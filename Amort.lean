@@ -3,8 +3,8 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
-import Amort.BinaryGCD
-import Amort.StepCount
+import Amort.GCD.BinaryGCD
+import Amort.GCD.StepCount
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -13,6 +13,8 @@ This library formalizes the time complexity and mathematical correctness of clas
 algorithms and amortized data structures.
 
 ## Modules
-- `Amort.BinaryGCD`: Definition, invariant lemmas, and proof of equivalence for Stein's Binary GCD.
-- `Amort.StepCount`: Step counting, instrumented representation, and bit-length logarithmic bounds.
+- `Amort.GCD.BinaryGCD`: Definition, invariant lemmas, and proof of equivalence
+  for Stein's Binary GCD.
+- `Amort.GCD.StepCount`: Step counting, instrumented representation, and bit-length
+  logarithmic bounds.
 -/
