@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-07T21:12:35Z
+# BRIEFING — 2026-09-07T21:52:08Z
 
 ## Mission
-Sentinel monitoring and routing for Lean 4 formalization of Euclidean GCD step bounds and Mathlib Asymptotics.IsBigO bridge.
+Sentinel monitoring and routing for Lean 4 formalization of Insertion Sort and Merge Sort comparison counting, complexity bounds, and Mathlib Asymptotics.IsBigO connection.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -12,6 +12,10 @@ Sentinel monitoring and routing for Lean 4 formalization of Euclidean GCD step b
 - Progress Cron: a1c064f2-412e-4cfb-85d2-b236f9697c38/task-26
 - Liveness Cron: a1c064f2-412e-4cfb-85d2-b236f9697c38/task-28
 - Victory Auditor 2: 9db0d599-1cbc-4205-a21b-83b99171e2f0 (teamwork_preview_victory_auditor_2)
+- Pipeline Conductor 3: d0745333-1492-42aa-8b96-9d61f1a622c8 (teamwork_preview_pipeline_3)
+- Progress Cron 3: 15776f9f-165e-4e8c-995d-67802938a787/task-24
+- Liveness Cron 3: 15776f9f-165e-4e8c-995d-67802938a787/task-26
+- Victory Auditor 3: 5371f01d-d83f-401c-852d-d4fadec13a1d (teamwork_preview_victory_auditor_3)
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -19,13 +23,13 @@ Sentinel monitoring and routing for Lean 4 formalization of Euclidean GCD step b
 - Route per Routing Decision Table: Math/Proof -> teamwork_preview_pipeline
 
 ## User Context
-- **Last user request**: Connect Binary GCD complexity bounds to Mathlib's `Asymptotics.IsBigO`, formalize step counting for standard Euclidean GCD with a logarithmic upper bound, and conduct a dedicated style guide audit for full Mathlib readiness.
+- **Last user request**: Formalize comparison counting and time complexity for Insertion Sort (O(n²)) and Merge Sort (O(n log n)) in Lean 4, reusing Mathlib's sorting definitions and connecting to `Asymptotics.IsBigO`.
 - **Pending clarifications**: none
 - **Delivered results**:
-  - Formalized standard Euclidean GCD step counting `euclideanGcdSteps` and proved logarithmic upper bounds (≤ 2 * size(min a b) + 1 and ≤ 2 * size(a + b) + 1) along with modulo halving properties.
-  - Formalized Mathlib `Asymptotics.IsBigO` bridge for Binary GCD and Euclidean GCD step counts across general and specialized filters (`Filter.atTop`, `Filter.comap`).
-  - Passed Mathlib style guide audit: namespace `Nat`, line lengths ≤ 100, proper docstrings.
-  - Clean build with `lake build` (1471 jobs, 0 errors, 0 warnings) and 0 `sorryAx`.
+  - Formalized comparison counting for Insertion Sort with equivalence to `List.insertionSort`, bounds ≤ n(n-1)/2 and ≤ n², and IsBigO bridge to O(n²).
+  - Formalized comparison counting for Merge Sort with equivalence to `List.mergeSort`, divide-and-conquer recurrence bound ≤ n * Nat.size n, and IsBigO bridge to O(n log n).
+  - Built with `lake build` (1474 jobs, 0 warnings, 0 errors) and confirmed 0 `sorryAx`.
+  - Comprehensive documentation in `Amort/Sorting/Sorting.md`.
   - Independent Victory Auditor verdict: VICTORY CONFIRMED.
 
 ## Project Status
@@ -38,9 +42,9 @@ Sentinel monitoring and routing for Lean 4 formalization of Euclidean GCD step b
 
 ## Artifact Index
 - /home/deck/projects/amort/.agents/ORIGINAL_REQUEST.md — Authoritative record of user requests
-- /home/deck/projects/amort/Amort/GCD/BinaryGCD.lean — Binary GCD formalization & equivalence proof
-- /home/deck/projects/amort/Amort/GCD/StepCount.lean — Step counting definitions and logarithmic bounds
-- /home/deck/projects/amort/Amort/GCD/EuclideanGCD.lean — Euclidean GCD step counting and logarithmic bounds
-- /home/deck/projects/amort/Amort/GCD/Asymptotics.lean — Mathlib Asymptotics.IsBigO bridge
-- /home/deck/projects/amort/docs/BinaryGCD.md — Documentation for Binary GCD
-- /home/deck/projects/amort/docs/EuclideanAndAsymptotics.md — Documentation for Euclidean GCD and Asymptotics
+- /home/deck/projects/amort/Amort/Sorting/InsertionSort.lean — Insertion sort comparison counting, bounds, and equivalence
+- /home/deck/projects/amort/Amort/Sorting/MergeSort.lean — Merge sort comparison counting, bounds, and equivalence
+- /home/deck/projects/amort/Amort/Sorting/Asymptotics.lean — Asymptotics.IsBigO connections for sorting algorithms
+- /home/deck/projects/amort/Amort/Sorting/Sorting.md — Comprehensive sorting complexity documentation
+- /home/deck/projects/amort/Amort.lean — Top-level library export
+- /home/deck/projects/amort/README.md — Project overview and build instructions

@@ -70,3 +70,33 @@ The repository must build cleanly with `lake build` (0 warnings, 0 errors). Prov
 - [ ] `IsBigO` connection theorem is proven using Mathlib's asymptotics library.
 - [ ] Code passes style check guidelines (proper namespacing, docstrings, line lengths).
 - [ ] Documentation file exists and describes the new formalizations.
+
+## 2026-09-07T21:52:08Z
+
+Formalize comparison counting and time complexity for Insertion Sort ($O(n^2)$) and Merge Sort ($O(n \log n)$) in Lean 4, reusing Mathlib's sorting definitions and connecting to `Asymptotics.IsBigO`.
+
+Working directory: /home/deck/projects/amort
+Integrity mode: demo
+
+## Requirements
+
+### R1. Insertion Sort Comparison Counting & O(n²) Upper Bound
+Model comparison counting for insertion sort over lists, proving equivalence to Mathlib's `List.insertionSort`. Prove the concrete comparison upper bound $\le \frac{n(n-1)}{2} \le n^2$ where $n = l.\text{length}$, and connect it to Mathlib's `IsBigO` under `Filter.atTop` on list length.
+
+### R2. Merge Sort Comparison Counting & O(n log n) Upper Bound
+Model comparison counting for merge sort over lists, proving equivalence to Mathlib's `List.mergeSort` (or standard functional merge sort). Prove the concrete comparison upper bound $\le n \cdot \text{Nat.size } n$, and connect it to Mathlib's `IsBigO` under `Filter.atTop` on list length.
+
+### R3. Style Guide & Axiom Integrity
+Ensure all definitions and theorems adhere to Mathlib conventions (scoped under appropriate namespaces such as `List`, line lengths $\le 100$, docstrings `/-- ... -/`, zero `sorryAx` confirmed via `#print axioms`).
+
+### R4. Build & Documentation
+The project must compile cleanly with `lake build` (0 warnings, 0 errors). Provide clear documentation explaining the comparison models, recurrences, and asymptotic connections in `Amort/Sorting/Sorting.md`.
+
+## Acceptance Criteria
+
+### Verification
+- [ ] `lake build` succeeds in `/home/deck/projects/amort` with 0 errors and 0 warnings.
+- [ ] `#print axioms` on the main sorting complexity and `IsBigO` theorems confirms zero `sorryAx`.
+- [ ] Equivalence of instrumented/counted sorting to Mathlib's sorted outputs is formally proven.
+- [ ] The $O(n^2)$ bound for insertion sort and $O(n \log n)$ bound for merge sort are formally proven.
+- [ ] Documentation explains the recurrence relations, bounds, and asymptotic proofs.

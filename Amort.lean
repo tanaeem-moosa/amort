@@ -7,6 +7,9 @@ import Amort.GCD.BinaryGCD
 import Amort.GCD.StepCount
 import Amort.GCD.EuclideanGCD
 import Amort.GCD.Asymptotics
+import Amort.Sorting.InsertionSort
+import Amort.Sorting.MergeSort
+import Amort.Sorting.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -22,5 +25,11 @@ algorithms and amortized data structures.
 - `Amort.GCD.EuclideanGCD`: Step counting and logarithmic upper bounds for the
   standard Euclidean algorithm via modulo halving.
 - `Amort.GCD.Asymptotics`: Bridges connecting concrete step bounds to Mathlib's
+  `Asymptotics.IsBigO` framework.
+- `Amort.Sorting.InsertionSort`: Comparison counting, instrumented representation, and
+  concrete $O(n^2)$ comparison bounds for Insertion Sort.
+- `Amort.Sorting.MergeSort`: Comparison counting, instrumented representation, divide-and-conquer
+  recurrence bounds, and concrete $O(n \log n)$ bounds for Merge Sort.
+- `Amort.Sorting.Asymptotics`: Bridges connecting concrete sorting comparison bounds to Mathlib's
   `Asymptotics.IsBigO` framework.
 -/
