@@ -1,0 +1,9 @@
+# Lean / Lake build artifacts
+.lake/
+lake-packages/
+*~
+*.olean
+*.ilean
+*.c
+*.o
+/.lake
