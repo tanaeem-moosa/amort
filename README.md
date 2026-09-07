@@ -10,7 +10,7 @@ This repository includes a complete Lean 4 formalization of Stein's binary great
 - **Step Counting & Bound**: Companion `Nat.binaryGcdSteps` and instrumented `Nat.binaryGcdWithSteps` with proven upper bounds:
   - `binaryGcdSteps a b ≤ Nat.size a + Nat.size b`
   - `binaryGcdSteps a b ≤ 2 * Nat.size (a + b)`
-- **Documentation**: Detailed architecture, invariant lemma DAG, and proof notes in [`docs/BinaryGCD.md`](docs/BinaryGCD.md).
+- **Documentation**: Detailed architecture, invariant lemma DAG, and proof notes in [`Amort/GCD/BinaryGCD.md`](Amort/GCD/BinaryGCD.md).
 
 ### Building and Verification
 ```bash
