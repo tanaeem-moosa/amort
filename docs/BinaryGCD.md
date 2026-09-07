@@ -10,7 +10,7 @@ The formalization is structured into two core modules under the `Amort` library 
 
 ```
 Amort/
-├── Basic.lean        -- Library placeholder
+├── -- (Basic.lean removed)        -- Library placeholder
 ├── BinaryGCD.lean    -- Core algorithm, termination proof, invariant lemmas, and equivalence with Nat.gcd
 └── StepCount.lean    -- Step counter, instrumented (gcd, steps) representation, and logarithmic bounds
 ```
@@ -60,9 +60,9 @@ graph TD
     CoprimeTwo --> GcdEvenOdd["gcd_even_odd: gcd(a, b) = gcd(a/2, b)"]
     GcdEvenOdd --> GcdOddEven["gcd_odd_even: gcd(a, b) = gcd(a, b/2)"]
     NatGcdMulLeft["Nat.gcd_mul_left"] --> GcdEvenEven["gcd_even_even: gcd(a, b) = 2 * gcd(a/2, b/2)"]
-    NatGcdSubLeft["Nat.gcd_sub_self_left"] --> GcdOddOdd["gcd_odd_odd_sub_div2: gcd(a, b) = gcd((a-b)/2, b)"]
+    NatGcdSubLeft["Nat.gcd_sub_self_left"] --> GcdOddOdd["gcd_odd_odd_sub_div_two_left: gcd(a, b) = gcd((a-b)/2, b)"]
     GcdEvenOdd --> GcdOddOdd
-    GcdOddOdd --> GcdOddOddRight["gcd_odd_odd_sub_div2_right: gcd(a, b) = gcd(a, (b-a)/2)"]
+    GcdOddOdd --> GcdOddOddRight["gcd_odd_odd_sub_div_two_right: gcd(a, b) = gcd(a, (b-a)/2)"]
     
     GcdEvenEven --> BinaryGcdEq["binaryGcd_eq_gcd: binaryGcd a b = Nat.gcd a b"]
     GcdEvenOdd --> BinaryGcdEq
@@ -84,12 +84,12 @@ graph TD
 4. **`gcd_even_even`**:
    $$\forall a b, a \bmod 2 = 0 \land b \bmod 2 = 0 \implies \gcd(a, b) = 2 \cdot \gcd(a / 2, b / 2)$$
    Proved by rewriting $a = 2 \cdot (a / 2)$, $b = 2 \cdot (b / 2)$, and applying `Nat.gcd_mul_left`.
-5. **`gcd_odd_odd_sub_div2`**:
+5. **`gcd_odd_odd_sub_div_two_left`**:
    $$\forall a b, a \bmod 2 = 1 \land b \bmod 2 = 1 \land b \le a \implies \gcd(a, b) = \gcd((a - b) / 2, b)$$
    Proved by combining subtraction invariance `Nat.gcd_sub_self_left` with `gcd_even_odd`, since the difference of two odd numbers is even.
-6. **`gcd_odd_odd_sub_div2_right`**:
+6. **`gcd_odd_odd_sub_div_two_right`**:
    $$\forall a b, a \bmod 2 = 1 \land b \bmod 2 = 1 \land a \le b \implies \gcd(a, b) = \gcd(a, (b - a) / 2)$$
-   Proved symmetrically via `Nat.gcd_comm` and `gcd_odd_odd_sub_div2`.
+   Proved symmetrically via `Nat.gcd_comm` and `gcd_odd_odd_sub_div_two_left`.
 
 ### Main Equivalence Theorem
 ```lean
@@ -168,5 +168,5 @@ No theorem depends on `sorryAx`.
 
 For upstreaming to Mathlib (`Mathlib.Data.Nat.GCD.Basic` or a new `Mathlib.Data.Nat.GCD.Binary`):
 - `binaryGcd` provides an executable alternative to `Nat.gcd` that avoids division and modulus operations, suitable for kernel evaluation and fast computation.
-- The lemmas `gcd_even_odd`, `gcd_odd_even`, `gcd_even_even`, and `gcd_odd_odd_sub_div2` are natural additions to `Mathlib.Data.Nat.GCD.Basic`.
+- The lemmas `gcd_even_odd`, `gcd_odd_even`, `gcd_even_even`, and `gcd_odd_odd_sub_div_two_left` are natural additions to `Mathlib.Data.Nat.GCD.Basic`.
 - The connection between `Nat.size` decrement and `binaryRec'` in `size_div_two` is a reusable lemma for any bitwise divide-and-conquer algorithm.

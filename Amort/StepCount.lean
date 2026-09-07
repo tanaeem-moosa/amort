@@ -14,17 +14,18 @@ explicit upper bounds on the number of recursive transitions in terms of the bit
 lengths of the inputs.
 
 ## Key Definitions
-- `binaryGcdSteps`: Companion function counting the recursive steps of `binaryGcd`.
-- `binaryGcdWithSteps`: Instrumented representation returning `(gcd, steps)`.
+- `Nat.binaryGcdSteps`: Companion function counting the recursive steps of `binaryGcd`.
+- `Nat.binaryGcdWithSteps`: Instrumented representation returning `(gcd, steps)`.
 
 ## Key Theorems
-- `binaryGcdWithSteps_fst`: The result of `binaryGcdWithSteps` matches `binaryGcd`.
-- `binaryGcdWithSteps_snd`: The step count of `binaryGcdWithSteps` matches `binaryGcdSteps`.
-- `binaryGcdWithSteps_eq_gcd`: The result of `binaryGcdWithSteps` equals `Nat.gcd a b`.
-- `binaryGcdSteps_le_size_add_size`: `binaryGcdSteps a b ≤ Nat.size a + Nat.size b`.
-- `binaryGcdSteps_le_two_mul_size_add`: `binaryGcdSteps a b ≤ 2 * Nat.size (a + b)`.
-- Instrumented step bounds mirroring the above.
+- `Nat.binaryGcdWithSteps_fst`: The result of `binaryGcdWithSteps` matches `binaryGcd`.
+- `Nat.binaryGcdWithSteps_snd`: The step count of `binaryGcdWithSteps` matches `binaryGcdSteps`.
+- `Nat.binaryGcdWithSteps_eq_gcd`: The result of `binaryGcdWithSteps` equals `Nat.gcd a b`.
+- `Nat.binaryGcdSteps_le_size_add_size`: `binaryGcdSteps a b ≤ Nat.size a + Nat.size b`.
+- `Nat.binaryGcdSteps_le_two_mul_size_add`: `binaryGcdSteps a b ≤ 2 * Nat.size (a + b)`.
 -/
+
+namespace Nat
 
 /-- Companion step-counting function for `binaryGcd`.
 Counts the exact number of recursive transitions executed on inputs `a` and `b`. -/
@@ -74,6 +75,7 @@ decreasing_by
   all_goals omega
 
 /-- The computed GCD in `binaryGcdWithSteps` matches `binaryGcd`. -/
+@[simp]
 theorem binaryGcdWithSteps_fst (a b : ℕ) :
     (binaryGcdWithSteps a b).1 = binaryGcd a b := by
   induction a, b using binaryGcd.induct with
@@ -113,6 +115,7 @@ theorem binaryGcdWithSteps_fst (a b : ℕ) :
       dif_neg hnba]
 
 /-- The step counter in `binaryGcdWithSteps` matches `binaryGcdSteps`. -/
+@[simp]
 theorem binaryGcdWithSteps_snd (a b : ℕ) :
     (binaryGcdWithSteps a b).2 = binaryGcdSteps a b := by
   induction a, b using binaryGcdSteps.induct with
@@ -156,30 +159,32 @@ theorem binaryGcdWithSteps_snd (a b : ℕ) :
       dif_neg hnba]
     omega
 
+/-- Combined product equality for the instrumented binary GCD. -/
+@[simp]
+theorem binaryGcdWithSteps_eq (a b : ℕ) :
+    binaryGcdWithSteps a b = (binaryGcd a b, binaryGcdSteps a b) :=
+  Prod.ext (binaryGcdWithSteps_fst a b) (binaryGcdWithSteps_snd a b)
+
 /-- The instrumented function computes `Nat.gcd a b`. -/
 theorem binaryGcdWithSteps_eq_gcd (a b : ℕ) :
     (binaryGcdWithSteps a b).1 = Nat.gcd a b := by
   rw [binaryGcdWithSteps_fst, binaryGcd_eq_gcd]
 
 /-- Halving a strictly positive natural number decrements its bit size by 1. -/
-theorem size_div_two (a : ℕ) (ha : 0 < a) : Nat.size (a / 2) + 1 = Nat.size a := by
+lemma size_div_two (a : ℕ) (ha : 0 < a) : Nat.size (a / 2) + 1 = Nat.size a := by
   induction a using Nat.binaryRec' with
   | zero => omega
   | bit b n _ _ =>
-    have hne : Nat.bit b n ≠ 0 := by omega
-    rw [Nat.size_bit hne, Nat.bit_div_two]
+    rw [Nat.size_bit (by omega), Nat.bit_div_two]
 
-/-- Subtraction and halving bounded by bit size: for positive `a, b` with `b ≤ a`,
+/-- Subtraction and halving bounded by bit size: for positive `a`,
 `size ((a - b) / 2) + 1 ≤ size a`. -/
-theorem size_sub_div_two_le (a b : ℕ) (ha : 0 < a) (_hb : 0 < b) (_hba : b ≤ a) :
+lemma size_sub_div_two_le (a b : ℕ) (ha : 0 < a) :
     Nat.size ((a - b) / 2) + 1 ≤ Nat.size a := by
-  have h_le : (a - b) / 2 ≤ a / 2 := by omega
-  have h_size_le : Nat.size ((a - b) / 2) ≤ Nat.size (a / 2) := Nat.size_le_size h_le
   rw [← size_div_two a ha]
-  omega
+  exact Nat.add_le_add_right (Nat.size_le_size (by omega)) 1
 
-/-- **Main Step Bound Theorem (R3)**:
-The number of recursive steps of `binaryGcd` is bounded above by the sum of the
+/-- The number of recursive steps of `binaryGcd` is bounded above by the sum of the
 bit lengths (logarithmic sizes) of the two arguments:
 `binaryGcdSteps a b ≤ Nat.size a + Nat.size b`. -/
 theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
@@ -191,37 +196,28 @@ theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
   | case2 a ha =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_pos rfl]
     omega
-  | case3 a b ha hb ha_even hb_even _ =>
+  | case3 a b ha hb ha_even hb_even ih =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_pos hb_even]
-    have ha_pos : 0 < a := by omega
-    have hb_pos : 0 < b := by omega
-    have ha_s := size_div_two a ha_pos
-    have hb_s := size_div_two b hb_pos
+    have := size_div_two a (by omega)
+    have := size_div_two b (by omega)
     omega
-  | case4 a b ha hb ha_even hb_odd _ =>
+  | case4 a b ha hb ha_even hb_odd ih =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_neg hb_odd]
-    have ha_pos : 0 < a := by omega
-    have ha_s := size_div_two a ha_pos
+    have := size_div_two a (by omega)
     omega
-  | case5 a b ha hb ha_odd hb_even _ =>
+  | case5 a b ha hb ha_odd hb_even ih =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_pos hb_even]
-    have hb_pos : 0 < b := by omega
-    have hb_s := size_div_two b hb_pos
+    have := size_div_two b (by omega)
     omega
-  | case6 a b ha hb ha_odd hb_odd hba _ =>
+  | case6 a b ha hb ha_odd hb_odd hba ih =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd,
       dif_pos hba]
-    have ha_pos : 0 < a := by omega
-    have hb_pos : 0 < b := by omega
-    have h_sub := size_sub_div_two_le a b ha_pos hb_pos hba
+    have := size_sub_div_two_le a b (by omega)
     omega
-  | case7 a b ha hb ha_odd hb_odd hnba _ =>
+  | case7 a b ha hb ha_odd hb_odd hnba ih =>
     rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd,
       dif_neg hnba]
-    have ha_pos : 0 < a := by omega
-    have hb_pos : 0 < b := by omega
-    have hab : a ≤ b := by omega
-    have h_sub := size_sub_div_two_le b a hb_pos ha_pos hab
+    have := size_sub_div_two_le b a (by omega)
     omega
 
 /-- Step bound in terms of the bit length of the sum:
@@ -235,14 +231,16 @@ theorem binaryGcdSteps_le_two_mul_size_add (a b : ℕ) :
 
 /-- Upper bound for the instrumented step counter:
 `(binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b`. -/
-theorem binaryGcdWithSteps_steps_le_size_add_size (a b : ℕ) :
+theorem binaryGcdWithSteps_snd_le_size_add_size (a b : ℕ) :
     (binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b := by
   rw [binaryGcdWithSteps_snd]
   exact binaryGcdSteps_le_size_add_size a b
 
 /-- Upper bound for the instrumented step counter in terms of the sum:
 `(binaryGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b)`. -/
-theorem binaryGcdWithSteps_steps_le_two_mul_size_add (a b : ℕ) :
+theorem binaryGcdWithSteps_snd_le_two_mul_size_add (a b : ℕ) :
     (binaryGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b) := by
   rw [binaryGcdWithSteps_snd]
   exact binaryGcdSteps_le_two_mul_size_add a b
+
+end Nat
