@@ -82,9 +82,16 @@ We prove that the instrumented sorting functions compute the exact sorted output
        insertionSortCount r l ≤ l.length * (l.length - 1) / 2
    ```
 
-3. **Quadratic Bound**:
-   Since $\frac{n(n-1)}{2} \le n(n-1) \le n^2$:
+3. **Quadratic Bound via Telescoping Recurrence**:
+   In addition to the triangular number bound, insertion sort directly maps to the general
+   linear telescoping recurrence in `Amort.Recurrence.Telescoping` ($T(n+1) \le T(n) + n$):
    ```lean
+   theorem insertionSortCount_le_recBound (l : List α) :
+       insertionSortCount r l ≤ insertionSortRecBound l.length
+
+   theorem insertionSortRecBound_le_sq (n : ℕ) :
+       insertionSortRecBound n ≤ n ^ 2
+
    theorem insertionSortCount_le_sq (l : List α) :
        insertionSortCount r l ≤ l.length ^ 2
    ```
@@ -143,10 +150,10 @@ We formally prove:
        mergeSortCount le xs ≤ mergeSortRecBound xs.length
    ```
 
-3. **Power-of-Two Bounding Lemma**:
-   We prove the strong induction lemma on the tree height $k \in \mathbb{N}$:
-   $$\forall k \in \mathbb{N},\; \forall n \le 2^k,\; T(n) \le n \cdot k$$
-   In `Amort/Sorting/MergeSort.lean`:
+3. **Power-of-Two Bounding Lemma via Master Theorem**:
+   In `Amort/Sorting/MergeSort.lean`, `mergeSortRecBound` is shown to satisfy the balanced
+   divide-and-conquer master recurrence with $c = 1$ (`mergeSortRecBound_le_rec`), and directly
+   derives its dyadic power-of-two bound via `Amort.Recurrence.master_divide_conquer_aux`:
    ```lean
    theorem mergeSortRecBound_le_mul_of_le_two_pow :
        ∀ (k : ℕ) (n : ℕ), n ≤ 2 ^ k → mergeSortRecBound n ≤ n * k

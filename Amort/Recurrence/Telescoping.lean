@@ -3,7 +3,6 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
-import Amort.Sorting.InsertionSort
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Analysis.Asymptotics.Defs
 import Mathlib.Tactic.Ring
@@ -195,51 +194,4 @@ theorem telescoping_linear_step_isBigO_sq (c : ℕ)
   have : 1 + 1 = 2 := rfl
   rw [this] at h_res
   exact h_res
-
-/-! ### Application to Iterative Sorting (Insertion Sort) -/
-
-/-- Exact recurrence bound for insertion sort comparisons on list length $n$. -/
-def insertionSortRecBound : ℕ → ℕ
-  | 0 => 0
-  | n + 1 => insertionSortRecBound n + n
-
-/-- The insertion sort recurrence satisfies the linear step equality. -/
-theorem insertionSortRecBound_step (n : ℕ) :
-    insertionSortRecBound (n + 1) = insertionSortRecBound n + n := rfl
-
-/-- Concrete upper bound: insertion sort comparisons bounded by $n^2$. -/
-theorem insertionSortRecBound_le_sq (n : ℕ) :
-    insertionSortRecBound n ≤ n ^ 2 := by
-  have h_step : ∀ i, insertionSortRecBound (i + 1) ≤ insertionSortRecBound i + 1 * i := by
-    intro i
-    rw [insertionSortRecBound_step, one_mul]
-  have h := telescoping_linear_step_bound 1 h_step n
-  have h0 : insertionSortRecBound 0 = 0 := rfl
-  rw [h0, one_mul] at h
-  omega
-
-/-- Asymptotic complexity of insertion sort recurrence: $O(n^2)$ under `Filter.atTop`. -/
-theorem insertionSortRecBound_isBigO_sq :
-    (fun n : ℕ ↦ ((insertionSortRecBound n : ℕ) : ℝ)) =O[Filter.atTop]
-    (fun n : ℕ ↦ ((n ^ 2 : ℕ) : ℝ)) := by
-  have h_step : ∀ i, insertionSortRecBound (i + 1) ≤ insertionSortRecBound i + 1 * i := by
-    intro i
-    rw [insertionSortRecBound_step, one_mul]
-  exact telescoping_linear_step_isBigO_sq 1 h_step
-
-/-- Connection to concrete insertion sort: comparisons on list $l$ are bounded by the
-telescoping recurrence bound `insertionSortRecBound l.length`. -/
-theorem insertionSortCount_le_recBound {α : Type*} (r : α → α → Prop) [DecidableRel r]
-    (l : List α) :
-    List.insertionSortCount r l ≤ insertionSortRecBound l.length := by
-  induction l with
-  | nil => simp [List.insertionSortCount, insertionSortRecBound]
-  | cons a l ih =>
-    simp only [List.insertionSortCount, List.length_cons]
-    have h_ins := List.orderedInsertCount_le r a (List.insertionSort r l)
-    have h_len : (List.insertionSort r l).length = l.length := List.length_insertionSort r l
-    rw [h_len] at h_ins
-    rw [insertionSortRecBound_step]
-    omega
-
 end Amort.Recurrence

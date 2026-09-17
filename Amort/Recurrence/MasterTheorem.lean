@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
 import Amort.Recurrence.Halving
-import Amort.Sorting.MergeSort
 import Mathlib.Analysis.Asymptotics.Defs
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Data.Nat.Size
@@ -165,60 +164,5 @@ theorem master_divide_conquer_isBigO_n_log_n (T : ℕ → ℕ) (c : ℕ)
     (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) :=
   (master_divide_conquer_isBigO_mul_size T c hrec).trans
     (isBigO_mul_size_n_log_n isBigO_size_log)
-
-/-! ### Application to Divide-and-Conquer Sorting (Merge Sort) -/
-
-/-- Step equality for the merge sort comparison recurrence. -/
-theorem mergeSortRecBound_step (n : ℕ) (hn : 2 ≤ n) :
-    mergeSortRecBound n =
-    mergeSortRecBound ((n + 1) / 2) + mergeSortRecBound (n / 2) + n := by
-  match n with
-  | 0 => omega
-  | 1 => omega
-  | n + 2 =>
-    have h1 : (n + 2 + 1) / 2 = (n + 3) / 2 := by ring_nf
-    rw [h1]
-    rw [mergeSortRecBound]
-
-/-- The merge sort comparison recurrence satisfies the master recurrence with $c = 1$. -/
-theorem mergeSortRecBound_le_rec (n : ℕ) (hn : 2 ≤ n) :
-    mergeSortRecBound n ≤
-    mergeSortRecBound ((n + 1) / 2) + mergeSortRecBound (n / 2) + 1 * n := by
-  rw [one_mul, mergeSortRecBound_step n hn]
-
-/-- Concrete $O(n \cdot \text{size } n)$ bound on merge sort derived via the Master Theorem. -/
-theorem mergeSortRecBound_le_mul_size_of_master (n : ℕ) :
-    mergeSortRecBound n ≤ n * Nat.size n := by
-  by_cases hn : n = 0
-  · subst hn
-    simp [mergeSortRecBound]
-  · have hn_pos : 1 ≤ n := by omega
-    have h := master_divide_conquer_bound mergeSortRecBound 1 mergeSortRecBound_le_rec n hn_pos
-    have h1 : mergeSortRecBound 1 = 0 := by simp [mergeSortRecBound]
-    rw [h1] at h
-    simp only [zero_add, one_mul] at h
-    exact h
-
-/-- Merge sort recurrence comparisons are $O(n \cdot \text{Nat.size } n)$
-under `Filter.atTop` via the Master Theorem. -/
-theorem mergeSortRecBound_isBigO_mul_size :
-    (fun n : ℕ ↦ ((mergeSortRecBound n : ℕ) : ℝ)) =O[Filter.atTop]
-    (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) :=
-  master_divide_conquer_isBigO_mul_size mergeSortRecBound 1 mergeSortRecBound_le_rec
-
-/-- Merge sort recurrence comparisons are $O(n \log n)$ under `Filter.atTop`
-via the Master Theorem. -/
-theorem mergeSortRecBound_isBigO_n_log_n :
-    (fun n : ℕ ↦ ((mergeSortRecBound n : ℕ) : ℝ)) =O[Filter.atTop]
-    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) :=
-  master_divide_conquer_isBigO_n_log_n mergeSortRecBound 1 mergeSortRecBound_le_rec
-
-/-- Connection to list merge sort: comparison count on list $l$ is bounded by
-$l.\text{length} \cdot \text{Nat.size } l.\text{length}$ via the Master Theorem. -/
-theorem mergeSortCount_le_master_bound {α : Type*} (le : α → α → Bool) (l : List α) :
-    List.mergeSortCount le l ≤ l.length * Nat.size l.length := by
-  have h_rec := List.mergeSortCount_le_recBound le l
-  have h_master := mergeSortRecBound_le_mul_size_of_master l.length
-  exact le_trans h_rec h_master
 
 end Amort.Recurrence

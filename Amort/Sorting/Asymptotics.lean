@@ -3,6 +3,8 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
+import Amort.Recurrence.MasterTheorem
+import Amort.Recurrence.Telescoping
 import Amort.Sorting.InsertionSort
 import Amort.Sorting.MergeSort
 import Mathlib.Analysis.Asymptotics.Defs
@@ -145,5 +147,23 @@ theorem isBigO_mergeSortRecBound_atTop :
   simp only [Real.norm_eq_abs, Nat.abs_cast, one_mul]
   have h := mergeSortRecBound_le_mul_size n
   exact_mod_cast h
+
+/-- The merge sort divide-and-conquer recurrence bound on `ℕ` is asymptotically
+`O(n \log n)` under `Filter.atTop` via the Master Theorem. -/
+theorem isBigO_mergeSortRecBound_n_log_n :
+    (fun n : ℕ ↦ ((mergeSortRecBound n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) :=
+  Amort.Recurrence.master_divide_conquer_isBigO_n_log_n mergeSortRecBound 1
+    mergeSortRecBound_le_rec
+
+/-- The insertion sort recurrence bound on `ℕ` is asymptotically `O(n ^ 2)` under `Filter.atTop`,
+derived directly from the general linear telescoping recurrence theorem. -/
+theorem isBigO_insertionSortRecBound_atTop :
+    (fun n : ℕ ↦ ((insertionSortRecBound n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((n ^ 2 : ℕ) : ℝ)) := by
+  have h_step : ∀ i, insertionSortRecBound (i + 1) ≤ insertionSortRecBound i + 1 * i := by
+    intro i
+    rw [insertionSortRecBound_step, one_mul]
+  exact Amort.Recurrence.telescoping_linear_step_isBigO_sq 1 h_step
 
 end List

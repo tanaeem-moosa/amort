@@ -3,6 +3,7 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
+import Amort.Recurrence.MasterTheorem
 import Mathlib.Data.List.Sort
 import Mathlib.Data.Nat.Size
 import Mathlib.Tactic.Ring
@@ -53,36 +54,42 @@ def mergeSortRecBound : ℕ → ℕ
   | n + 2 =>
     mergeSortRecBound ((n + 3) / 2) + mergeSortRecBound ((n + 2) / 2) + (n + 2)
 
+/-- Step equality for the merge sort comparison recurrence. -/
+theorem mergeSortRecBound_step (n : ℕ) (hn : 2 ≤ n) :
+    mergeSortRecBound n =
+    mergeSortRecBound ((n + 1) / 2) + mergeSortRecBound (n / 2) + n := by
+  match n with
+  | 0 => omega
+  | 1 => omega
+  | n + 2 =>
+    have h1 : (n + 2 + 1) / 2 = (n + 3) / 2 := by ring_nf
+    rw [h1]
+    rw [mergeSortRecBound]
+
+/-- The merge sort comparison recurrence satisfies the balanced master recurrence with $c = 1$. -/
+theorem mergeSortRecBound_le_rec (n : ℕ) (hn : 2 ≤ n) :
+    mergeSortRecBound n ≤
+    mergeSortRecBound ((n + 1) / 2) + mergeSortRecBound (n / 2) + 1 * n := by
+  rw [one_mul, mergeSortRecBound_step n hn]
+
 /-- Whenever `n ≤ 2 ^ k`, the merge sort recurrence bound satisfies
-`mergeSortRecBound n ≤ n * k`. -/
+`mergeSortRecBound n ≤ n * k`, derived from the general Master Theorem dyadic induction
+(`Amort.Recurrence.master_divide_conquer_aux`). -/
 theorem mergeSortRecBound_le_mul_of_le_two_pow :
     ∀ (k : ℕ) (n : ℕ), n ≤ 2 ^ k → mergeSortRecBound n ≤ n * k := by
-  intro k
-  induction k with
-  | zero =>
-    intro n hn
-    have hn' : n = 0 ∨ n = 1 := by omega
-    rcases hn' with rfl | rfl <;> simp [mergeSortRecBound]
-  | succ k ih =>
-    intro n hn
-    match n with
-    | 0 => simp [mergeSortRecBound]
-    | 1 => simp [mergeSortRecBound]
-    | n + 2 =>
-      have h1 : (n + 3) / 2 ≤ 2 ^ k := by omega
-      have h2 : (n + 2) / 2 ≤ 2 ^ k := by omega
-      have ih1 := ih ((n + 3) / 2) h1
-      have ih2 := ih ((n + 2) / 2) h2
-      rw [mergeSortRecBound]
-      have h_sum : (n + 3) / 2 + (n + 2) / 2 = n + 2 := by omega
-      have : (n + 2) * (k + 1) = ((n + 3) / 2) * k + ((n + 2) / 2) * k + (n + 2) := by
-        calc (n + 2) * (k + 1)
-          _ = (n + 2) * k + (n + 2) := by ring
-          _ = ((n + 3) / 2 + (n + 2) / 2) * k + (n + 2) := by rw [h_sum]
-          _ = ((n + 3) / 2) * k + ((n + 2) / 2) * k + (n + 2) := by ring
-      omega
+  intro k n hn
+  by_cases hn0 : n = 0
+  · subst hn0
+    simp [mergeSortRecBound]
+  · have hn_pos : 1 ≤ n := by omega
+    have h := Amort.Recurrence.master_divide_conquer_aux mergeSortRecBound 1
+      mergeSortRecBound_le_rec k n hn_pos hn
+    have h1 : mergeSortRecBound 1 = 0 := by simp [mergeSortRecBound]
+    rw [h1, zero_mul, zero_add, one_mul] at h
+    exact h
 
-/-- For any `n : ℕ`, `mergeSortRecBound n ≤ n * Nat.size n`. -/
+/-- For any `n : ℕ`, `mergeSortRecBound n ≤ n * Nat.size n`, derived directly from
+the general Master Theorem bound (`Amort.Recurrence.master_divide_conquer_bound`). -/
 theorem mergeSortRecBound_le_mul_size (n : ℕ) :
     mergeSortRecBound n ≤ n * Nat.size n := by
   have h_le : n ≤ 2 ^ (Nat.size n) := le_of_lt (Nat.lt_size_self n)

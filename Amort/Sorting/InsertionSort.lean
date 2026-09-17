@@ -3,6 +3,7 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
+import Amort.Recurrence.Telescoping
 import Mathlib.Data.List.Sort
 import Mathlib.Tactic.Ring
 
@@ -145,15 +146,45 @@ theorem insertionSortCount_le_triangular (l : List α) :
     rw [h_arith, h_div]
     omega
 
-/-- Total comparisons in insertion sort are bounded by `n ^ 2` where `n = l.length`. -/
-theorem insertionSortCount_le_sq (l : List α) :
-    insertionSortCount r l ≤ l.length ^ 2 := by
-  have h := insertionSortCount_le_triangular r l
-  have h_div : l.length * (l.length - 1) / 2 ≤ l.length * (l.length - 1) := Nat.div_le_self _ 2
-  have h_mul : l.length * (l.length - 1) ≤ l.length * l.length :=
-    Nat.mul_le_mul_left _ (Nat.sub_le _ _)
-  have h_sq : l.length * l.length = l.length ^ 2 := by ring
+/-- Exact recurrence bound for insertion sort comparisons on list length $n$. -/
+def insertionSortRecBound : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => insertionSortRecBound n + n
+
+/-- The insertion sort recurrence satisfies the linear step equality. -/
+theorem insertionSortRecBound_step (n : ℕ) :
+    insertionSortRecBound (n + 1) = insertionSortRecBound n + n := rfl
+
+/-- Concrete upper bound: insertion sort comparisons bounded by $n^2$ via the general
+linear telescoping recurrence theorem (`Amort.Recurrence.telescoping_linear_step_bound`). -/
+theorem insertionSortRecBound_le_sq (n : ℕ) :
+    insertionSortRecBound n ≤ n ^ 2 := by
+  have h_step : ∀ i, insertionSortRecBound (i + 1) ≤ insertionSortRecBound i + 1 * i := by
+    intro i
+    rw [insertionSortRecBound_step, one_mul]
+  have h := Amort.Recurrence.telescoping_linear_step_bound 1 h_step n
+  have h0 : insertionSortRecBound 0 = 0 := rfl
+  rw [h0, one_mul] at h
   omega
+
+/-- Comparisons on list $l$ are bounded by the telescoping recurrence `insertionSortRecBound`. -/
+theorem insertionSortCount_le_recBound (l : List α) :
+    insertionSortCount r l ≤ insertionSortRecBound l.length := by
+  induction l with
+  | nil => simp [insertionSortCount, insertionSortRecBound]
+  | cons a l ih =>
+    simp only [insertionSortCount, List.length_cons]
+    have h_ins := orderedInsertCount_le r a (List.insertionSort r l)
+    have h_len : (List.insertionSort r l).length = l.length := List.length_insertionSort r l
+    rw [h_len] at h_ins
+    rw [insertionSortRecBound_step]
+    omega
+
+/-- Total comparisons in insertion sort are bounded by `n ^ 2` where `n = l.length`,
+derived directly from the telescoping recurrence bound. -/
+theorem insertionSortCount_le_sq (l : List α) :
+    insertionSortCount r l ≤ l.length ^ 2 :=
+  (insertionSortCount_le_recBound r l).trans (insertionSortRecBound_le_sq l.length)
 
 /-- Instrumented comparison count is bounded by `n * (n - 1) / 2`. -/
 theorem insertionSortWithCount_snd_le_triangular (l : List α) :
