@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, and `Amort/Recurrence/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, and `Amort/String/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -69,13 +69,21 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Divide-and-Conquer Master Recurrence**: `Amort.Recurrence.MasterTheorem` formalizing balanced divide-and-conquer recurrences with integer rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), proving dyadic bounds $T(n) \le T(1) n + c n k$, $O(n \log n)$ asymptotics, and connecting to Merge Sort.
 - **Documentation**: Comprehensive documentation in [`Amort/Recurrence/Recurrence.md`](Amort/Recurrence/Recurrence.md).
 
+### 8. Textbook String Algorithms (`Amort.String`)
+- **Naive String Matching**: `Amort.String.NaiveMatch` formalizing sliding-window matching, character comparison counting, concrete upper bound $\le (n - m + 1) \cdot m \le n \cdot m$, and substring occurrence correctness.
+- **Knuth-Morris-Pratt (KMP)**: `Amort.String.KMP` formalizing failure function $\pi$ with preprocessing bound $\le 2m$, amortized potential function $\Phi(j) = j$ proving scanning bound $\le 2n$, combined linear bound $\le 2(n + m)$, and equivalence to naive matching.
+- **Longest Common Subsequence (LCS)**: `Amort.String.LCS` formalizing recursive formulation, constructive maximal common subsequence witness, bottom-up $(n + 1) \times (m + 1)$ dynamic programming table, and concrete operation bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+- **Edit Distance (Levenshtein Distance)**: `Amort.String.EditDistance` formalizing recursive edit distance, explicit alignment operations and cost, minimal-cost alignment correctness proof, bottom-up $(n + 1) \times (m + 1)$ dynamic programming matrix, and concrete step bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+- **Asymptotics & Composition Bridges**: `Amort.String.Asymptotics` connecting 2D table bounds to `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+- **Documentation**: Comprehensive documentation in [`Amort/String/String.md`](Amort/String/String.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 1997 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2002 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

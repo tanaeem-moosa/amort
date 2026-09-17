@@ -180,4 +180,60 @@ Integrate the modules under `Amort/Recurrence/` (e.g. `Composition.lean`, `Teles
 - [ ] Divide-and-conquer recurrence theorem ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n \implies O(n \log n)$) is proven.
 - [ ] All new modules are exported in `Amort.lean` and documented in `Amort/Recurrence/Recurrence.md`.
 
+## 2026-09-17T04:55:59Z
+
+Formalize standard textbook string algorithms in Lean 4 within `Amort.String`, contrasting naive solutions with optimal algorithms: String Matching (Naive $O(n \cdot m)$ vs. KMP $O(n + m)$) and Sequence Alignment (LCS and Edit Distance $O(n \cdot m)$ DP), proving correctness, step bounds, and asymptotic complexity.
+
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. String Matching: Naive vs. Knuth-Morris-Pratt (KMP)
+- **Naive String Matching**:
+  - Formalize the sliding-window character comparison algorithm checking pattern $P$ (length $m$) at each shift $s \in [0, n - m]$ in text $T$ (length $n$).
+  - Step counter proving worst-case comparison bound $\le (n - m + 1) \cdot m \le n \cdot m$ ($O(n \cdot m)$).
+- **Knuth-Morris-Pratt (KMP)**:
+  - Formalize the prefix/failure function $\pi$ with preprocessing bound $\le 2m$ character steps.
+  - Formalize KMP text scanning with potential function analysis on pattern index $j$, proving search executes in $\le 2n$ character comparisons/transitions.
+  - Combined step bound $\le 2(n + m)$ ($O(n + m)$ linear time).
+- **Equivalence & Correctness**:
+  - Prove that Naive matching and KMP produce identical match indices, and that reported positions correspond exactly to occurrences of $P$ as a substring in $T$.
+
+### R2. Sequence Alignment: Dynamic Programming (LCS & Edit Distance)
+- **Longest Common Subsequence (LCS)**:
+  - Formalize the standard recursive formulation and bottom-up $(n+1) \times (m+1)$ dynamic programming table.
+  - Prove mathematical correctness (computing the maximum length common subsequence).
+  - Step counter proving the DP table is computed in $\le (n + 1) \cdot (m + 1)$ operations ($O(n \cdot m)$).
+- **Edit Distance (Levenshtein Distance)**:
+  - Formalize recursive edit distance with operations (insertion, deletion, substitution).
+  - Formalize the 2D DP matrix computation, proving step count $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+  - Correctness: the DP matrix computes the minimal cost alignment between two sequences.
+
+### R3. Asymptotics & Composition Bridges
+- Connect $O(n \cdot m)$ 2D table / nested loop bounds to `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`).
+- Connect $O(n + m)$ linear KMP bound to `Amort.Recurrence.Composition` (`isBigO_sequential_add_nat`).
+- Under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$, verify formal `Asymptotics.IsBigO` bounds for all four algorithms.
+
+### R4. Library Integration & Documentation
+- Implement clean modules under `Amort/String/`:
+  - `Amort/String/NaiveMatch.lean`
+  - `Amort/String/KMP.lean`
+  - `Amort/String/LCS.lean`
+  - `Amort/String/EditDistance.lean`
+  - `Amort/String/Asymptotics.lean`
+- Re-export all modules in `Amort.lean`.
+- Document mathematical architecture, invariant lemmas, potential functions, and comparison tables in `Amort/String/String.md` and `README.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build` (0 errors, 0 warnings).
+- [ ] No theorems rely on `sorry` or `sorryAx` (strictly foundational Lean 4 axioms).
+- [ ] Naive string matcher ($O(n \cdot m)$) and KMP ($O(n + m)$) are proven equivalent and correct.
+- [ ] LCS ($O(n \cdot m)$) and Edit Distance ($O(n \cdot m)$) DP algorithms are proven correct with concrete step bounds.
+- [ ] All bounds are connected to Mathlib `Asymptotics.IsBigO` via `Amort.Recurrence.Composition`.
+- [ ] All new files are exported in `Amort.lean` and documented in `Amort/String/String.md`.
+
+
 

@@ -17,6 +17,11 @@ import Amort.Recurrence.Telescoping
 import Amort.Recurrence.Halving
 import Amort.Recurrence.BinarySearch
 import Amort.Recurrence.MasterTheorem
+import Amort.String.NaiveMatch
+import Amort.String.KMP
+import Amort.String.LCS
+import Amort.String.EditDistance
+import Amort.String.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -56,4 +61,20 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Recurrence.MasterTheorem`: Balanced divide-and-conquer master recurrence with integer
   rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), $O(n \log n)$
   asymptotics, and connection to Merge Sort.
+- `Amort.String.NaiveMatch`: Naive sliding-window string matching, character comparison counting,
+  concrete worst-case comparison bound $\le (n - m + 1) \cdot m \le n \cdot m$, and substring
+  occurrence correctness.
+- `Amort.String.KMP`: Knuth-Morris-Pratt string matching, failure function $\pi$, preprocessing
+  bound $\le 2m$, potential function analysis on index $j$ proving scanning bound $\le 2n$,
+  combined linear bound $\le 2(n + m)$, and equivalence to naive matching.
+- `Amort.String.LCS`: Longest Common Subsequence recursive formulation, constructive maximal
+  common subsequence witness, bottom-up $(n + 1) \times (m + 1)$ dynamic programming table,
+  and concrete operational step bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+- `Amort.String.EditDistance`: Levenshtein edit distance recursive formulation, explicit alignment
+  operations, minimal-cost alignment correctness proof, bottom-up $(n + 1) \times (m + 1)$
+  dynamic programming matrix, and concrete step bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+- `Amort.String.Asymptotics`: Bridges connecting concrete 2D table bounds to
+  `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to
+  `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds
+  under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 -/
