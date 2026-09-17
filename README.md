@@ -40,6 +40,7 @@ This repository formalizes algorithms and their computational complexity in `Amo
   - `insertionSortCount r l ≤ l.length * (l.length - 1) / 2`
   - `insertionSortCount r l ≤ l.length ^ 2`
 - **Asymptotics**: `isBigO_insertionSortCount_sq` ($O(n^2)$ under arbitrary filters and `Filter.comap List.length Filter.atTop`) and `isBigO_insertionSort_triangular_atTop`.
+- **Documentation**: Detailed proof strategy in [`Amort/Sorting/InsertionSort.md`](Amort/Sorting/InsertionSort.md).
 
 ### 5. Merge Sort Comparison Counting & $O(n \log n)$ Complexity
 - **Comparison Models**: `List.mergeCount` and instrumented `List.mergeWithCount`; `List.mergeSortCount` and instrumented `List.mergeSortWithCount`.
@@ -50,6 +51,7 @@ This repository formalizes algorithms and their computational complexity in `Amo
   - Bit-size logarithmic bound: `mergeSortRecBound n ≤ n * Nat.size n`.
   - Concrete list comparison bound: `mergeSortCount le xs ≤ xs.length * Nat.size xs.length`.
 - **Asymptotics**: `isBigO_mergeSortCount_mul_size` ($O(n \cdot \text{size } n)$ under arbitrary filters and `Filter.comap List.length Filter.atTop`) and `isBigO_mergeSortRecBound_atTop` under `Filter.atTop`.
+- **Documentation**: Detailed proof strategy in [`Amort/Sorting/MergeSort.md`](Amort/Sorting/MergeSort.md).
 
 ### 6. Comparison Sorting Lower Bound ($\Omega(n \log n)$)
 - **Decision Tree Model**: `Amort.Sorting.DecisionTree` with depth and leaf count, proving `leafCount T ≤ 2 ^ depth T` by structural induction.
@@ -60,22 +62,22 @@ This repository formalizes algorithms and their computational complexity in `Amo
   - `isBigO_n_log_n_factorial` proving $n \log n = O(\log(n!))$ ($\log(n!) = \Omega(n \log n)$).
   - `isTheta_factorial_n_log_n` proving $\log(n!) = \Theta(n \log n)$.
   - `isBigO_n_log_n_clog_factorial` and `isBigO_n_log_n_depth` proving $n \log n = O(\text{depth } T_n)$.
-- **Documentation**: Comprehensive documentation in [`Amort/Sorting/Sorting.md`](Amort/Sorting/Sorting.md).
+- **Documentation**: Suite overview in [`Amort/Sorting/Sorting.md`](Amort/Sorting/Sorting.md) and detailed proof strategy in [`Amort/Sorting/LowerBound.md`](Amort/Sorting/LowerBound.md).
 
 ### 7. Algorithmic Recurrence & Complexity Theorems
-- **Compositional Complexity Algebra**: `Amort.Recurrence.Composition` formalizing nested loop products $O(g_1 \cdot g_2)$, sequential phase sums $O(g_1 + g_2)$, maximum phase bounds $O(\max(g_1, g_2))$, and phase dominance in Mathlib `IsBigO`.
-- **Linear & Telescoping Recurrences**: `Amort.Recurrence.Telescoping` with fundamental telescoping inequality, constant step bounds $O(n)$, power step bounds $O(n^{k+1})$, and connection to Insertion Sort comparison complexity ($O(n^2)$).
-- **Halving Recurrences & Binary Search**: `Amort.Recurrence.Halving` and `Amort.Recurrence.BinarySearch` with bit-length reduction $\text{size}(n/2) = \text{size } n - 1$, halving recurrence bounds $T(n) \le c \cdot \text{size } n + T(1)$, logarithmic bridge $\text{size } n = O(\log n)$, representative binary search step counter, and $O(\log n)$ complexity.
-- **Divide-and-Conquer Master Recurrence**: `Amort.Recurrence.MasterTheorem` formalizing balanced divide-and-conquer recurrences with integer rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), proving dyadic bounds $T(n) \le T(1) n + c n k$, $O(n \log n)$ asymptotics, and connecting to Merge Sort.
-- **Documentation**: Comprehensive documentation in [`Amort/Recurrence/Recurrence.md`](Amort/Recurrence/Recurrence.md).
+- **Compositional Complexity Algebra**: `Amort.Recurrence.Composition` formalizing nested loop products $O(g_1 \cdot g_2)$, sequential phase sums $O(g_1 + g_2)$, maximum phase bounds $O(\max(g_1, g_2))$, and phase dominance in Mathlib `IsBigO`. Documented in [`Amort/Recurrence/Composition.md`](Amort/Recurrence/Composition.md).
+- **Linear & Telescoping Recurrences**: `Amort.Recurrence.Telescoping` with fundamental telescoping inequality, constant step bounds $O(n)$, power step bounds $O(n^{k+1})$, and connection to Insertion Sort comparison complexity ($O(n^2)$). Documented in [`Amort/Recurrence/Telescoping.md`](Amort/Recurrence/Telescoping.md).
+- **Halving Recurrences & Binary Search**: `Amort.Recurrence.Halving` and `Amort.Recurrence.BinarySearch` with bit-length reduction $\text{size}(n/2) = \text{size } n - 1$, halving recurrence bounds $T(n) \le c \cdot \text{size } n + T(1)$, logarithmic bridge $\text{size } n = O(\log n)$, representative binary search step counter, and $O(\log n)$ complexity. Documented in [`Amort/Recurrence/HalvingAndBinarySearch.md`](Amort/Recurrence/HalvingAndBinarySearch.md).
+- **Divide-and-Conquer Master Recurrence**: `Amort.Recurrence.MasterTheorem` formalizing balanced divide-and-conquer recurrences with integer rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), proving dyadic bounds $T(n) \le T(1) n + c n k$, $O(n \log n)$ asymptotics, and connecting to Merge Sort. Documented in [`Amort/Recurrence/MasterTheorem.md`](Amort/Recurrence/MasterTheorem.md).
+- **Documentation**: Suite overview in [`Amort/Recurrence/Recurrence.md`](Amort/Recurrence/Recurrence.md).
 
 ### 8. Textbook String Algorithms (`Amort.String`)
-- **Naive String Matching**: `Amort.String.NaiveMatch` formalizing sliding-window matching, character comparison counting, concrete upper bound $\le (n - m + 1) \cdot m \le n \cdot m$, and substring occurrence correctness.
-- **Knuth-Morris-Pratt (KMP)**: `Amort.String.KMP` formalizing failure function $\pi$ with preprocessing bound $\le 2m$, amortized potential function $\Phi(j) = j$ proving scanning bound $\le 2n$, combined linear bound $\le 2(n + m)$, and equivalence to naive matching.
-- **Longest Common Subsequence (LCS)**: `Amort.String.LCS` formalizing recursive formulation, constructive maximal common subsequence witness, bottom-up $(n + 1) \times (m + 1)$ dynamic programming table, and concrete operation bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
-- **Edit Distance (Levenshtein Distance)**: `Amort.String.EditDistance` formalizing recursive edit distance, explicit alignment operations and cost, minimal-cost alignment correctness proof, bottom-up $(n + 1) \times (m + 1)$ dynamic programming matrix, and concrete step bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$).
+- **Naive String Matching**: `Amort.String.NaiveMatch` formalizing sliding-window matching, character comparison counting, concrete upper bound $\le (n - m + 1) \cdot m \le n \cdot m$, and substring occurrence correctness. Documented in [`Amort/String/NaiveMatch.md`](Amort/String/NaiveMatch.md).
+- **Knuth-Morris-Pratt (KMP)**: `Amort.String.KMP` formalizing failure function $\pi$ with preprocessing bound $\le 2m$, amortized potential function $\Phi(j) = j$ proving scanning bound $\le 2n$, combined linear bound $\le 2(n + m)$, and equivalence to naive matching. Documented in [`Amort/String/KMP.md`](Amort/String/KMP.md).
+- **Longest Common Subsequence (LCS)**: `Amort.String.LCS` formalizing recursive formulation, constructive maximal common subsequence witness, bottom-up $(n + 1) \times (m + 1)$ dynamic programming table, and concrete operation bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$). Documented in [`Amort/String/LCS.md`](Amort/String/LCS.md).
+- **Edit Distance (Levenshtein Distance)**: `Amort.String.EditDistance` formalizing recursive edit distance, explicit alignment operations and cost, minimal-cost alignment correctness proof, bottom-up $(n + 1) \times (m + 1)$ dynamic programming matrix, and concrete step bound $\le (n + 1) \cdot (m + 1)$ ($O(n \cdot m)$). Documented in [`Amort/String/EditDistance.md`](Amort/String/EditDistance.md).
 - **Asymptotics & Composition Bridges**: `Amort.String.Asymptotics` connecting 2D table bounds to `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
-- **Documentation**: Comprehensive documentation in [`Amort/String/String.md`](Amort/String/String.md).
+- **Documentation**: Suite overview in [`Amort/String/String.md`](Amort/String/String.md).
 
 ## Building and Verification
 
