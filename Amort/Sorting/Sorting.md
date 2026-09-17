@@ -1,14 +1,15 @@
-# Formalization of Sorting Complexity: Insertion Sort ($O(n^2)$) and Merge Sort ($O(n \log n)$)
+# Formalization of Sorting Complexity: Upper Bounds ($O(n^2)$, $O(n \log n)$) and Information-Theoretic Lower Bound ($\Omega(n \log n)$)
 
 This document details the Lean 4 formalization of comparison counting, mathematical correctness,
-concrete upper bounds, and asymptotic time complexity for Insertion Sort ($O(n^2)$) and Merge Sort
-($O(n \log n)$), reusing Mathlib's sorting definitions and connecting to `Mathlib.Analysis.Asymptotics.IsBigO`.
+concrete upper bounds, decision tree models, permutation coverage, and asymptotic time complexity
+for comparison-based sorting algorithms in the `Amort.Sorting` namespace, integrating with Mathlib's
+`Mathlib.Analysis.Asymptotics.IsBigO` framework.
 
 ---
 
 ## 1. Architectural Overview
 
-The sorting complexity formalization comprises three dedicated modules under `Amort/Sorting/`:
+The sorting complexity formalization comprises five dedicated modules under `Amort/Sorting/`:
 
 ```
 Amort/
@@ -18,6 +19,8 @@ Amort/
     ├── InsertionSort.lean      -- Comparison counting, instrumented sort, triangular & O(n²) bounds
     ├── MergeSort.lean          -- Merge comparison counting, D&C recurrence, O(n * size n) bounds
     ├── Asymptotics.lean        -- Asymptotic bridges connecting concrete bounds to Mathlib IsBigO
+    ├── DecisionTree.lean       -- Abstract binary decision trees, depth, leaf count bound (R1)
+    ├── LowerBound.lean         -- Permutation coverage, clog bound, and Ω(n log n) asymptotics (R2, R3)
     └── Sorting.md              -- Architectural and mathematical documentation
 ```
 
@@ -143,14 +146,6 @@ We formally prove:
 3. **Power-of-Two Bounding Lemma**:
    We prove the strong induction lemma on the tree height $k \in \mathbb{N}$:
    $$\forall k \in \mathbb{N},\; \forall n \le 2^k,\; T(n) \le n \cdot k$$
-   *Proof Idea*:
-   - Base case $k = 0$: $n \le 2^0 = 1$, so $n = 0$ or $n = 1$, where $T(n) = 0 \le n \cdot 0$.
-   - Inductive step $k+1$: For $n \le 2^{k+1}$, both subproblems satisfy:
-     $$(n+1)/2 \le (2^{k+1}+1)/2 = 2^k \quad \text{and} \quad n/2 \le 2^{k+1}/2 = 2^k$$
-     By the induction hypothesis:
-     $$T((n+1)/2) \le ((n+1)/2) \cdot k \quad \text{and} \quad T(n/2) \le (n/2) \cdot k$$
-     Summing them:
-     $$T(n) \le ((n+1)/2 + n/2) \cdot k + n = n \cdot k + n = n \cdot (k + 1)$$
    In `Amort/Sorting/MergeSort.lean`:
    ```lean
    theorem mergeSortRecBound_le_mul_of_le_two_pow :
@@ -225,7 +220,152 @@ theorem isBigO_mergeSortRecBound_atTop :
 
 ---
 
-## 5. Axiom Integrity Verification (R3)
+## 5. Decision Tree Model: Depth & Leaf Count (R1)
+
+In `Amort/Sorting/DecisionTree.lean`, comparison-based algorithms are modeled as abstract binary
+decision trees:
+
+```lean
+inductive DecisionTree (α : Type u) (β : Type v) where
+  | leaf (val : β) : DecisionTree α β
+  | node (query : α) (left right : DecisionTree α β) : DecisionTree α β
+```
+
+### Depth and Leaf Count
+- `depth : DecisionTree α β → ℕ`:
+  - `depth (leaf _) = 0`
+  - `depth (node _ left right) = max (depth left) (depth right) + 1`
+- `leafCount : DecisionTree α β → ℕ`:
+  - `leafCount (leaf _) = 1`
+  - `leafCount (node _ left right) = leafCount left + leafCount right`
+
+### Structural Induction Bound
+By structural induction on `T`, any binary decision tree of depth `d` has at most $2^d$ leaves:
+```lean
+theorem leafCount_le_two_pow_depth (T : DecisionTree α β) :
+    leafCount T ≤ 2 ^ depth T
+```
+
+### Evaluation & Leaf Sets
+- `eval (T : DecisionTree α β) (oracle : α → Bool) : β`: Evaluates the tree against an oracle.
+- `leavesList (T : DecisionTree α β) : List β`: Multiset of all leaf values.
+- `leaves [DecidableEq β] (T : DecisionTree α β) : Finset β`: Finset of distinct leaf values.
+- `eval_mem_leavesList`: Every execution reaches a leaf in `leavesList T`.
+- `card_leaves_le_leafCount`: Distinct leaves cardinality is bounded by `leafCount T`.
+- `card_leaves_le_two_pow_depth`:
+  $$\text{card}(\text{leaves } T) \le \text{leafCount } T \le 2^{\text{depth } T}$$
+
+---
+
+## 6. Permutation Coverage & Factorial Lower Bound (R2)
+
+In `Amort/Sorting/LowerBound.lean`, sorting algorithms on $n$ elements are evaluated on inputs
+represented by permutations of `Fin n`.
+
+### Permutation Oracle
+For each permutation $\sigma \in \text{Equiv.Perm } (\text{Fin } n)$ and query pair $(i, j)$:
+```lean
+def permOracle (σ : Equiv.Perm (Fin n)) (q : Fin n × Fin n) : Bool :=
+  decide (σ q.1 ≤ σ q.2)
+```
+
+### Correctness Condition
+An algorithm distinguishing all $n!$ input orderings has an injective evaluation map:
+```lean
+def DistinguishesPermutations {β : Type*} (T : DecisionTree (Fin n × Fin n) β) : Prop :=
+  Function.Injective (fun σ : Equiv.Perm (Fin n) ↦ DecisionTree.eval T (permOracle σ))
+```
+Any sorting tree that outputs $\sigma^{-1}$ (`IsSortingTree T`) satisfies this condition:
+```lean
+theorem distinguishesPermutations_of_isSortingTree
+    (T : DecisionTree (Fin n × Fin n) (Equiv.Perm (Fin n))) (hT : IsSortingTree T) :
+    DistinguishesPermutations T
+```
+
+### Reachable Leaves and Factorial Bounds
+Since the evaluation map $\sigma \mapsto \text{eval } T\ (\text{permOracle } \sigma)$ is injective
+and its image is contained in $\text{leaves } T$:
+```lean
+theorem factorial_le_card_leaves [DecidableEq β] (T : DecisionTree (Fin n × Fin n) β)
+    (hT : DistinguishesPermutations T) :
+    Nat.factorial n ≤ (DecisionTree.leaves T).card
+
+theorem factorial_le_leafCount (T : DecisionTree (Fin n × Fin n) β)
+    (hT : DistinguishesPermutations T) :
+    Nat.factorial n ≤ DecisionTree.leafCount T
+
+theorem factorial_le_two_pow_depth (T : DecisionTree (Fin n × Fin n) β)
+    (hT : DistinguishesPermutations T) :
+    Nat.factorial n ≤ 2 ^ DecisionTree.depth T
+```
+
+### Worst-Case Query Lower Bound
+Taking binary ceiling logarithm gives the fundamental comparison lower bound:
+```lean
+theorem clog_factorial_le_depth (T : DecisionTree (Fin n × Fin n) β)
+    (hT : DistinguishesPermutations T) :
+    Nat.clog 2 (Nat.factorial n) ≤ DecisionTree.depth T
+```
+
+---
+
+## 7. Factorial Combinatorial & Asymptotic Bounds ($\Omega(n \log n)$) (R3)
+
+### Combinatorial Lower Bound on Factorial Growth
+By pairing factors in $n! = \prod_{i=1}^n i$, the top half $i \ge \lfloor n/2 \rfloor + 1$
+each contribute at least $n/2 + 1 > n/2$. Formalized via Mathlib's `factorial_mul_pow_le_factorial`:
+```lean
+lemma pow_div_two_le_factorial (n : ℕ) :
+    (n / 2) ^ (n / 2) ≤ Nat.factorial n
+```
+
+Auxiliary quadratic and linear lemmas establish that for $n \ge 6$:
+- `nat_div_two_sq_ge (n : ℕ) (hn : 6 ≤ n) : n ≤ (n / 2) ^ 2`
+- `nat_le_three_mul_div_two (n : ℕ) (hn : 2 ≤ n) : n ≤ 3 * (n / 2)`
+
+Consequently, for $n \ge 6$:
+$$n \log n \le 3(n/2) \cdot (2 \log(n/2)) = 6 (n/2) \log(n/2) \le 6 \log(n!)$$
+
+### Asymptotic Equivalence to Mathlib `IsBigO` / `IsTheta`
+Under `Filter.atTop`, $n \log n = O(\log(n!))$:
+```lean
+theorem isBigO_n_log_n_factorial :
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ Real.log ((Nat.factorial n : ℕ) : ℝ))
+```
+
+Combined with the upper bound $n! \le n^n$ (`Nat.factorial_le_pow`):
+```lean
+theorem isBigO_factorial_n_log_n :
+    (fun n : ℕ ↦ Real.log ((Nat.factorial n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ))
+
+theorem isTheta_factorial_n_log_n :
+    (fun n : ℕ ↦ Real.log ((Nat.factorial n : ℕ) : ℝ)) =Θ[Filter.atTop]
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ))
+```
+
+### Depth Lower Bound Asymptotics
+Connecting $\log(n!)$ to $\text{Nat.clog } 2 (n!)$ and decision tree depth:
+```lean
+theorem isBigO_log_factorial_clog_factorial :
+    (fun n : ℕ ↦ Real.log ((Nat.factorial n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((Nat.clog 2 (Nat.factorial n) : ℕ) : ℝ))
+
+theorem isBigO_n_log_n_clog_factorial :
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((Nat.clog 2 (Nat.factorial n) : ℕ) : ℝ))
+
+theorem isBigO_n_log_n_depth {β : (n : ℕ) → Type*}
+    (T : (n : ℕ) → DecisionTree (Fin n × Fin n) (β n))
+    (hT : ∀ n, DistinguishesPermutations (T n)) :
+    (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ (((T n).depth : ℕ) : ℝ))
+```
+
+---
+
+## 8. Axiom Integrity Verification
 
 All definitions, auxiliary lemmas, and main theorems adhere strictly to standard foundational
 axioms. `#print axioms` confirms zero reliance on `sorryAx`:
@@ -248,13 +388,27 @@ axioms. `#print axioms` confirms zero reliance on `sorryAx`:
 | `List.isBigO_mergeSortCount_atTop` | `[propext, Classical.choice, Quot.sound]` | Clean |
 | `List.isBigO_mergeSortWithCount_snd_atTop` | `[propext, Classical.choice, Quot.sound]` | Clean |
 | `List.isBigO_mergeSortRecBound_atTop` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `DecisionTree.leafCount_le_two_pow_depth` | `[propext]` | Clean |
+| `DecisionTree.card_leaves_le_two_pow_depth` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `distinguishesPermutations_of_isSortingTree` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `factorial_le_card_leaves` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `factorial_le_leafCount` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `factorial_le_two_pow_depth` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `clog_factorial_le_depth` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `pow_div_two_le_factorial` | `[propext, Quot.sound]` | Clean |
+| `isBigO_n_log_n_factorial` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_factorial_n_log_n` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isTheta_factorial_n_log_n` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_log_factorial_clog_factorial` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_n_log_n_clog_factorial` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_n_log_n_depth` | `[propext, Classical.choice, Quot.sound]` | Clean |
 
 ---
 
-## 6. Style & Linter Conformance (R3)
+## 9. Style & Linter Conformance
 
-- **Namespacing**: Scoped under `namespace List`.
-- **Classification**: `lemma` for auxiliaries (`orderedInsertCount_le`, `mergeCount_le`, `mergeSortCount_le_recBound`), `theorem` for milestones.
+- **Namespacing**: Scoped under `namespace Amort.Sorting` (and `List` for list sorting algorithms).
+- **Classification**: `lemma` for auxiliaries, `theorem` for milestones.
 - **Documentation**: All public definitions and theorems documented with docstrings `/-- ... -/`.
 - **Line Length**: All lines across all Lean source files $\le 100$ characters.
-- **Build Status**: `lake build` succeeds with 0 errors and 0 warnings (1474 jobs).
+- **Build Status**: `lake build` succeeds with 0 errors and 0 warnings (1992 jobs).

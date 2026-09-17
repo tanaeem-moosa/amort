@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/` and `Amort/Sorting/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, and `Amort/Recurrence/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -50,7 +50,24 @@ This repository formalizes algorithms and their computational complexity in `Amo
   - Bit-size logarithmic bound: `mergeSortRecBound n ≤ n * Nat.size n`.
   - Concrete list comparison bound: `mergeSortCount le xs ≤ xs.length * Nat.size xs.length`.
 - **Asymptotics**: `isBigO_mergeSortCount_mul_size` ($O(n \cdot \text{size } n)$ under arbitrary filters and `Filter.comap List.length Filter.atTop`) and `isBigO_mergeSortRecBound_atTop` under `Filter.atTop`.
+
+### 6. Comparison Sorting Lower Bound ($\Omega(n \log n)$)
+- **Decision Tree Model**: `Amort.Sorting.DecisionTree` with depth and leaf count, proving `leafCount T ≤ 2 ^ depth T` by structural induction.
+- **Permutation Coverage**: `Amort.Sorting.factorial_le_card_leaves`, `factorial_le_leafCount`, and `factorial_le_two_pow_depth` proving $n! \le \text{leafCount } T \le 2^{\text{depth } T}$.
+- **Worst-Case Depth Bound**: `Amort.Sorting.clog_factorial_le_depth` establishing $\text{Nat.clog } 2\ (n!) \le \text{depth } T$.
+- **Combinatorial Factorial Bound**: `Amort.Sorting.pow_div_two_le_factorial` proving $(n/2)^{n/2} \le n!$.
+- **Asymptotics Bridge**:
+  - `isBigO_n_log_n_factorial` proving $n \log n = O(\log(n!))$ ($\log(n!) = \Omega(n \log n)$).
+  - `isTheta_factorial_n_log_n` proving $\log(n!) = \Theta(n \log n)$.
+  - `isBigO_n_log_n_clog_factorial` and `isBigO_n_log_n_depth` proving $n \log n = O(\text{depth } T_n)$.
 - **Documentation**: Comprehensive documentation in [`Amort/Sorting/Sorting.md`](Amort/Sorting/Sorting.md).
+
+### 7. Algorithmic Recurrence & Complexity Theorems
+- **Compositional Complexity Algebra**: `Amort.Recurrence.Composition` formalizing nested loop products $O(g_1 \cdot g_2)$, sequential phase sums $O(g_1 + g_2)$, maximum phase bounds $O(\max(g_1, g_2))$, and phase dominance in Mathlib `IsBigO`.
+- **Linear & Telescoping Recurrences**: `Amort.Recurrence.Telescoping` with fundamental telescoping inequality, constant step bounds $O(n)$, power step bounds $O(n^{k+1})$, and connection to Insertion Sort comparison complexity ($O(n^2)$).
+- **Halving Recurrences & Binary Search**: `Amort.Recurrence.Halving` and `Amort.Recurrence.BinarySearch` with bit-length reduction $\text{size}(n/2) = \text{size } n - 1$, halving recurrence bounds $T(n) \le c \cdot \text{size } n + T(1)$, logarithmic bridge $\text{size } n = O(\log n)$, representative binary search step counter, and $O(\log n)$ complexity.
+- **Divide-and-Conquer Master Recurrence**: `Amort.Recurrence.MasterTheorem` formalizing balanced divide-and-conquer recurrences with integer rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), proving dyadic bounds $T(n) \le T(1) n + c n k$, $O(n \log n)$ asymptotics, and connecting to Merge Sort.
+- **Documentation**: Comprehensive documentation in [`Amort/Recurrence/Recurrence.md`](Amort/Recurrence/Recurrence.md).
 
 ## Building and Verification
 
@@ -58,7 +75,7 @@ This repository formalizes algorithms and their computational complexity in `Amo
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 1474 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 1997 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

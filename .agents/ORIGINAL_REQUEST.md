@@ -100,3 +100,84 @@ The project must compile cleanly with `lake build` (0 warnings, 0 errors). Provi
 - [ ] Equivalence of instrumented/counted sorting to Mathlib's sorted outputs is formally proven.
 - [ ] The $O(n^2)$ bound for insertion sort and $O(n \log n)$ bound for merge sort are formally proven.
 - [ ] Documentation explains the recurrence relations, bounds, and asymptotic proofs.
+
+## 2026-09-16T03:21:17Z
+
+Formalize the information-theoretic lower bound for comparison-based sorting ($\Omega(n \log n)$) in Lean 4 within the `Amort.Sorting` namespace.
+
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. Decision Tree Model
+Formalize an abstract binary decision tree for comparison-based algorithms (evaluating comparisons between elements of a finite collection or indices `Fin n`). Define the depth (height / worst-case query count) and leaf count of the tree, and prove by structural induction that any decision tree $T$ satisfies:
+$$\text{leafCount}(T) \le 2^{\text{depth}(T)}$$
+
+### R2. Permutation Coverage & Factorial Bound
+Formalize the requirement that any correct comparison-based sorting algorithm on $n$ elements must be able to output or distinguish all $n!$ possible permutations of the input. Establish that the number of reachable leaves of a correct sorting tree for $n$ elements is at least $n!$:
+$$n! \le \text{leafCount}(T) \le 2^{\text{depth}(T)}$$
+Deduce the worst-case lower bound:
+$$\text{depth}(T) \ge \lceil \log_2(n!) \rceil \quad (\text{or in Lean, } \text{Nat.clog } 2\ (n!) \le \text{depth}(T))$$
+
+### R3. Factorial Combinatorial and Asymptotic Bounds
+Prove the combinatorial lower bound on factorial growth (e.g. $n! \ge (n/2)^{n/2}$ or $2^k \ge n! \implies k = \Omega(n \log n)$). Connect this lower bound to Mathlib's asymptotic complexity framework (`Mathlib.Analysis.Asymptotics.IsBigO` / `IsTheta`), proving that $\log(n!) = \Omega(n \log n)$ (i.e. $n \log n = O(\log(n!))$ under `Filter.atTop`).
+
+### R4. Library Integration
+Integrate the new formalization modules under `Amort/Sorting/` (e.g. `Amort/Sorting/DecisionTree.lean`, `Amort/Sorting/LowerBound.lean`), expose them in `Amort.lean`, and document the mathematical architecture in `Amort/Sorting/Sorting.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds with `lake build` with 0 errors and 0 warnings.
+- [ ] No theorems rely on `sorry` or `sorryAx` (all proofs are fully checked using standard Lean 4 axioms).
+- [ ] `leafCount T ≤ 2 ^ depth T` is formalized and proven.
+- [ ] `Nat.factorial n ≤ 2 ^ depth T` (or equivalent for correct sorters) is formalized and proven.
+- [ ] Concrete and asymptotic lower bounds ($\text{depth} \ge \text{clog}_2(n!)$ and $\Omega(n \log n)$) are stated and proven.
+- [ ] All new files are exported in `Amort.lean` and documented in `Amort/Sorting/Sorting.md`.
+
+## 2026-09-17T04:09:19Z
+
+Formalize algorithmic recurrence and complexity theorems (compositional loop algebra, telescoping loops, halving/binary search, and divide-and-conquer master recurrences) in Lean 4 within `Amort.Recurrence`.
+
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. Compositional Complexity Algebra
+Formalize high-level algorithmic composition theorems connecting to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO`:
+- Nested loops: if an outer loop executes $N(n) = O(g_1(n))$ iterations and each iteration costs $C(n) = O(g_2(n))$, the combined cost is $O(g_1(n) \cdot g_2(n))$.
+- Sequential phases: running step 1 with $O(g_1(n))$ followed by step 2 with $O(g_2(n))$ yields $O(g_1(n) + g_2(n))$ (or $O(\max(g_1, g_2))$).
+
+### R2. Linear & Telescoping Recurrences
+Formalize general recurrence theorems for loop algorithms where $T(n+1) \le T(n) + f(n)$:
+- General power step: if $T(n+1) \le T(n) + c \cdot n^k$, then $T(n) = O(n^{k+1})$ under `Filter.atTop`.
+- Constant step: if $T(n+1) \le T(n) + c$, then $T(n) = O(n)$.
+- Connect to iterative sorting (e.g. Insertion Sort step bound yielding $O(n^2)$ by mapping to the $k=1$ recurrence).
+
+### R3. Halving & Binary Search Recurrences
+Formalize recurrence bounds for decrease-by-constant-factor algorithms:
+- Halving recurrence: if $T(n) \le T(n / 2) + c$ for $n \ge 2$, then $T(n) \le c \cdot \text{Nat.size } n + T(1)$ and $T(n) = O(\text{Nat.size } n)$ / $O(\log n)$ under `Filter.atTop`.
+- Formalize a representative binary search step counter on a range or list of size $n$, proving its comparison count satisfies this halving recurrence and is $O(\log n)$.
+
+### R4. Divide-and-Conquer Recurrences
+Formalize the standard balanced divide-and-conquer recurrence with integer rounding:
+- If $T(n) \le T((n + 1) / 2) + T(n / 2) + c \cdot n$ for $n \ge 2$, then $T(n) = O(n \cdot \text{Nat.size } n)$ / $O(n \log n)$ under `Filter.atTop`.
+- Connect to divide-and-conquer sorting (e.g. Merge Sort step bound yielding $O(n \log n)$ by mapping to this recurrence).
+
+### R5. Library Integration & Documentation
+Integrate the modules under `Amort/Recurrence/` (e.g. `Composition.lean`, `Telescoping.lean`, `Halving.lean`, `MasterTheorem.lean`, `BinarySearch.lean`), export them in `Amort.lean`, and document the mathematical architecture in `Amort/Recurrence/Recurrence.md` and `README.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build` (0 errors, 0 warnings).
+- [ ] No theorems rely on `sorry` or `sorryAx` (all proofs rely strictly on standard Lean 4 foundational axioms).
+- [ ] Composition theorems for loop products ($O(g_1) \times O(g_2) \implies O(g_1 \cdot g_2)$) and sums are proven.
+- [ ] Telescoping recurrence theorem ($T(n+1) \le T(n) + c \cdot n^k \implies O(n^{k+1})$) is proven.
+- [ ] Halving recurrence theorem ($T(n) \le T(n/2) + c \implies O(\log n)$) and binary search complexity are proven.
+- [ ] Divide-and-conquer recurrence theorem ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n \implies O(n \log n)$) is proven.
+- [ ] All new modules are exported in `Amort.lean` and documented in `Amort/Recurrence/Recurrence.md`.
+
+
