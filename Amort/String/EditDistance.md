@@ -16,8 +16,16 @@ Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alph
 
 ### Bellman Recurrence
 The optimal substructure property yields the recurrence:
-$$E([], ys) = |ys|, \quad E(xs, []) = |xs|$$
-$$E(x :: xs, y :: ys) = \min \begin{cases} (\text{if } x = y \text{ then } 0 \text{ else } 1) + E(xs, ys) & \text{(match / substitute)} \\ 1 + E(xs, y :: ys) & \text{(delete } x) \\ 1 + E(x :: xs, ys) & \text{(insert } y) \end{cases}$$
+$$
+E([], ys) = |ys|, \quad E(xs, []) = |xs|
+$$
+$$
+E(x :: xs, y :: ys) = \min \begin{cases}
+  (\text{if } x = y \text{ then } 0 \text{ else } 1) + E(xs, ys) & \text{(match / substitute)} \\
+  1 + E(xs, y :: ys) & \text{(delete } x) \\
+  1 + E(x :: xs, ys) & \text{(insert } y)
+\end{cases}
+$$
 
 ---
 

@@ -17,7 +17,12 @@ Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alph
 
 ### Bellman Recurrence
 The optimal substructure property implies:
-$$LCS(x :: xs, y :: ys) = \begin{cases} 1 + LCS(xs, ys) & \text{if } x = y \\ \max(LCS(x :: xs, ys), LCS(xs, y :: ys)) & \text{if } x \ne y \end{cases}$$
+$$
+LCS(x :: xs, y :: ys) = \begin{cases}
+  1 + LCS(xs, ys) & \text{if } x = y \\
+  \max(LCS(x :: xs, ys), LCS(xs, y :: ys)) & \text{if } x \ne y
+\end{cases}
+$$
 with base cases $LCS([], ys) = 0$ and $LCS(xs, []) = 0$.
 
 ---
