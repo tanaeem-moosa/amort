@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, and `Amort/Graph/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, and `Amort/DataStructure/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -97,13 +97,22 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Asymptotic Complexity Bridges**: `Amort.Graph.Asymptotics` connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
 - **Documentation**: Suite overview and comparison in [`Amort/Graph/Graph.md`](Amort/Graph/Graph.md).
 
+### 11. Textbook Data Structures & Online Query Algorithms (`Amort.DataStructure`)
+- **Binary Heaps & Heapsort**: `Amort.DataStructure.BinaryHeap` formalizing binary heap order invariants, root minimality, logarithmic height, sift-up/down bounds $\le \text{Nat.size } n$, linear build-heap theorem $\sum_{h=0}^{\log n} (n / 2^h) h \le 2n$ via geometric sum, and heapsort comparison complexity bounded by $4n \log n + 2$. Documented in [`Amort/DataStructure/BinaryHeap.md`](Amort/DataStructure/BinaryHeap.md).
+- **Online Running Median with Dual Heaps**: `Amort.DataStructure.OnlineMedian` formalizing dual-heap streaming model (max-heap `low` + min-heap `high`), balance condition $|size(low) - size(high)| \le 1$, partition condition $\max(low) \le \min(high)$, mathematical median soundness proving $\max(low)$ is the true median, $O(1)$ query time, and $O(\log n)$ insertion/rebalancing work. Documented in [`Amort/DataStructure/OnlineMedian.md`](Amort/DataStructure/OnlineMedian.md).
+- **Balanced Binary Search Trees**: `Amort.DataStructure.BalancedBST` formalizing height-balanced BSTs with size annotations, $O(1)$ tree rotations preserving BST ordering and size annotations, and $O(\log n)$ online order-statistic queries (`rank`, `select`, `find`, `insert`). Documented in [`Amort/DataStructure/BalancedBST.md`](Amort/DataStructure/BalancedBST.md).
+- **Dynamic Array Capacity Doubling**: `Amort.DataStructure.DynamicArray` formalizing capacity doubling, potential function $\Phi = 2n - C$, amortized push $\hat{c} \le 3$, non-negativity $\Phi \ge 0$, and multi-operation telescoping bound $\sum c_i \le 3k + \Phi_0$. Documented in [`Amort/DataStructure/DynamicArray.md`](Amort/DataStructure/DynamicArray.md).
+- **Two-Stack FIFO Queue**: `Amort.DataStructure.TwoStackQueue` formalizing two-stack FIFO queue, potential function $\Phi = 2 \cdot |\text{inStack}|$, amortized push $\hat{c} = 3$, amortized pop $\hat{c} \le 1$, FIFO sequence append soundness, and multi-operation telescoping bound $\sum c_i \le 3m$. Documented in [`Amort/DataStructure/TwoStackQueue.md`](Amort/DataStructure/TwoStackQueue.md).
+- **Asymptotic Complexity Bridges**: `Amort.DataStructure.Asymptotics` connecting linear build-heap ($O(n)$), heapsort ($O(n \log n)$), online median query ($O(1)$) and insert ($O(\log n)$), balanced BST queries ($O(\log n)$), dynamic array pushes ($O(k)$), and two-stack queue operations ($O(m)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Suite overview and comparison in [`Amort/DataStructure/DataStructure.md`](Amort/DataStructure/DataStructure.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2014 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2020 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

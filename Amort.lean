@@ -34,6 +34,12 @@ import Amort.Graph.TopologicalSort
 import Amort.Graph.DSU
 import Amort.Graph.Kruskal
 import Amort.Graph.Asymptotics
+import Amort.DataStructure.BinaryHeap
+import Amort.DataStructure.OnlineMedian
+import Amort.DataStructure.BalancedBST
+import Amort.DataStructure.DynamicArray
+import Amort.DataStructure.TwoStackQueue
+import Amort.DataStructure.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -123,4 +129,23 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Graph.Asymptotics`: Bridges connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford
   ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU
   ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.DataStructure.BinaryHeap`: Binary heaps, min-heap order invariant, logarithmic height,
+  sift-down and sift-up step bounds, linear build-heap theorem $\sum (n/2^h) h \le 2n$,
+  and heapsort comparison complexity $O(n \log n)$.
+- `Amort.DataStructure.OnlineMedian`: Dual-heap streaming model (max-heap + min-heap),
+  balance invariant $|size(low) - size(high)| \le 1$,
+  partition invariant $\max(low) \le \min(high)$,
+  mathematical median soundness, $O(1)$ query time, and $O(\log n)$ insertion/rebalance time.
+- `Amort.DataStructure.BalancedBST`: Height-balanced binary search trees with size annotations,
+  $O(1)$ tree rotations preserving BST ordering and size, and $O(\log n)$ online order-statistic
+  queries (`rank`, `select`, `find`, `insert`).
+- `Amort.DataStructure.DynamicArray`: Dynamic array with capacity doubling, potential function
+  $\Phi = 2n - C$, amortized $O(1)$ push ($T_{\text{amortized}} \le 3$), non-negativity,
+  and $O(k)$ total actual cost bound across $k$ pushes.
+- `Amort.DataStructure.TwoStackQueue`: Two-stack FIFO queue backed by input and output stacks,
+  potential function $\Phi = 2 \cdot |\text{inStack}|$, amortized $O(1)$ operations
+  ($T_{\text{amortized}} \le 3$), FIFO correctness, and $O(m)$ total actual cost bound.
+- `Amort.DataStructure.Asymptotics`: Bridges connecting operational and amortized bounds
+  for heaps, online median, balanced BSTs, dynamic arrays, and two-stack queues to Mathlib's
+  `Asymptotics.IsBigO` framework under `Filter.atTop`.
 -/
