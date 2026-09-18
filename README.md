@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, and `Amort/String/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, and `Amort/DP/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -80,13 +80,20 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Asymptotics & Composition Bridges**: `Amort.String.Asymptotics` connecting 2D table bounds to `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 - **Documentation**: Suite overview in [`Amort/String/String.md`](Amort/String/String.md).
 
+### 9. Textbook Dynamic Programming Algorithms (`Amort.DP`)
+- **Interval DP: Matrix Chain Multiplication**: `Amort.DP.MatrixChain` formalizing matrix dimensions, Bellman recurrence, interval state space `IntervalState n` with exact cardinality $n(n+1)/2 \le n^2$, and $O(n^3)$ operational bound via `Amort.Recurrence.DP`. Documented in [`Amort/DP/MatrixChain.md`](Amort/DP/MatrixChain.md).
+- **Grid DP: 0/1 Knapsack**: `Amort.DP.Knapsack` formalizing item weights and values, capacity $W$, Bellman recurrence, mathematical correctness against subcollections (soundness, completeness, optimality), and $O(n \cdot W)$ bound via `Amort.Recurrence.GridDP`. Documented in [`Amort/DP/Knapsack.md`](Amort/DP/Knapsack.md).
+- **Predecessor State-Space DP: Longest Increasing Subsequence**: `Amort.DP.LIS` formalizing strictly increasing sublists, prefix/recursive formulations, mathematical correctness (soundness and completeness), and $O(n^2)$ state-space model on $\text{Fin } n$ examining predecessors $j < i$ with triangular bound $n(n-1)/2$. Documented in [`Amort/DP/LIS.md`](Amort/DP/LIS.md).
+- **Asymptotic Complexity Bridges**: `Amort.DP.Asymptotics` connecting Matrix Chain ($O(n^3)$), 0/1 Knapsack ($O(n \cdot W)$), and LIS ($O(n^2)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Suite overview and comparison in [`Amort/DP/DP.md`](Amort/DP/DP.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2002 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2007 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

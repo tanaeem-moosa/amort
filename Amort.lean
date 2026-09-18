@@ -23,6 +23,10 @@ import Amort.String.KMP
 import Amort.String.LCS
 import Amort.String.EditDistance
 import Amort.String.Asymptotics
+import Amort.DP.MatrixChain
+import Amort.DP.Knapsack
+import Amort.DP.LIS
+import Amort.DP.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -81,4 +85,16 @@ algorithms, recurrence relations, and amortized data structures.
   `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to
   `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds
   under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+- `Amort.DP.MatrixChain`: Matrix Chain Multiplication interval DP model, Bellman recurrence,
+  interval state space cardinality $n(n+1)/2 \le n^2$, and $O(n^3)$ operational bound
+  via `Amort.Recurrence.DP`.
+- `Amort.DP.Knapsack`: 0/1 Knapsack problem Bellman recurrence, mathematical correctness
+  against subcollections (soundness, completeness, optimality), and $O(n \cdot W)$ bound
+  via `Amort.Recurrence.GridDP`.
+- `Amort.DP.LIS`: Longest Increasing Subsequence strictly increasing sublist characterization,
+  mathematical correctness proof, and $O(n^2)$ state-space model on $\text{Fin } n$
+  examining predecessors $j < i$.
+- `Amort.DP.Asymptotics`: Bridges connecting Matrix Chain ($O(n^3)$), 0/1 Knapsack ($O(n \cdot W)$),
+  and LIS ($O(n^2)$) operational step bounds to Mathlib's `Asymptotics.IsBigO`
+  under `Filter.atTop`.
 -/

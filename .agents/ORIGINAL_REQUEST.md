@@ -235,5 +235,51 @@ Integrity mode: development
 - [ ] All bounds are connected to Mathlib `Asymptotics.IsBigO` via `Amort.Recurrence.Composition`.
 - [ ] All new files are exported in `Amort.lean` and documented in `Amort/String/String.md`.
 
+## 2026-09-18T02:45:46Z
 
+Formalize textbook dynamic programming algorithms (Interval DP: Matrix Chain Multiplication $O(n^3)$, Grid DP: 0/1 Knapsack $O(n \cdot W)$, and Longest Increasing Subsequence $O(n^2)$) in Lean 4 within `Amort.DP`, leveraging the `Amort.Recurrence.DP` state-space complexity framework and proving mathematical correctness, operational step bounds, and asymptotic complexity in Mathlib `IsBigO`.
 
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. Interval DP: Matrix Chain Multiplication
+- Formalize matrix dimensions for a chain of $n$ matrices as a list/vector of lengths $p_0, p_1, \dots, p_n$.
+- Define the recursive Bellman cost function $M(i, j)$ representing the minimum number of scalar multiplications needed to compute $A_i \dots A_j$:
+  $$M(i, i) = 0, \quad M(i, j) = \min_{i \le k < j} \{ M(i, k) + M(k+1, j) + p_i \cdot p_{k+1} \cdot p_{j+1} \}$$
+- Formalize the interval state space of pairs $(i, j)$ with $0 \le i \le j < n$, establishing that the state space cardinality is $n(n+1)/2 \le n^2$.
+- Model the local work per interval $(i, j)$, evaluating $j - i \le n$ split choices ($c(i, j) \le n$), and prove the total operations across all states is bounded by $n^3$ via `Amort.Recurrence.DP`.
+
+### R2. Grid DP: 0/1 Knapsack Problem
+- Formalize items with weights and values ($w_i, v_i \in \mathbb{N}$), knapsack capacity $W \in \mathbb{N}$, and the standard recursive decision formulation:
+  $$K(0, w) = 0, \quad K(i+1, w) = \begin{cases} K(i, w) & \text{if } w < w_i \\ \max(K(i, w), v_i + K(i, w - w_i)) & \text{if } w \ge w_i \end{cases}$$
+- Prove mathematical correctness: $K(n, W)$ equals the maximum value attainable by any subcollection of items whose total weight does not exceed $W$.
+- Instantiate `Amort.Recurrence.GridDP` on state space $\text{Fin}(n+1) \times \text{Fin}(W+1)$ with unit/constant local transitions ($C = 1$), proving total work is bounded by $(n+1)(W+1)$ ($O(n \cdot W)$).
+
+### R3. Longest Increasing Subsequence (LIS)
+- Formalize the predicate `IsStrictlyIncreasingSubsequence` and the recursive/subproblem characterization of LIS.
+- Prove correctness: the computed value corresponds to the length of the longest strictly increasing sublist.
+- Formalize the $O(n^2)$ state-space model where state $i \in \text{Fin } n$ examines predecessors $j < i$, proving total work across all states is bounded by $n(n+1)/2 \le n^2$.
+
+### R4. Asymptotic Complexity Bridges & Module Integration
+- Connect all step bounds to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop` (e.g. $O(n^3)$ for Matrix Chain Multiplication, $O(n \cdot W)$ for Knapsack, and $O(n^2)$ for LIS).
+- Implement modular, clean Lean files under `Amort/DP/`:
+  - `Amort/DP/MatrixChain.lean`
+  - `Amort/DP/Knapsack.lean`
+  - `Amort/DP/LIS.lean`
+  - `Amort/DP/Asymptotics.lean`
+- Re-export all modules in `Amort.lean`.
+- Document mathematical architecture, invariant hierarchies, and proof strategies in `Amort/DP/DP.md` and individual algorithm `.md` documents, updating `README.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build Amort` (0 errors, 0 warnings).
+- [ ] Zero reliance on `sorry` or `sorryAx` (all proofs rely strictly on foundational Lean 4 axioms).
+- [ ] Matrix Chain Multiplication $O(n^3)$ bound is formally proven using the interval state-space DP model.
+- [ ] 0/1 Knapsack correctness and $O(n \cdot W)$ bound are formally proven using `GridDP`.
+- [ ] LIS correctness and $O(n^2)$ bound are formally proven.
+- [ ] All step bounds are connected to Mathlib's `IsBigO`.
+- [ ] Comprehensive Markdown proof documentation is provided for each module.
+- [ ] All new files are exported in `Amort.lean` and indexed in `README.md`.

@@ -1,15 +1,15 @@
-# BRIEFING — 2026-09-17T04:55:59Z
+# BRIEFING — 2026-09-18T02:45:46Z
 
 ## Mission
-Sentinel monitoring and routing for Lean 4 formalization of textbook string algorithms (String Matching: Naive vs. KMP, Sequence Alignment: LCS and Edit Distance DP, correctness, step bounds, and asymptotic complexity) within `Amort.String`.
+Sentinel monitoring and routing for Lean 4 formalization of textbook dynamic programming algorithms (Interval DP: Matrix Chain Multiplication O(n^3), Grid DP: 0/1 Knapsack O(n*W), and Longest Increasing Subsequence O(n^2)) within `Amort.DP`, leveraging `Amort.Recurrence.DP` state-space complexity framework and proving mathematical correctness, operational step bounds, and asymptotic complexity in Mathlib `IsBigO`.
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: /workspace/amort/.agents/sentinel
-- Orchestrator: 1394d3a0-9250-4de7-9408-4feeec0dc39d (teamwork_preview_pipeline_6) [completed]
-- Victory Auditor: d0ceab75-9b0c-478f-bd04-720806b462af (teamwork_preview_victory_auditor_6) [completed]
-- Progress Cron: 3359c975-946b-46ae-9a62-cc1b898ee851/task-34 [cancelled]
-- Liveness Cron: 3359c975-946b-46ae-9a62-cc1b898ee851/task-36 [cancelled]
+- Orchestrator: a5807bb0-4a55-4a5f-a37b-862589a62e25 (teamwork_preview_pipeline_7) [completed]
+- Victory Auditor: a561c8e9-ae26-4531-a4db-400d84548a90 (teamwork_preview_victory_auditor_7) [completed]
+- Progress Cron: 19e0a264-23b1-4131-ad33-e730c1c91981/task-38 [cancelled]
+- Liveness Cron: 19e0a264-23b1-4131-ad33-e730c1c91981/task-40 [cancelled]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -17,16 +17,16 @@ Sentinel monitoring and routing for Lean 4 formalization of textbook string algo
 - Route per Routing Decision Table: Math/Proof -> teamwork_preview_pipeline
 
 ## User Context
-- **Last user request**: Formalize standard textbook string algorithms in Lean 4 within `Amort.String`, contrasting naive solutions with optimal algorithms: String Matching (Naive O(n*m) vs. KMP O(n+m)) and Sequence Alignment (LCS and Edit Distance O(n*m) DP), proving correctness, step bounds, and asymptotic complexity.
+- **Last user request**: Formalize textbook dynamic programming algorithms (Interval DP: Matrix Chain Multiplication O(n^3), Grid DP: 0/1 Knapsack O(n*W), and Longest Increasing Subsequence O(n^2)) in Lean 4 within `Amort.DP`, leveraging `Amort.Recurrence.DP` state-space complexity framework and proving mathematical correctness, operational step bounds, and asymptotic complexity in Mathlib `IsBigO`.
 - **Pending clarifications**: none
 - **Delivered results**:
-  - `Amort/String/NaiveMatch.lean`: sliding-window matching, comparison count, worst-case bound $(n - m + 1) \cdot m \le n \cdot m$, substring occurrence equivalence.
-  - `Amort/String/KMP.lean`: failure function $\pi$, potential function $\Phi(j) = j$, search bound $\le 2n$, total linear bound $\le 2(n + m)$, equivalence to naive matcher.
-  - `Amort/String/LCS.lean`: recursive formulation, constructive maximal witness, DP table with $\le (n + 1)(m + 1)$ operations.
-  - `Amort/String/EditDistance.lean`: alignment model, minimal cost optimality, DP matrix with $\le (n + 1)(m + 1)$ operations.
-  - `Amort/String/Asymptotics.lean`: composition bridges to `Amort.Recurrence.Composition`, `Asymptotics.IsBigO` bounds under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
-  - Library integration in `Amort.lean`, documentation in `Amort/String/String.md` and `README.md`.
-  - Clean build with `lake build` (2002 jobs, 0 errors, 0 warnings).
+  - `Amort/DP/MatrixChain.lean`: interval state space $\{ (i, j) \mid i \le j \}$, $|IntervalState\ n| = n(n+1)/2 \le n^2$, split cost evaluation, $n^3$ total step bound via `Amort.Recurrence.DP`.
+  - `Amort/DP/Knapsack.lean`: Bellman recurrence $K(i, w)$, full mathematical correctness (soundness, completeness, optimality) against arbitrary subcollections, `GridDP` instantiation on $\text{Fin}(n+1) \times \text{Fin}(W+1)$ with $(n+1)(W+1)$ bound.
+  - `Amort/DP/LIS.lean`: `IsStrictlyIncreasingSubsequence` predicate, recursive Bellman characterization, mathematical correctness (soundness, completeness, optimality), predecessor examination model with work $n(n+1)/2 \le n^2$.
+  - `Amort/DP/Asymptotics.lean`: Mathlib `Asymptotics.IsBigO` under `Filter.atTop` for Matrix Chain ($O(n^3)$), 0/1 Knapsack ($O(n \cdot W)$), and LIS ($O(n^2)$).
+  - Comprehensive documentation in `Amort/DP/DP.md`, `Amort/DP/MatrixChain.md`, `Amort/DP/Knapsack.md`, `Amort/DP/LIS.md`, and `README.md`.
+  - Library exports in `Amort.lean`.
+  - Clean build with `lake build Amort` (2007 jobs, 0 errors, 0 warnings).
   - Axiom integrity confirmed: 0 `sorryAx`, all proofs depend strictly on foundational Lean 4 axioms.
   - Independent Victory Auditor verdict: VICTORY CONFIRMED.
 
@@ -40,12 +40,14 @@ Sentinel monitoring and routing for Lean 4 formalization of textbook string algo
 
 ## Artifact Index
 - /workspace/amort/.agents/ORIGINAL_REQUEST.md — Authoritative record of user requests
-- /workspace/amort/Amort/String/NaiveMatch.lean — Naive sliding-window string matching
-- /workspace/amort/Amort/String/KMP.lean — Knuth-Morris-Pratt string matching
-- /workspace/amort/Amort/String/LCS.lean — Longest Common Subsequence dynamic programming
-- /workspace/amort/Amort/String/EditDistance.lean — Edit Distance dynamic programming
-- /workspace/amort/Amort/String/Asymptotics.lean — Asymptotic complexity and composition bridges
-- /workspace/amort/Amort/String/String.md — Comprehensive mathematical documentation
+- /workspace/amort/Amort/DP/MatrixChain.lean — Interval DP Matrix Chain Multiplication
+- /workspace/amort/Amort/DP/Knapsack.lean — Grid DP 0/1 Knapsack
+- /workspace/amort/Amort/DP/LIS.lean — Longest Increasing Subsequence DP
+- /workspace/amort/Amort/DP/Asymptotics.lean — Mathlib Asymptotics.IsBigO connections
+- /workspace/amort/Amort/DP/DP.md — Comprehensive dynamic programming framework documentation
+- /workspace/amort/Amort/DP/MatrixChain.md — Matrix chain multiplication documentation
+- /workspace/amort/Amort/DP/Knapsack.md — 0/1 knapsack documentation
+- /workspace/amort/Amort/DP/LIS.md — Longest increasing subsequence documentation
 - /workspace/amort/Amort.lean — Top-level library exports
 - /workspace/amort/README.md — Project overview documentation
-- /workspace/amort/.agents/teamwork_preview_victory_auditor_6/handoff.md — Independent audit report
+- /workspace/amort/.agents/teamwork_preview_victory_auditor_7/handoff.md — Independent audit report
