@@ -27,6 +27,13 @@ import Amort.DP.MatrixChain
 import Amort.DP.Knapsack
 import Amort.DP.LIS
 import Amort.DP.Asymptotics
+import Amort.Graph.FloydWarshall
+import Amort.Graph.BellmanFord
+import Amort.Graph.Traversal
+import Amort.Graph.TopologicalSort
+import Amort.Graph.DSU
+import Amort.Graph.Kruskal
+import Amort.Graph.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -97,4 +104,23 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.DP.Asymptotics`: Bridges connecting Matrix Chain ($O(n^3)$), 0/1 Knapsack ($O(n \cdot W)$),
   and LIS ($O(n^2)$) operational step bounds to Mathlib's `Asymptotics.IsBigO`
   under `Filter.atTop`.
+- `Amort.Graph.FloydWarshall`: Floyd-Warshall all-pairs shortest paths algorithm,
+  3D state space `Fin (n + 1) × Fin n × Fin n` of cardinality $(n + 1) \cdot n^2$,
+  and $O(n^3)$ operational bound via `Amort.Recurrence.DP` (`DPModel`).
+- `Amort.Graph.BellmanFord`: Bellman-Ford single-source shortest paths algorithm,
+  $(n - 1)$ edge relaxation passes, step counter $(n - 1) \cdot |E| \le n \cdot |E|$,
+  and loop product composition.
+- `Amort.Graph.Traversal`: Directed graph adjacency representation, directed Handshaking Lemma
+  $\sum_{v} \text{outdeg}(v) = |E|$, queue-based BFS work bound $|V| + |E|$, and unweighted
+  shortest-path distance correctness.
+- `Amort.Graph.TopologicalSort`: Kahn's in-degree zero queue algorithm, $O(|V| + |E|)$ step bound,
+  and mathematical correctness proving DAG acyclicity.
+- `Amort.Graph.DSU`: Disjoint Set Union with union-by-rank, exponential subtree size invariant
+  $2^{\text{rank}} \le n$, logarithmic depth and find bounds, and $O((n + m) \log n)$ complexity.
+- `Amort.Graph.Kruskal`: Kruskal's Minimum Spanning Tree algorithm, edge sorting via
+  `Amort.Sorting.MergeSort`, DSU cycle checking, $O(|E| \log |V|)$ complexity, and Cut-Property
+  greedy optimality.
+- `Amort.Graph.Asymptotics`: Bridges connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford
+  ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU
+  ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib `IsBigO` under `Filter.atTop`.
 -/

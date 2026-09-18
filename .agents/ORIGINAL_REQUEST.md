@@ -283,3 +283,55 @@ Integrity mode: development
 - [ ] All step bounds are connected to Mathlib's `IsBigO`.
 - [ ] Comprehensive Markdown proof documentation is provided for each module.
 - [ ] All new files are exported in `Amort.lean` and indexed in `README.md`.
+
+## 2026-09-18T03:15:57Z
+
+Formalize textbook graph algorithms in Lean 4 within `Amort.Graph`:
+1. Graph Dynamic Programming & Shortest Paths: Floyd-Warshall ($O(|V|^3)$ via `Amort.Recurrence.DP`) and Bellman-Ford ($O(|V| \cdot |E|)$ via loop composition).
+2. Foundational Linear Graph Traversals: BFS with Handshaking degree sum ($O(|V| + |E|)$) and Topological Sort (Kahn's algorithm on DAGs, $O(|V| + |E|)$).
+3. Amortized Data Structures & MST: Disjoint Set Union (Union-Find) with rank bounds ($O((|V| + |E|) \log |V|)$) and Kruskal's Minimum Spanning Tree algorithm.
+
+Working directory: /workspace/amort
+Integrity mode: demo
+
+## Requirements
+
+### R1. Graph Dynamic Programming & Shortest Paths
+- Formalize weighted directed graphs with finite vertices $\text{Fin } n$.
+- **Floyd-Warshall**: Formalize all-pairs shortest paths via 3D dynamic programming $(k, i, j) \in \text{Fin}(n+1) \times \text{Fin } n \times \text{Fin } n$, proving total operations bounded by $(n+1) \cdot n^2 = O(n^3)$ using `Amort.Recurrence.DP`.
+- **Bellman-Ford**: Formalize single-source shortest paths via $|V| - 1$ edge relaxation passes, proving $O(|V| \cdot |E|)$ operations via `Amort.Recurrence.Composition.isBigO_nested_loops_nat`.
+
+### R2. Linear Graph Traversals & Handshaking Lemma ($O(|V| + |E|)$)
+- Formalize adjacency list representation and the Handshaking Lemma: $\sum_{v \in V} \text{outdeg}(v) = |E|$.
+- **Breadth-First Search (BFS)**: Formalize queue-based traversal visiting vertices at most once and scanning outgoing edges, proving total work bounded by $|V| + |E|$ ($O(|V| + |E|)$) and unweighted shortest-path distance correctness.
+- **Topological Sort**: Formalize Kahn's in-degree zero queue algorithm, proving $O(|V| + |E|)$ step bound and topological sort correctness on DAGs.
+
+### R3. Amortized Data Structures & Minimum Spanning Trees
+- **Disjoint Set Union (Union-Find)**: Formalize union-by-rank, proving tree depth bounded by $\log_2 n$ and $m$ operations on $n$ elements bounded by $O((n + m) \log n)$.
+- **Kruskal's MST Algorithm**: Formalize edge sorting (connecting to `Amort.Sorting.MergeSort`) followed by DSU cycle checking, proving overall time complexity and minimum spanning tree cut-property optimality.
+
+### R4. Asymptotics Bridges & Module Integration
+- Connect all operational bounds to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- Implement clean, modular Lean files under `Amort/Graph/`:
+  - `Amort/Graph/FloydWarshall.lean`
+  - `Amort/Graph/BellmanFord.lean`
+  - `Amort/Graph/Traversal.lean`
+  - `Amort/Graph/TopologicalSort.lean`
+  - `Amort/Graph/DSU.lean`
+  - `Amort/Graph/Kruskal.lean`
+  - `Amort/Graph/Asymptotics.lean`
+- Re-export all modules in `Amort.lean`.
+- Document mathematical architecture, invariant hierarchies, and proof strategies in `Amort/Graph/Graph.md` and individual algorithm `.md` documents, updating `README.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build Amort` (0 errors, 0 warnings).
+- [ ] Zero reliance on `sorry` or `sorryAx` (all proofs rely strictly on foundational Lean 4 axioms).
+- [ ] Floyd-Warshall $O(|V|^3)$ bound is formally proven using `Amort.Recurrence.DP`.
+- [ ] Bellman-Ford $O(|V| \cdot |E|)$ bound is formally proven using loop product composition.
+- [ ] BFS and Topological Sort $O(|V| + |E|)$ bounds are formally proven using the degree sum.
+- [ ] DSU and Kruskal's algorithm bounds and correctness are formally proven.
+- [ ] All step bounds are connected to Mathlib `IsBigO`.
+- [ ] Comprehensive Markdown proof documentation is provided for each module.
+- [ ] All new modules are exported in `Amort.lean` and indexed in `README.md`.

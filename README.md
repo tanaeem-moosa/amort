@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, and `Amort/DP/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, and `Amort/Graph/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -87,13 +87,23 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Asymptotic Complexity Bridges**: `Amort.DP.Asymptotics` connecting Matrix Chain ($O(n^3)$), 0/1 Knapsack ($O(n \cdot W)$), and LIS ($O(n^2)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
 - **Documentation**: Suite overview and comparison in [`Amort/DP/DP.md`](Amort/DP/DP.md).
 
+### 10. Textbook Graph Algorithms (`Amort.Graph`)
+- **Floyd-Warshall Shortest Paths**: `Amort.Graph.FloydWarshall` formalizing all-pairs shortest paths via 3D dynamic programming on `Fin (n + 1) × Fin n × Fin n` with exact cardinality $(n + 1) \cdot n^2$, and $O(n^3)$ operational bound via `Amort.Recurrence.DP`. Documented in [`Amort/Graph/FloydWarshall.md`](Amort/Graph/FloydWarshall.md).
+- **Bellman-Ford Shortest Paths**: `Amort.Graph.BellmanFord` formalizing single-source shortest paths via $(n - 1)$ edge relaxation passes, proving $(n - 1) \cdot |E| \le n \cdot |E|$ step bound and $O(|V| \cdot |E|)$ complexity via `Amort.Recurrence.Composition.isBigO_nested_loops_nat`. Documented in [`Amort/Graph/BellmanFord.md`](Amort/Graph/BellmanFord.md).
+- **Linear Graph Traversals & Handshaking**: `Amort.Graph.Traversal` formalizing adjacency list representations, the directed Handshaking Lemma $\sum_{v} \text{outdeg}(v) = |E|$, queue-based BFS operational bound $\le |V| + |E|$, and unweighted shortest-path distance correctness. Documented in [`Amort/Graph/Traversal.md`](Amort/Graph/Traversal.md).
+- **Topological Sort**: `Amort.Graph.TopologicalSort` formalizing Kahn's in-degree zero queue algorithm, proving $\le |V| + |E|$ step bound and topological ordering correctness guaranteeing DAG cycle-freedom. Documented in [`Amort/Graph/TopologicalSort.md`](Amort/Graph/TopologicalSort.md).
+- **Disjoint Set Union (Union-Find)**: `Amort.Graph.DSU` formalizing union-by-rank, the exponential subtree size invariant $2^{\text{rank}} \le n$, logarithmic tree depth and find step bounds $\le \text{Nat.size } n \le \log_2 n$, and proving $m$ operations on $n$ elements execute in $\le 3(n + m) \cdot \text{Nat.size } n$ ($O((n + m) \log n)$). Documented in [`Amort/Graph/DSU.md`](Amort/Graph/DSU.md).
+- **Kruskal's Minimum Spanning Tree**: `Amort.Graph.Kruskal` formalizing edge sorting connecting to `Amort.Sorting.MergeSort`, DSU cycle checking, $O(|E| \log |V|)$ overall time complexity, and greedy Cut-Property optimality. Documented in [`Amort/Graph/Kruskal.md`](Amort/Graph/Kruskal.md).
+- **Asymptotic Complexity Bridges**: `Amort.Graph.Asymptotics` connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Suite overview and comparison in [`Amort/Graph/Graph.md`](Amort/Graph/Graph.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2007 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2014 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 
