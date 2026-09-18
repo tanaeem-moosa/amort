@@ -17,6 +17,7 @@ import Amort.Recurrence.Telescoping
 import Amort.Recurrence.Halving
 import Amort.Recurrence.BinarySearch
 import Amort.Recurrence.MasterTheorem
+import Amort.Recurrence.DP
 import Amort.String.NaiveMatch
 import Amort.String.KMP
 import Amort.String.LCS
@@ -61,6 +62,9 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Recurrence.MasterTheorem`: Balanced divide-and-conquer master recurrence with integer
   rounding ($T(n) \le T(\lceil n/2 \rceil) + T(\lfloor n/2 \rfloor) + c \cdot n$), $O(n \log n)$
   asymptotics, and connection to Merge Sort.
+- `Amort.Recurrence.DP`: State-space dynamic programming complexity framework ($|S| \cdot C$),
+  2D grid DP specialization, and generic $O(|S| \cdot C)$ complexity derivations without
+  requiring explicit bottom-up loops.
 - `Amort.String.NaiveMatch`: Naive sliding-window string matching, character comparison counting,
   concrete worst-case comparison bound $\le (n - m + 1) \cdot m \le n \cdot m$, and substring
   occurrence correctness.

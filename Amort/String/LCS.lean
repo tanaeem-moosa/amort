@@ -3,6 +3,7 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
+import Amort.Recurrence.DP
 import Mathlib.Data.List.Sublists
 
 /-!
@@ -282,5 +283,44 @@ theorem lcsTable_length (xs ys : List α) :
   have h := h_fold [List.replicate (ys.length + 1) 0] 0 h_base
   simp only [List.length_reverse, h]
   omega
+
+/-! ### State-Space Dynamic Programming Model -/
+
+open Amort.Recurrence
+
+omit [DecidableEq α] in
+/-- Subproblem state space for LCS on sequences `xs` and `ys`.
+Each state `(i, j)` corresponds to the subproblem on suffixes of lengths `i ≤ xs.length`
+and `j ≤ ys.length`. -/
+abbrev lcsStateSpace (xs ys : List α) : Type :=
+  Fin (xs.length + 1) × Fin (ys.length + 1)
+
+omit [DecidableEq α] in
+/-- Canonical 2D grid DP model for LCS on `xs` and `ys`.
+At each subproblem state `(i, j)`, the algorithm performs at most 1 comparison
+and 1 branch/max selection (cost 1). -/
+def lcsGridDP (xs ys : List α) : GridDP xs.length ys.length :=
+  GridDP.unitGridDP xs.length ys.length
+
+omit [DecidableEq α] in
+/-- The state space cardinality of LCS is exactly `(n + 1) * (m + 1)`. -/
+theorem lcs_card_states (xs ys : List α) :
+    Fintype.card (lcsStateSpace xs ys) = (xs.length + 1) * (ys.length + 1) :=
+  GridDP.card_grid_states xs.length ys.length
+
+omit [DecidableEq α] in
+/-- State-space dynamic programming complexity theorem:
+The total work required to solve LCS on sequences of lengths `n` and `m` across all
+`(n + 1) * (m + 1)` states in the subproblem DAG is bounded by `(n + 1) * (m + 1)`. -/
+theorem lcs_state_space_totalCost_le (xs ys : List α) :
+    (lcsGridDP xs ys).toDPModel.totalCost ≤ (xs.length + 1) * (ys.length + 1) :=
+  (lcsGridDP xs ys).totalCost_le_unit (Nat.le_refl 1)
+
+omit [DecidableEq α] in
+/-- Equivalence between the bottom-up table step count and the state-space total work. -/
+theorem lcsTableCount_eq_state_space_totalCost (xs ys : List α) :
+    lcsTableCount xs ys = (lcsGridDP xs ys).toDPModel.totalCost := by
+  dsimp [lcsTableCount, lcsGridDP]
+  rw [GridDP.unitGridDP_totalCost]
 
 end Amort.String

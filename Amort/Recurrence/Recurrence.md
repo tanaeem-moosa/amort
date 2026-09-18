@@ -21,6 +21,8 @@ Amort/
     ├── Halving.lean            -- Halving recurrences (O(size n), O(log n))
     ├── BinarySearch.lean       -- Representative binary search step counter and logarithmic complexity
     ├── MasterTheorem.lean      -- Balanced divide-and-conquer master recurrence (O(n log n), Merge Sort)
+    ├── DP.lean                 -- State-space dynamic programming complexity framework (|S| * C)
+    ├── DP.md                   -- State-space dynamic programming documentation
     └── Recurrence.md           -- Architectural and mathematical documentation
 ```
 
@@ -247,9 +249,44 @@ of size $\lceil n/2 \rceil = (n+1)/2$ and $\lfloor n/2 \rfloor = n/2$, combining
 
 ---
 
-## 6. Verification and Axiom Audit
+## 6. State-Space Dynamic Programming Framework (`DP.lean`)
 
-All 54 theorems and lemmas across `Amort.Recurrence` have been audited via `#print axioms`.
+Dynamic programming algorithms on finite state spaces (such as sequence alignment, interval DP,
+tree DP, bitmask DP) can be analyzed without writing manual nested table loops.
+
+### Mathematical Theorems
+
+1. **General Finite State-Space DP Model**:
+   Given a finite state space `State` with local work $c(s) \le C$:
+   ```lean
+   theorem totalCost_le (dp : DPModel State) :
+       dp.totalCost ≤ Fintype.card State * dp.costBound
+   ```
+   bounding the total work of evaluating the memoized DAG by $|State| \cdot C$.
+
+2. **2D Grid Dynamic Programming**:
+   For $(n + 1) \times (m + 1)$ state spaces:
+   ```lean
+   theorem totalCost_le (g : GridDP n m) :
+       g.toDPModel.totalCost ≤ (n + 1) * (m + 1) * g.costBound
+
+   theorem totalCost_le_unit (g : GridDP n m) (h_unit : g.costBound ≤ 1) :
+       g.toDPModel.totalCost ≤ (n + 1) * (m + 1)
+   ```
+
+3. **Asymptotic Complexity**:
+   - `isBigO_dp_totalCost`: Product rule $|State| = O(g_1) \land C = O(g_2) \implies \text{totalCost} = O(g_1 \cdot g_2)$.
+   - `isBigO_gridDP_totalCost`: 2D Grid DP with $O(1)$ cell transitions is $O((n+1)(m+1))$.
+
+4. **Application to LCS**:
+   - `Amort.String.lcs_state_space_totalCost_le`: Proves that the total work across all $(n+1)(m+1)$ subproblems in the LCS DAG is bounded by $(n+1)(m+1)$.
+   - `Amort.String.lcsTableCount_eq_state_space_totalCost`: Connects table step count to state-space total work.
+
+---
+
+## 7. Verification and Axiom Audit
+
+All theorems and lemmas across `Amort.Recurrence` have been audited via `#print axioms`.
 Every declaration depends solely on foundational Lean 4 axioms:
 - `propext` (Propositional Extensionality)
 - `Classical.choice` (Axiom of Choice)

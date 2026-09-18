@@ -146,7 +146,41 @@ Proven by generalized induction on the `foldl` accumulator length.
 
 ---
 
-## 5. Asymptotic Complexity Bridge
+## 5. State-Space Dynamic Programming Model
+
+In addition to the executable bottom-up table, LCS directly instantiates the abstract state-space dynamic programming framework from [`Amort/Recurrence/DP.lean`](../Recurrence/DP.md):
+
+```mermaid
+graph TD
+    lcsStateSpace["lcsStateSpace xs ys = Fin(n+1) × Fin(m+1)"] --> lcsCard["lcs_card_states: |State| = (n+1)*(m+1)"]
+    unitCost["lcsGridDP: costPerCell = 1, costBound = 1"] --> totalCost["lcs_state_space_totalCost_le: totalCost ≤ (n+1)*(m+1)"]
+    lcsCard --> totalCost
+    totalCost --> tableEq["lcsTableCount_eq_state_space_totalCost: lcsTableCount = totalCost"]
+```
+
+### 5.1 Subproblem State Space
+Any subproblem in `lcsRec xs ys` evaluates suffixes of `xs` and `ys`, which are indexed by their remaining lengths:
+$$\text{State} = \text{Fin}(|xs| + 1) \times \text{Fin}(|ys| + 1)$$
+- **Cardinality** (`lcs_card_states`):
+  $$|\text{lcsStateSpace}(xs, ys)| = (|xs| + 1) \cdot (|ys| + 1)$$
+
+### 5.2 Local Work Bound per State
+At each subproblem state $(i, j)$:
+- If $i = 0$ or $j = 0$: base case returns 0 in 1 step.
+- If $i > 0$ and $j > 0$: 1 character equality check and at most 1 $\max$ branch selection (cost $\le 1$).
+
+### 5.3 Complexity Without Manual Table Iteration
+By instantiating `Amort.Recurrence.GridDP.unitGridDP`:
+- **Theorem** (`lcs_state_space_totalCost_le`):
+  $$\text{totalCost}(\text{lcsGridDP } xs\ ys) \le (|xs| + 1) \cdot (|ys| + 1)$$
+- **Theorem** (`lcsTableCount_eq_state_space_totalCost`):
+  $$\text{lcsTableCount } xs\ ys = \text{totalCost}(\text{lcsGridDP } xs\ ys)$$
+
+This enables establishing the $O(n \cdot m)$ complexity bound entirely via the state space and per-state local work, without needing to reason about nested list folds or 2D matrix accumulation.
+
+---
+
+## 6. Asymptotic Complexity Bridge
 
 In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the operational count is connected to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` via `Amort.Recurrence.Composition`:
 
@@ -161,7 +195,7 @@ Combined with the product composition rule `isBigO_nested_loops_nat`, this yield
 
 ---
 
-## 6. Axiomatic Verification
+## 7. Axiomatic Verification
 
 Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4 axioms:
 - `propext`
