@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, `Amort/Algebraic/`, and `Amort/Complexity/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, `Amort/Algebraic/`, `Amort/Complexity/`, `Amort/Approximation/`, `Amort/Randomized/`, and `Amort/LP/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -214,6 +214,27 @@ This repository formalizes algorithms and their computational complexity in `Amo
   ($O(n \log n)$), Karger Min-Cut ($O(n^4)$), and Universal Hashing ($O(1)$) to Mathlib's
   `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
 - **Documentation**: Overview in [`Amort/Randomized/Randomized.md`](Amort/Randomized/Randomized.md).
+
+### 20. Linear Programming & Duality (`Amort.LP`)
+- **Primal and Dual Formulations**: `Amort.LP.Duality` formalizing linear programs in standard inequality form over vectors ($Ax \le b, x \ge 0$ and $A^T y \ge c, y \ge 0$), with feasibility predicates `PrimalFeasible` and `DualFeasible`. Documented in [`Amort/LP/Duality.md`](Amort/LP/Duality.md).
+- **Weak Duality & Optimality Certificates**: Formal proofs of `weak_duality` ($c^T x \le b^T y$), `optimality_certificate` ($c^T x^* = b^T y^* \implies \text{OPT}$), and unboundedness infeasibility corollaries (`dual_infeasible_of_unbounded_primal`, `primal_infeasible_of_unbounded_dual`).
+- **Simplex Slack Form & Dictionary Invariant**: `Amort.LP.Simplex` formalizing dictionary representations $x_B = \bar{b} - \bar{A} x_N$, basic solution feasibility invariant $\bar{b} \ge 0$, ratio test bounds, invariant preservation under pivoting (`pivot_preserves_feasibility`, `new_b_bar_nonneg`), and objective progression (`obj_increases_of_pivot`). Documented in [`Amort/LP/Simplex.md`](Amort/LP/Simplex.md).
+- **Asymptotic Complexity Bridges**: `Amort.LP.Asymptotics` connecting simplex pivot step ($O(m \cdot n)$) and feasibility checking to Mathlib `IsBigO` under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. Documented in [`Amort/LP/Asymptotics.md`](Amort/LP/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/LP/LP.md`](Amort/LP/LP.md).
+
+### 21. Tarjan's Inverse Ackermann Bound for DSU (`Amort.Graph.Ackermann`)
+- **Ackermann Hierarchy & Functional Inverse**: `Amort.Graph.Ackermann.AckermannHierarchy` formalizing two-variable Ackermann function $A_k(n)$, strict monotonicity, exact milestone evaluations ($A(0, 1) = 2, A(1, 1) = 3, A(2, 1) = 5, A(3, 1) = 13, A(4, 1) = 65533$), functional inverse $\alpha(n) = \min \{ k \mid A(k, 1) \ge n \}$, and slow growth theorem ($\alpha(n) \le 4$ for all $n \le 65533$). Documented in [`Amort/Graph/Ackermann/AckermannHierarchy.md`](Amort/Graph/Ackermann/AckermannHierarchy.md).
+- **Path Compression with Union-by-Rank**: `Amort.Graph.Ackermann.PathCompression` formalizing DSU with path compression during `find`, proving strict parent rank hierarchy invariant preservation (`compress_preserves_hierarchy`), and logarithmic rank bounds $\text{rank}(v) \le \log_2 n \le \text{Nat.size } n$. Documented in [`Amort/Graph/Ackermann/PathCompression.md`](Amort/Graph/Ackermann/PathCompression.md).
+- **Potential Function Analysis & Amortized Bound**: `Amort.Graph.Ackermann.PotentialBound` formalizing rank level intervals $[A_k(r), A_{k+1}(r)]$, potential function $\Phi(v)$, amortized telescoping summation theorem (`amortized_telescoping_sum`), and total work bound $\text{dsuAckermannWork}(m, n) \le 6(m + n)(\alpha(n) + 1)$ ($O(m \cdot \alpha(n))$ for $m \ge n$). Documented in [`Amort/Graph/Ackermann/PotentialBound.md`](Amort/Graph/Ackermann/PotentialBound.md).
+- **Asymptotic Complexity Bridges**: `Amort.Graph.Ackermann.Asymptotics` connecting DSU total work with path compression to Mathlib `IsBigO` under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. Documented in [`Amort/Graph/Ackermann/Asymptotics.md`](Amort/Graph/Ackermann/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/Graph/Ackermann/Ackermann.md`](Amort/Graph/Ackermann/Ackermann.md).
+
+### 22. Suffix Trees & Ukkonen's Online Linear-Time Construction (`Amort.String.SuffixTree`)
+- **Compact Suffix Tree Structure**: `Amort.String.SuffixTree.CompactTree` formalizing slice intervals $[l, r]$ into string $S$, internal branching degree $\ge 2$, leaf count $\le n$, internal node bound $\le n - 1$ via tree combinatorics, and total node bound $\le 2n$. Documented in [`Amort/String/SuffixTree/CompactTree.md`](Amort/String/SuffixTree/CompactTree.md).
+- **Suffix Links & Depth Invariants**: `Amort.String.SuffixTree.SuffixLink` formalizing suffix links mapping $a \beta$ to $\beta$, strict depth decrement invariant $\text{stringDepth}(\text{link}(u)) = \text{stringDepth}(u) - 1$, and link chain depth reduction $\text{stringDepth}(u) - k$. Documented in [`Amort/String/SuffixTree/SuffixLink.md`](Amort/String/SuffixTree/SuffixLink.md).
+- **Ukkonen's Online Algorithm & $O(n)$ Bound**: `Amort.String.SuffixTree.Ukkonen` formalizing active point `(active_node, active_edge, active_len)`, the three extension rules (Rule 1, Rule 2, Rule 3), global end pointer $O(1)$ amortized leaf extensions, total Rule 2 splits $\le n$, total link traversals $\le 2n$, and linear time bound $\text{ukkonenWork}(n) \le 4n = O(n)$. Documented in [`Amort/String/SuffixTree/Ukkonen.md`](Amort/String/SuffixTree/Ukkonen.md).
+- **Asymptotic Complexity Bridges**: `Amort.String.SuffixTree.Asymptotics` connecting Ukkonen operational work to Mathlib `IsBigO` under `Filter.atTop` on $\mathbb{N}$. Documented in [`Amort/String/SuffixTree/Asymptotics.md`](Amort/String/SuffixTree/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/String/SuffixTree/SuffixTree.md`](Amort/String/SuffixTree/SuffixTree.md).
 
 ## Building and Verification
 

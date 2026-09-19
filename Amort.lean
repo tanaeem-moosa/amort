@@ -82,6 +82,17 @@ import Amort.Randomized.Quicksort
 import Amort.Randomized.KargerMinCut
 import Amort.Randomized.UniversalHash
 import Amort.Randomized.Asymptotics
+import Amort.LP.Duality
+import Amort.LP.Simplex
+import Amort.LP.Asymptotics
+import Amort.Graph.Ackermann.AckermannHierarchy
+import Amort.Graph.Ackermann.PathCompression
+import Amort.Graph.Ackermann.PotentialBound
+import Amort.Graph.Ackermann.Asymptotics
+import Amort.String.SuffixTree.CompactTree
+import Amort.String.SuffixTree.SuffixLink
+import Amort.String.SuffixTree.Ukkonen
+import Amort.String.SuffixTree.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -297,4 +308,30 @@ algorithms, recurrence relations, and amortized data structures.
   $O(1)$ expected lookup, and reservoir sampling streaming invariant $k/(t+1)$.
 - `Amort.Randomized.Asymptotics`: Bridges connecting Expected Quicksort ($O(n \log n)$),
   Karger Min-Cut ($O(n^4)$), and Universal Hashing ($O(1)$) to Mathlib `IsBigO`.
+- `Amort.LP.Duality`: Linear Programming standard inequality form, primal and dual feasibility,
+  Weak Duality Theorem $c^T x \le b^T y$, Optimality Certificate Theorem ($c^T x^* = b^T y^*$),
+  and unboundedness infeasibility corollaries.
+- `Amort.LP.Simplex`: Simplex slack form, dictionary representation $x_B = \bar{b} - \bar{A} x_N$,
+  basic solution feasibility invariant $\bar{b} \ge 0$, ratio test, pivot preservation,
+  and objective progression.
+- `Amort.LP.Asymptotics`: Bridges connecting simplex pivot step ($O(m \cdot n)$) and LP feasibility
+  verification to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Graph.Ackermann.AckermannHierarchy`: Standard Ackermann hierarchy $A_k(n)$, strict
+  monotonicity, milestone evaluations up to $A(4, 1) = 65533$, functional inverse Ackermann
+  function $\alpha(n)$, and slow-growth bound $\alpha(n) \le 4$ for all practical $n$.
+- `Amort.Graph.Ackermann.PathCompression`: DSU with path compression during `find`, strict parent
+  rank hierarchy preservation, and logarithmic rank bound $\text{rank}(v) \le \log_2 n$.
+- `Amort.Graph.Ackermann.PotentialBound`: Rank level intervals $[A_k(r), A_{k+1}(r)]$, potential
+  function analysis, telescoping amortized summation theorem, and $O(m \cdot \alpha(n))$ bound.
+- `Amort.Graph.Ackermann.Asymptotics`: Bridges connecting DSU total work to Mathlib `IsBigO` under
+  `Filter.atTop`.
+- `Amort.String.SuffixTree.CompactTree`: Compact suffix trees with slice intervals $[l, r]$,
+  internal branching degree $\ge 2$, leaf bound $\le n$, internal node bound $\le n - 1$, and
+  total node bound $\le 2n$.
+- `Amort.String.SuffixTree.SuffixLink`: Suffix links mapping $a \beta$ to $\beta$, depth invariant
+  $\text{stringDepth}(\text{link}(u)) = \text{stringDepth}(u) - 1$, and chain termination.
+- `Amort.String.SuffixTree.Ukkonen`: Ukkonen's online active point, three extension rules, global
+  end pointer $O(1)$ amortized leaf extensions, split bounds $\le n$, and $O(n)$ linear time.
+- `Amort.String.SuffixTree.Asymptotics`: Bridges connecting Ukkonen linear time to Mathlib `IsBigO`
+  under `Filter.atTop`.
 -/
