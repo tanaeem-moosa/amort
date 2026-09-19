@@ -63,6 +63,9 @@ import Amort.NumberTheory.ModExp
 import Amort.NumberTheory.ExtendedGCD
 import Amort.NumberTheory.Sieve
 import Amort.NumberTheory.Asymptotics
+import Amort.Algebraic.FFT
+import Amort.Algebraic.Strassen
+import Amort.Algebraic.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -228,4 +231,14 @@ algorithms, recurrence relations, and amortized data structures.
   theorem ($k$ unmarked iff prime), and harmonic operational work bound $O(n \log n)$.
 - `Amort.NumberTheory.Asymptotics`: Bridges connecting ModExp ($O(\log b)$), Extended GCD
   ($O(\log(\min a\ b))$), and Sieve ($O(n \log n)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Algebraic.FFT`: Fast Fourier Transform, roots of unity, cancellation lemma,
+  Cooley-Tukey Radix-2 decomposition $A(x) = A_{even}(x^2) + x A_{odd}(x^2)$, butterfly
+  correctness, divide-and-conquer recurrence $T(n) \le 2T(n/2) + c \cdot n$, and $O(n \log n)$
+  polynomial multiplication complexity.
+- `Amort.Algebraic.Strassen`: Strassen's sub-cubic matrix multiplication, $2 \times 2$ block
+  matrices, 7 auxiliary multiplications, algebraic equivalence theorem in arbitrary rings,
+  divide-and-conquer recurrence $T(n) \le 7T(n/2) + c \cdot n^2$, and $O(n^{\log_2 7})$ bound.
+- `Amort.Algebraic.Asymptotics`: Bridges connecting FFT ($O(n \log n)$), polynomial multiplication
+  ($O(n \log n)$), and Strassen's matrix multiplication ($O(n^{\log_2 7})$) to Mathlib `IsBigO`
+  under `Filter.atTop`, with rigorous proof that $\log_2 7 < 3$.
 -/

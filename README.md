@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, and `Amort/NumberTheory/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, and `Amort/Algebraic/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -136,6 +136,12 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Sieve of Eratosthenes**: `Amort.NumberTheory.Sieve` formalizing composite marking array model over $[2, n]$, correctness theorem proving integer $k \in [2, n]$ remains unmarked iff $k$ is prime, and harmonic operational work bound $\sum_{p \le n} (n / p) \le n \sum_{k=1}^n (1 / k) \le n (1 + \ln n) = O(n \log n)$. Documented in [`Amort/NumberTheory/Sieve.md`](Amort/NumberTheory/Sieve.md).
 - **Asymptotic Complexity Bridges**: `Amort.NumberTheory.Asymptotics` connecting ModExp ($O(\log b)$), Extended GCD ($O(\log(\min a\ b))$), and Sieve of Eratosthenes ($O(n \log n)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/NumberTheory/Asymptotics.md`](Amort/NumberTheory/Asymptotics.md).
 - **Documentation**: Suite overview in [`Amort/NumberTheory/NumberTheory.md`](Amort/NumberTheory/NumberTheory.md).
+ 
+### 15. Fast Algebraic & Divide-and-Conquer Algorithms (`Amort.Algebraic`)
+- **Fast Fourier Transform (FFT) & Polynomial Multiplication**: `Amort.Algebraic.FFT` formalizing roots of unity, cancellation lemma ($\omega_{dn}^{dk} = \omega_n^k$), halving lemma, negation lemma, Cooley-Tukey Radix-2 decomposition $A(x) = A_{even}(x^2) + x A_{odd}(x^2)$, butterfly operation correctness, divide-and-conquer recurrence $T(n) \le 2T(n/2) + c \cdot n$, and linear-logarithmic operational complexity $O(n \log n)$ contrasting with naive $O(n^2)$. Documented in [`Amort/Algebraic/FFT.md`](Amort/Algebraic/FFT.md).
+- **Strassen's Sub-Cubic Matrix Multiplication**: `Amort.Algebraic.Strassen` formalizing $2 \times 2$ block matrices over arbitrary rings, Strassen's 7 auxiliary multiplications, algebraic equivalence theorem $C_{ij} = (A \cdot B)_{ij}$, divide-and-conquer recurrence $T(n) \le 7T(n/2) + c \cdot n^2$, and sub-cubic operational bound $O(n^{\log_2 7})$ ($O(n^{2.807})$). Documented in [`Amort/Algebraic/Strassen.md`](Amort/Algebraic/Strassen.md).
+- **Asymptotic Complexity Bridges**: `Amort.Algebraic.Asymptotics` connecting FFT ($O(n \log n)$), polynomial multiplication ($O(n \log n)$), and Strassen's algorithm ($O(n^{\log_2 7})$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`, with rigorous proof that $\log_2 7 < 3$. Documented in [`Amort/Algebraic/Algebraic.md`](Amort/Algebraic/Algebraic.md).
+- **Documentation**: Suite overview in [`Amort/Algebraic/Algebraic.md`](Amort/Algebraic/Algebraic.md).
 
 ## Building and Verification
 
