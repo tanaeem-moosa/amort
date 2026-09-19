@@ -70,6 +70,18 @@ import Amort.Complexity.Classes
 import Amort.Complexity.TwoSAT
 import Amort.Complexity.KarpReductions
 import Amort.Complexity.Asymptotics
+import Amort.Approximation.VertexCover
+import Amort.Approximation.MetricTSP
+import Amort.Approximation.SetCover
+import Amort.Approximation.Asymptotics
+import Amort.Graph.Advanced.HopcroftKarp
+import Amort.Graph.Advanced.HallMarriage
+import Amort.Graph.Advanced.BridgeTarjan
+import Amort.Graph.Advanced.Asymptotics
+import Amort.Randomized.Quicksort
+import Amort.Randomized.KargerMinCut
+import Amort.Randomized.UniversalHash
+import Amort.Randomized.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -260,4 +272,29 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Complexity.Asymptotics`: Bridges connecting 2-SAT linear time, canonical polynomial
   growth, 3-SAT gadget graph size ($O(m)$ vertices, $O(m^2)$ edges), and complement graph edge
   complexity to Mathlib's `Asymptotics.IsBigO` framework under `Filter.atTop`.
+- `Amort.Approximation.VertexCover`: 2-approximation for vertex cover via maximal matching,
+  lower bound $|M| \le |C^*|$, approximation ratio $|C| \le 2|C^*|$, and linear time $O(|V| + |E|)$.
+- `Amort.Approximation.MetricTSP`: 2-approximation for metric TSP via MST double-tree walk,
+  triangle inequality, shortcutting theorem, and bound $\text{cost} \le 2 \cdot \text{OPT}$.
+- `Amort.Approximation.SetCover`: Greedy $H(n)$-approximation for set cover, harmonic numbers,
+  marginal charging scheme, and bound $|\mathcal{C}_{\text{greedy}}| \le H(n) \cdot \text{OPT}$.
+- `Amort.Approximation.Asymptotics`: Bridges connecting Vertex Cover ($O(|V| + |E|)$), Metric TSP
+  ($O(n^2 \log n)$), and Set Cover ($O(m \cdot n)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Graph.Advanced.HopcroftKarp`: Maximum bipartite matching, alternating/augmenting paths,
+  strictly increasing path lengths, phase bound $\le 2\sqrt{|V|}$, and $O(|E|\sqrt{|V|})$ time.
+- `Amort.Graph.Advanced.HallMarriage`: Hall's Marriage Theorem, neighborhood $N(S)$, combinatorial
+  condition $|S| \le |N(S)|$, max-flow reduction, and equivalence with saturating matchings.
+- `Amort.Graph.Advanced.BridgeTarjan`: Tarjan's DFS bridge and articulation point finding, low-link,
+  bridge characterization $\text{low}[v] > \text{disc}[u]$, and $O(|V| + |E|)$ bound.
+- `Amort.Graph.Advanced.Asymptotics`: Bridges connecting Hopcroft-Karp and Tarjan bridge-finding
+  to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Randomized.Quicksort`: Expected complexity of randomized quicksort, comparison indicator
+  variables $X_{ij}$, pivot probability $2/(j - i + 1)$, and $O(n \log n)$ harmonic bound.
+- `Amort.Randomized.KargerMinCut`: Karger's random contraction algorithm for global min-cut,
+  degree bound $|E| \ge n k / 2$, survival $(n-2)/n$, telescoping lower bound $2/(n(n-1))$,
+  and repetition amplification.
+- `Amort.Randomized.UniversalHash`: 2-Universal hash families, collision bound $\le 1/m$,
+  $O(1)$ expected lookup, and reservoir sampling streaming invariant $k/(t+1)$.
+- `Amort.Randomized.Asymptotics`: Bridges connecting Expected Quicksort ($O(n \log n)$),
+  Karger Min-Cut ($O(n^4)$), and Universal Hashing ($O(1)$) to Mathlib `IsBigO`.
 -/

@@ -150,6 +150,71 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Asymptotic Complexity Bridges**: `Amort.Complexity.Asymptotics` connecting 2-SAT linear time ($O(n + m)$), canonical polynomial growth, 3-SAT gadget graph size ($O(m)$ vertices, $O(m^2)$ edges), and complement graph edge complexity ($O(n^2)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/Complexity/Complexity.md`](Amort/Complexity/Complexity.md).
 - **Documentation**: Suite overview in [`Amort/Complexity/Complexity.md`](Amort/Complexity/Complexity.md).
 
+### 17. Approximation Algorithms (`Amort.Approximation`)
+- **Vertex Cover 2-Approximation**: `Amort.Approximation.VertexCover` formalizing greedy maximal
+  matching edge selection, lower bound proving any vertex cover must select at least one endpoint
+  from each matching edge ($|M| \le |C^*|$), approximation ratio $|C| = 2|M| \le 2 \cdot |C^*|$,
+  and linear operational complexity $O(|V| + |E|)$.
+  Documented in [`Amort/Approximation/VertexCover.md`](Amort/Approximation/VertexCover.md).
+- **Metric TSP 2-Approximation**: `Amort.Approximation.MetricTSP` formalizing complete graphs with
+  metric triangle inequality $d(u, w) \le d(u, v) + d(v, w)$, MST weight lower bound
+  $\text{weight}(\text{MST}) \le \text{OPT}_{\text{TSP}}$, double-tree Eulerian tour,
+  shortcutting theorem, and bound $\text{cost}(\text{Tour}) \le 2 \cdot \text{OPT}_{\text{TSP}}$.
+  Documented in [`Amort/Approximation/MetricTSP.md`](Amort/Approximation/MetricTSP.md).
+- **Set Cover Greedy $H(n)$-Approximation**: `Amort.Approximation.SetCover` formalizing set systems,
+  greedy maximum marginal coverage selection, harmonic potential charging scheme, and harmonic
+  potential bound $|\mathcal{C}_{\text{greedy}}| \le H(n) \cdot \text{OPT}$.
+  Documented in [`Amort/Approximation/SetCover.md`](Amort/Approximation/SetCover.md).
+- **Asymptotic Complexity Bridges**: `Amort.Approximation.Asymptotics` connecting Vertex Cover
+  ($O(|V| + |E|)$), Metric TSP ($O(n^2 \log n)$), and Set Cover ($O(m \cdot n)$) to Mathlib's
+  `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Overview in
+  [`Amort/Approximation/Approximation.md`](Amort/Approximation/Approximation.md).
+
+### 18. Advanced Graph Algorithms & Bipartite Matching (`Amort.Graph.Advanced`)
+- **Hopcroft-Karp Maximum Bipartite Matching**: `Amort.Graph.Advanced.HopcroftKarp` formalizing
+  bipartite graphs, matchings, alternating paths, augmenting paths, layered BFS phase, maximal DFS
+  augmenting phase, strictly increasing path lengths across phases ($d_{i+1} \ge d_i + 2$),
+  phase bound $\le 2\sqrt{|V|}$, and $O(|E|\sqrt{|V|})$ worst-case time complexity.
+  Documented in [`Amort/Graph/Advanced/HopcroftKarp.md`](Amort/Graph/Advanced/HopcroftKarp.md).
+- **Hall's Marriage Theorem**: `Amort.Graph.Advanced.HallMarriage` formalizing bipartite graph
+  $G = (L, R, E)$, neighborhood $N(S)$ for subsets $S \subseteq L$, combinatorial condition
+  $|N(S)| \ge |S|$, max-flow reduction, and equivalence with saturating matchings.
+  Documented in [`Amort/Graph/Advanced/HallMarriage.md`](Amort/Graph/Advanced/HallMarriage.md).
+- **Bridges & Articulation Points (Tarjan's DFS)**: `Amort.Graph.Advanced.BridgeTarjan` formalizing
+  DFS discovery order $\text{disc}[u]$, low-link values $\text{low}[u]$, bridge characterization
+  $\text{low}[v] > \text{disc}[u]$, articulation point characterization, and $O(|V| + |E|)$ bound.
+  Documented in [`Amort/Graph/Advanced/BridgeTarjan.md`](Amort/Graph/Advanced/BridgeTarjan.md).
+- **Asymptotic Complexity Bridges**: `Amort.Graph.Advanced.Asymptotics` connecting Hopcroft-Karp
+  ($O(|E|\sqrt{|V|})$) and Tarjan bridge-finding ($O(|V| + |E|)$) to Mathlib's
+  `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Overview in
+  [`Amort/Graph/Advanced/AdvancedGraph.md`](Amort/Graph/Advanced/AdvancedGraph.md).
+
+### 19. Randomized Algorithms & Probabilistic Complexity (`Amort.Randomized`)
+- **Expected Complexity of Randomized Quicksort**: `Amort.Randomized.Quicksort` formalizing
+  comparison
+  indicators $X_{ij}$ for sorted elements $z_i, z_j$, pivot probability lemma
+  $\mathbb{P}[X_{ij} = 1] = \frac{2}{j - i + 1}$, linearity of expectation, and harmonic bound
+  $\mathbb{E}[C] = \sum_{k=1}^{n-1} \frac{2(n-k)}{k+1} \le 2n H(n) = O(n \log n)$.
+  Documented in [`Amort/Randomized/Quicksort.md`](Amort/Randomized/Quicksort.md).
+- **Karger's Min-Cut Contraction Algorithm**: `Amort.Randomized.KargerMinCut` formalizing multigraph
+  contraction, degree/edge bounds ($k \le \text{deg}(v) \implies |E| \ge n k / 2$),
+  single contraction survival probability $\ge (n-2)/n$, telescoping success lower bound
+  $\mathbb{P}[\text{success}] \ge \prod_{i=0}^{n-3} (1 - \frac{2}{n - i}) = \frac{2}{n(n-1)}$,
+  and repetition amplification to $1 - \delta$.
+  Documented in [`Amort/Randomized/KargerMinCut.md`](Amort/Randomized/KargerMinCut.md).
+- **Universal Hashing & Reservoir Sampling**: `Amort.Randomized.UniversalHash` formalizing
+  2-Universal
+  hash families, collision probability bound $\forall x \ne y, \mathbb{P}[h(x) = h(y)] \le 1/m$,
+  expected collision bound $\le n/m$ ($O(1)$ expected lookup), reservoir sampling algorithm, and
+  streaming uniform invariant $\frac{k}{t} \cdot \frac{t}{t+1} = \frac{k}{t+1}$.
+  Documented in [`Amort/Randomized/UniversalHash.md`](Amort/Randomized/UniversalHash.md).
+- **Asymptotic Complexity Bridges**: `Amort.Randomized.Asymptotics` connecting Quicksort
+  ($O(n \log n)$), Karger Min-Cut ($O(n^4)$), and Universal Hashing ($O(1)$) to Mathlib's
+  `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
+- **Documentation**: Overview in [`Amort/Randomized/Randomized.md`](Amort/Randomized/Randomized.md).
+
 ## Building and Verification
 
 ```bash
