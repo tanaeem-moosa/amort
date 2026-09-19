@@ -1,199 +1,142 @@
 # Textbook String Algorithms in Lean 4
 
-This document details the Lean 4 formalization of textbook string algorithms in `Amort.String`,
-contrasting naive solutions with optimal algorithms:
-- **String Matching**: Naive $O(n \cdot m)$ sliding window vs. Knuth-Morris-Pratt (KMP) $O(n + m)$
-  linear-time matching.
+This document details the Lean 4 formalization of foundational and advanced textbook string
+algorithms in `Amort.String`:
+- **Single-Pattern Matching**: Naive $O(n \cdot m)$ sliding window vs. Knuth-Morris-Pratt (KMP)
+  $O(n + m)$ linear-time matching.
+- **Multi-Pattern Matching & Dictionaries**:
+  - Prefix Trie (`Amort/String/Trie.lean`, `Trie.md`): explicit root, child transitions, word
+    termination markers, retrieval soundness, and $O(\sum |P_i|)$ dictionary construction.
+  - Aho-Corasick Multi-Pattern Automaton (`Amort/String/AhoCorasick.lean`, `AhoCorasick.md`):
+    failure links, text scanning state transitions, $\Phi(u) = \text{depth}(u)$ potential function
+    proving $\le 2|T|$ scanning steps, and overall $O(\sum |P_i| + |T| + z)$ search complexity.
+- **Linear Pattern Analysis**:
+  - Gusfield's Z-Algorithm (`Amort/String/ZAlgorithm.lean`, `ZAlgorithm.md`): $Z$-array
+    $Z[i] = \text{LCP}(S, S[i..])$, rightmost match window $[l, r]$, two-case branch logic,
+    $\le 2|S|$ comparison bound via window expansion progress, and pattern matching reduction $Z(P \$ T)$.
+- **Algebraic / Fingerprinting Matching**:
+  - Rabin-Karp Algorithm (`Amort/String/RabinKarp.lean`, `RabinKarp.md`): polynomial rolling hash,
+    $O(1)$ sliding window update identity, hash congruence soundness, and average-case
+    $O(|T| + |P|)$ search complexity.
+- **Suffix Structures & Linear LCP**:
+  - Suffix Array & Kasai's LCP (`Amort/String/SuffixArray.lean`, `SuffixArray.md`): suffix orderings,
+    inverse permutation ranks, Kasai's height decrement invariant $h_{i+1} \ge h_i - 1$, and
+    telescoping $\le 2n$ comparison bound yielding $O(n)$ step complexity.
 - **Sequence Alignment**: Longest Common Subsequence (LCS) and Levenshtein Edit Distance
   via bottom-up $(n + 1) \times (m + 1)$ dynamic programming tables.
-- **Asymptotic Bridges**: Direct composition through `Amort.Recurrence.Composition`
-  (`isBigO_nested_loops_nat` and `isBigO_sequential_add_nat`) connecting concrete step
-  counters to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` framework.
+- **Asymptotic Bridges**: Direct connections to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO`
+  under `Filter.atTop` (`Asymptotics.lean` and `AdvancedAsymptotics.lean`).
 
 ---
 
 ## 1. Architectural Overview
 
-The formalization comprises five modular files under `Amort/String/`:
+The formalization comprises eleven modular files under `Amort/String/`:
 
 ```
-Amort/
-├── Amort.lean                  -- Root library export
-├── GCD/                        -- Stein's Binary GCD & Euclidean GCD modules
-├── Sorting/                    -- Insertion Sort, Merge Sort, Decision Trees, Lower Bounds
-├── Recurrence/                 -- Recurrence algebra & master theorems
-└── String/
-    ├── NaiveMatch.lean         -- Naive sliding-window string matching (O(n * m))
-    ├── KMP.lean                -- Knuth-Morris-Pratt matching (O(n + m), potential Φ = j)
-    ├── LCS.lean                -- Longest Common Subsequence DP (O(n * m))
-    ├── EditDistance.lean       -- Levenshtein Edit Distance DP & minimal alignment (O(n * m))
-    ├── Asymptotics.lean        -- Mathlib IsBigO bridges connecting to Amort.Recurrence
-    └── String.md               -- Architectural and mathematical documentation
+Amort/String/
+├── NaiveMatch.lean         -- Naive sliding-window string matching (O(n * m))
+├── KMP.lean                -- Knuth-Morris-Pratt matching (O(n + m), potential Φ = j)
+├── LCS.lean                -- Longest Common Subsequence DP (O(n * m))
+├── EditDistance.lean       -- Levenshtein Edit Distance DP & minimal alignment (O(n * m))
+├── Trie.lean               -- Prefix trie dictionary data structure (O(∑|P_i|))
+├── AhoCorasick.lean        -- Aho-Corasick automaton (O(∑|P_i| + |T| + z))
+├── ZAlgorithm.lean         -- Gusfield's Z-Algorithm (O(|S|), window expansion progress)
+├── RabinKarp.lean          -- Rabin-Karp rolling hash matching (O(|T| + |P|))
+├── SuffixArray.lean        -- Suffix Array and Kasai's linear LCP (O(n), invariant h_{i+1} ≥ h_i - 1)
+├── Asymptotics.lean        -- Mathlib IsBigO bridges for basic matching & DP
+├── AdvancedAsymptotics.lean-- Mathlib IsBigO bridges for Trie, AC, Z, RK, and Kasai
+└── String.md               -- Consolidated architectural documentation
 ```
 
-All 5 modules are fully re-exported in `Amort.lean` and compile with 0 warnings, 0 errors,
-and 0 `sorryAx`.
+All 11 modules are exported in `Amort.lean` and compile with 0 warnings, 0 errors, and 0 `sorryAx`.
 
 ---
 
-## 2. String Matching: Naive vs. KMP
+## 2. Advanced Multi-Pattern Matching: Trie & Aho-Corasick
 
-### 2.1 Naive Sliding-Window Matching (`NaiveMatch.lean`)
+### 2.1 Prefix Trie Dictionary (`Trie.lean`)
+- **Automaton Model**: `Trie α` structure specifying `numNodes`, `root`, transition `step`,
+  termination marker `isTerminal`, and tree depth invariant `depth`.
+- **Prefix-Tree Walk**: `walk t u w` traces transitions along word `w`.
+- **Depth Invariant**: `walk t u w = some v → depth v = depth u + w.length`.
+- **Retrieval Soundness**:
+  $$\text{contains}(w) = \text{true} \iff \exists v, \; \text{walk}(\text{root}, w) = \text{some } v \land \text{isTerminal}(v) = \text{true}$$
+- **Operational Bounds**:
+  - Single-word lookup: bounded by $|w|$ edge traversals (`lookupSteps_le`).
+  - Single-word insert: bounded by $|w|$ operations (`insertWork_le`).
+  - Dictionary construction: bounded by $\sum |P_i|$ (`buildWork_eq_sum`).
 
-The naive string matching algorithm checks each possible shift $s \in [0, n - m]$ by
-comparing characters sequentially from left to right:
-- **Prefix checker**: `checkPrefix P (T.drop s)` tests whether pattern $P$ is a prefix of
-  the text slice at shift $s$.
-- **Step counter**: `checkPrefixCount P (T.drop s)` counts comparisons made until the first
-  mismatch or complete match.
-- **Shift bounds**: For each shift $s$, `checkPrefixCount P (T.drop s) ≤ P.length`
-  (`checkPrefixCount_le`).
-- **Total comparisons**:
-  $$\text{naiveMatchCount } P\ T \le (n - m + 1) \cdot m \le n \cdot m$$
-  (`naiveMatchCount_le_shifts` and `naiveMatchCount_le_mul`).
-- **Correctness**:
-  `s ∈ naiveMatch P T ↔ IsSubstringAt P T s` (`mem_naiveMatch_iff`), where
-  `IsSubstringAt P T s ↔ s + P.length ≤ T.length ∧ (T.drop s).take P.length = P`.
-
-### 2.2 Knuth-Morris-Pratt Algorithm (`KMP.lean`)
-
-The KMP algorithm achieves worst-case linear time $O(n + m)$ by eliminating redundant
-character comparisons through precomputed failure transitions:
-- **Failure Function $\pi$**: For each prefix length $q$, `piSpec P q` computes the length of
-  the longest proper prefix of $P[0..q-1]$ that is also a suffix of $P[0..q-1]$.
-  - Contraction invariant: `piSpec P q < q` for all $q > 0$ (`piSpec_lt`).
-- **Preprocessing Bound**: Scanning pattern $P$ against itself executes at most $2m$
-  character transitions:
-  $$\text{kmpPreprocessCount } P \le 2 \cdot P.\text{length} \quad (\text{kmpPreprocessCount\_le})$$
-- **Potential Function Analysis for Text Scanning**:
-  Define the potential function $\Phi(j) = j$, where $j \in [0, m]$ is the length of the
-  currently matched prefix.
-  - Single-step bound: At each character step with $k$ backtracks, $j$ decreases by at least $k$,
-    and then increases by at most 1. Hence `steps + j' ≤ j + 2` (`kmpStep_bound`).
-  - Telescoping across the text: Summing over all $n$ text characters telescopes:
-    $$\sum_{i=1}^n (\text{steps}_i + j_i - j_{i-1}) \le 2n \implies \text{steps} + j_{\text{end}} \le j_{\text{start}} + 2n$$
-    (`kmpScanCount_bound`).
-  - Scanning bound starting at $j = 0$: `(kmpScanCount P pi hpi T 0).2 ≤ 2 * T.length`
-    (`kmpScanCount_le_two_mul`).
-- **Combined Linear Bound**:
-  $$\text{kmpTotalSteps } P\ T \le 2 \cdot (n + m) \quad (\text{kmpTotalSteps\_le})$$
-- **Equivalence & Correctness**:
-  - `kmpMatch P T = naiveMatch P T` (`kmpMatch_eq_naiveMatch`).
-  - `s ∈ kmpMatch P T ↔ IsSubstringAt P T s` (`mem_kmpMatch_iff`).
+### 2.2 Aho-Corasick Automaton (`AhoCorasick.lean`)
+- **Structure**: Extends prefix trie with failure links `fail : ℕ → ℕ` and dictionary `outputList`.
+- **Depth Contraction Invariant**: $\forall u, \; \text{depth}(u) > 0 \implies \text{depth}(\text{fail}(u)) < \text{depth}(u)$.
+- **State Transition**: `acStep` follows trie transitions when available; falls back along `fail(u)` otherwise.
+- **Potential Function Analysis**: With $\Phi(u) = \text{depth}(u)$:
+  $$\text{steps} + \Phi(u') \le \Phi(u) + 2 \quad (\text{acStep\_bound})$$
+- **Linear Text Scanning**: Summing across text $T$ from root telescopes:
+  $$\text{Total Steps} \le 2|T| \quad (\text{acScan\_le\_two\_mul})$$
+- **Total Search Complexity**:
+  $$\text{Total Work} \le \sum_{i=1}^k |P_i| + 2|T| + z = O\left(\sum_{i=1}^k |P_i| + |T| + z\right)$$
 
 ---
 
-## 3. Sequence Alignment: Dynamic Programming
+## 3. Gusfield's Z-Algorithm (`ZAlgorithm.lean`)
 
-### 3.1 Longest Common Subsequence (`LCS.lean`)
-
-The LCS problem computes the maximum length of a common subsequence between sequences $xs$ and $ys$:
-- **Recursive Formulation**:
-  ```lean
-  def lcsRec : List α → List α → ℕ
-    | [], _ => 0
-    | _, [] => 0
-    | x :: xs, y :: ys =>
-      if x = y then 1 + lcsRec xs ys
-      else max (lcsRec (x :: xs) ys) (lcsRec xs (y :: ys))
-  ```
-- **Constructive Correctness**:
-  `lcsWitness xs ys` explicitly extracts a common subsequence from the decisions of `lcsRec`:
-  - `(lcsWitness xs ys).Sublist xs` (`lcsWitness_sublist_left`).
-  - `(lcsWitness xs ys).Sublist ys` (`lcsWitness_sublist_right`).
-  - `(lcsWitness xs ys).length = lcsRec xs ys` (`lcsWitness_length`).
-  - Maximal length existence: `∃ s, IsCommonSubsequence s xs ys ∧ s.length = lcsRec xs ys`
-    (`lcs_is_maximal`).
-  - Identity: `lcsRec s s = s.length` (`lcsRec_self`).
-- **Bottom-Up DP Table**:
-  `lcsTable xs ys` computes the $(n + 1) \times (m + 1)$ dynamic programming table row by row:
-  - Row count: `(lcsTable xs ys).length = xs.length + 1` (`lcsTable_length`).
-  - Operational step count:
-    $$\text{lcsTableCount } xs\ ys = (n + 1) \cdot (m + 1) \le (n + 1) \cdot (m + 1)$$
-    (`lcsTableCount_eq` and `lcsTableCount_le`).
-
-### 3.2 Edit Distance (`EditDistance.lean`)
-
-Levenshtein edit distance measures the minimum cost of transforming $xs$ into $ys$ using
-substitutions (cost 0 if matching, 1 if mismatch), deletions (cost 1), and insertions (cost 1):
-- **Alignment Model**:
-  Inductive predicate `IsAlignment ops xs ys` specifies sequences of `EditOp α` operations
-  transforming $xs$ into $ys$, with total cost `alignmentCost ops = (ops.map opCost).sum`.
-- **Recursive Formulation**:
-  ```lean
-  def editDistRec : List α → List α → ℕ
-    | [], ys => ys.length
-    | xs, [] => xs.length
-    | x :: xs, y :: ys =>
-      let cost_sub := (if x = y then 0 else 1) + editDistRec xs ys
-      let cost_del := 1 + editDistRec xs (y :: ys)
-      let cost_ins := 1 + editDistRec (x :: xs) ys
-      min cost_sub (min cost_del cost_ins)
-  ```
-- **Minimal Cost Alignment Correctness**:
-  - Soundness: Any valid alignment has cost at least `editDistRec`:
-    $$\forall \text{ops},\ \text{IsAlignment ops } xs\ ys \implies \text{editDistRec } xs\ ys \le \text{alignmentCost ops}$$
-    (`editDistRec_le_alignmentCost`).
-  - Completeness: `editDistWitness xs ys` constructs an alignment achieving exactly `editDistRec`:
-    $$\text{IsAlignment (editDistWitness } xs\ ys)\ xs\ ys \wedge \text{alignmentCost (editDistWitness } xs\ ys) = \text{editDistRec } xs\ ys$$
-    (`editDistWitness_isAlignment` and `editDistWitness_cost`).
-  - Minimality theorem: `editDist_is_minimal_alignment`.
-- **Bottom-Up DP Matrix**:
-  `editDistTable xs ys` computes the $(n + 1) \times (m + 1)$ matrix row by row:
-  - Row count: `(editDistTable xs ys).length = xs.length + 1` (`editDistTable_length`).
-  - Operational step count:
-    $$\text{editDistTableCount } xs\ ys = (n + 1) \cdot (m + 1) \le (n + 1) \cdot (m + 1)$$
-    (`editDistTableCount_eq` and `editDistTableCount_le`).
+- **$Z$-Array Specification**: $Z[i] = \text{lcp}(S, S.\text{drop } i)$ (`zSpec`).
+- **Rightmost Window $[l, r]$**:
+  - Case 1 ($i > r$): Explicit comparisons starting from 0, initializing new window.
+  - Case 2 ($i \le r$): Let $k = i - l$ and $\beta = r - i + 1$:
+    - Subcase 2a ($Z[k] < \beta$): Exact reuse $Z[i] = Z[k]$ with 0 comparisons.
+    - Subcase 2b ($Z[k] \ge \beta$): Comparisons strictly beyond $r$, expanding window.
+- **Linear Bound**: Every successful comparison increases $r$ ($\le n$ steps); at most 1 mismatch
+  per position ($\le n$ steps). Total comparisons $\le 2|S|$ (`zAlgorithmWork_le`).
+- **Pattern Matching Reduction**:
+  $$Z(P \$ T)[|P| + 1 + j] \ge |P| \iff P <+: T.\text{drop } j \iff \text{IsSubstringAt } P \; T \; j$$
 
 ---
 
-## 4. Asymptotics & Composition Bridges (`Asymptotics.lean`)
+## 4. Rabin-Karp Rolling Hash (`RabinKarp.lean`)
 
-All algorithmic step bounds connect directly to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO`
-via the compositional theorems in `Amort.Recurrence.Composition`.
-
-### 4.1 Product Composition for 2D DP Tables
-Because $n + 1 = O(n)$ (`isBigO_fst_add_one_atTop`) and $m + 1 = O(m)$ (`isBigO_snd_add_one_atTop`)
-under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$, applying `isBigO_nested_loops_nat` yields:
-$$(n + 1) \cdot (m + 1) = O(n \cdot m) \quad (\text{isBigO\_succ\_mul\_succ\_atTop})$$
-Consequently:
-- `isBigO_lcsTableCount_atTop`: LCS DP table size is $O(n \cdot m)$.
-- `isBigO_editDistTableCount_atTop`: Edit Distance DP matrix size is $O(n \cdot m)$.
-- `isBigO_naiveMatch_bound_atTop`: Naive string matching worst-case comparisons are $O(n \cdot m)$.
-
-### 4.2 Sequential Sum Composition for KMP
-KMP text scanning executes in $2n = O(n)$ (`isBigO_two_mul_fst_atTop`) and preprocessing
-executes in $2m = O(m)$ (`isBigO_two_mul_snd_atTop`).
-Applying `isBigO_sequential_add_nat` yields:
-$$2n + 2m = O(n + m) \quad (\text{isBigO\_kmp\_linear\_atTop})$$
-$$2(n + m) = O(n + m) \quad (\text{isBigO\_kmpTotalSteps\_bound\_atTop})$$
+- **Polynomial Rolling Hash**: $H(w) = \sum_{j=0}^{m-1} w[j] \cdot B^{m - 1 - j}$ (`polyHash`).
+- **Sliding Window Identity**:
+  $$H(S[i+1 \dots i+m]) \equiv (H(S[i \dots i+m-1]) \cdot B - S[i] \cdot B^m + S[i+m]) \pmod p$$
+  Formally proven in `polyHash_sliding_window` and `polyHash_sliding_window_mod`.
+- **Soundness**: Identical substrings produce identical hash values (`polyHash_congruence_soundness`).
+- **Complexity**: Average-case operational work bounded by $2(|T| + |P|)$ (`rabinKarpWork_no_collisions`).
 
 ---
 
-## 5. Comparison Tables
+## 5. Suffix Array & Kasai's LCP (`SuffixArray.lean`)
 
-### 5.1 String Matching: Naive vs. Knuth-Morris-Pratt
-
-| Algorithm | Preprocessing Time | Search Comparisons | Combined Bound | Asymptotic Class | Method |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Naive Matching** | $0$ | $\le (n - m + 1) \cdot m$ | $\le n \cdot m$ | $O(n \cdot m)$ | Sliding window |
-| **KMP Matching** | $\le 2m$ | $\le 2n$ | $\le 2(n + m)$ | $O(n + m)$ | Failure $\pi$ + Potential $\Phi = j$ |
-
-### 5.2 Sequence Alignment: LCS vs. Edit Distance
-
-| Problem | Table Dimensions | Cell Operations | Total Operations | Asymptotic Class | Correctness Target |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **LCS** | $(n + 1) \times (m + 1)$ | Match / Max | $\le (n + 1)(m + 1)$ | $O(n \cdot m)$ | Maximal common subsequence |
-| **Edit Distance** | $(n + 1) \times (m + 1)$ | Sub / Ins / Del | $\le (n + 1)(m + 1)$ | $O(n \cdot m)$ | Minimal cost alignment |
+- **Suffix Array Permutation**: Permutation `sa : Fin n → Fin n` and rank `rank : Fin n → Fin n` (`SuffixArray`).
+- **Height Decrement Invariant**:
+  $$h_{i+1} \ge h_i - 1 \quad \text{where } h_i = \text{LCP}(S[i..], S[\text{SA}[\text{rank}[i] - 1]..])$$
+  Formally verified in `KasaiHeightInvariant` and `kasai_height_decrement_le`.
+- **Telescoping Comparison Bound**:
+  $$\sum_{i=0}^{n-1} (h_{i+1} - (h_i - 1)) = (h_n - h_0) + n \le 2n$$
+  Formally proven in `kasai_telescoping_increments`, establishing linear operational complexity
+  $\le 2n$ (`kasaiWork_le`).
 
 ---
 
-## 6. Verification & Axiom Audit
+## 6. Asymptotic Complexity Summary (`AdvancedAsymptotics.lean`)
 
-Every declaration in `Amort.String` has been verified via `#print axioms`.
-The formalization relies strictly on standard foundational Lean 4 axioms:
-- `propext` (Propositional Extensionality)
-- `Classical.choice` (Axiom of Choice)
-- `Quot.sound` (Quotient Soundness)
+| Algorithm | Concrete Bound | Asymptotic Class (`IsBigO`) | Lean Theorem |
+| :--- | :--- | :--- | :--- |
+| **Prefix Trie Build** | $\sum |P_i|$ | $O(\sum |P_i|)$ | `isBigO_trieBuildWork_atTop` |
+| **Aho-Corasick Scan** | $\le 2|T|$ | $O(|T|)$ | `isBigO_acScan_atTop` |
+| **Aho-Corasick Search**| $\sum |P_i| + 2|T| + z$ | $O(\sum |P_i| + |T| + z)$ | `isBigO_acTotalSearchWork_atTop` |
+| **Gusfield's Z-Alg** | $\le 2|S|$ | $O(|S|)$ | `isBigO_zAlgorithmWork_atTop` |
+| **Rabin-Karp Match** | $\le 2(|T| + |P|)$ | $O(|T| + |P|)$ | `isBigO_rabinKarpAverageWork_atTop` |
+| **Kasai's LCP** | $\le 2n$ | $O(n)$ | `isBigO_kasaiWork_atTop` |
 
-Zero theorems rely on `sorry` or `sorryAx`.
+---
+
+## 7. Verification & Axiom Audit
+
+All milestone theorems in `Amort.String` depend exclusively on standard Lean 4 foundational axioms:
+- `propext`
+- `Classical.choice`
+- `Quot.sound`
+
+Verified with 0 `sorry` and 0 `sorryAx`.

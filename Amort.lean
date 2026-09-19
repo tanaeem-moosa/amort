@@ -23,6 +23,12 @@ import Amort.String.KMP
 import Amort.String.LCS
 import Amort.String.EditDistance
 import Amort.String.Asymptotics
+import Amort.String.Trie
+import Amort.String.AhoCorasick
+import Amort.String.ZAlgorithm
+import Amort.String.RabinKarp
+import Amort.String.SuffixArray
+import Amort.String.AdvancedAsymptotics
 import Amort.DP.MatrixChain
 import Amort.DP.Knapsack
 import Amort.DP.LIS
@@ -104,6 +110,20 @@ algorithms, recurrence relations, and amortized data structures.
   `Amort.Recurrence.Composition` (`isBigO_nested_loops_nat`), linear KMP bounds to
   `isBigO_sequential_add_nat`, and proving formal $O(n \cdot m)$ and $O(n + m)$ `IsBigO` bounds
   under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+- `Amort.String.Trie`: Prefix trie dictionary, explicit root, child transitions, word termination
+  markers, retrieval soundness, and $O(\sum |P_i|)$ construction bound.
+- `Amort.String.AhoCorasick`: Aho-Corasick multi-pattern matching automaton, failure links,
+  depth potential function $\Phi(u) = \text{depth}(u)$, linear scanning $\le 2|T|$, and
+  $O(\sum |P_i| + |T| + z)$ search.
+- `Amort.String.ZAlgorithm`: Gusfield's Z-Algorithm, $Z$-array, rightmost match window $[l, r]$,
+  linear comparison bound $\le 2|S|$ via window progress, and reduction $Z(P \$ T)$.
+- `Amort.String.RabinKarp`: Rabin-Karp polynomial rolling hash, $O(1)$ sliding window update
+  identity, hash congruence soundness, and average-case $O(|T| + |P|)$ search complexity.
+- `Amort.String.SuffixArray`: Suffix array permutations and ranks, Kasai's height decrement
+  invariant $h_{i+1} \ge h_i - 1$, and telescoping linear comparison bound $\le 2n$ ($O(n)$).
+- `Amort.String.AdvancedAsymptotics`: Bridges connecting Trie ($O(\sum |P_i|)$), Aho-Corasick
+  ($O(\sum |P_i| + |T| + z)$), Z-Algorithm ($O(|S|)$), Rabin-Karp ($O(|T| + |P|)$), and
+  Kasai's LCP ($O(n)$) to Mathlib's `Asymptotics.IsBigO` under `Filter.atTop`.
 - `Amort.DP.MatrixChain`: Matrix Chain Multiplication interval DP model, Bellman recurrence,
   interval state space cardinality $n(n+1)/2 \le n^2$, and $O(n^3)$ operational bound
   via `Amort.Recurrence.DP`.
