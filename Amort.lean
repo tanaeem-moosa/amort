@@ -34,6 +34,12 @@ import Amort.Graph.TopologicalSort
 import Amort.Graph.DSU
 import Amort.Graph.Kruskal
 import Amort.Graph.Asymptotics
+import Amort.Graph.Dijkstra
+import Amort.Graph.MaxFlow
+import Amort.Graph.SCC
+import Amort.Graph.Eulerian
+import Amort.Graph.Prim
+import Amort.Graph.AdvancedAsymptotics
 import Amort.DataStructure.BinaryHeap
 import Amort.DataStructure.OnlineMedian
 import Amort.DataStructure.BalancedBST
@@ -129,6 +135,19 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Graph.Asymptotics`: Bridges connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford
   ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU
   ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Graph.Dijkstra`: Dijkstra's algorithm for directed graphs with non-negative edge weights,
+  greedy choice invariant, and operational step bound $(|V| + |E|) \cdot \text{Nat.size } |V|$.
+- `Amort.Graph.MaxFlow`: Flow networks, capacity constraints, flow conservation, $s$-$t$ cuts,
+  Cut-Flow Identity, Weak Duality, Max-Flow Min-Cut Theorem, and Edmonds-Karp $O(|V| \cdot |E|^2)$.
+- `Amort.Graph.SCC`: Directed reachability, mutual reachability equivalence classes, strongly
+  connected components, acyclic condensation DAG, and Kosaraju's algorithm $O(|V| + |E|)$.
+- `Amort.Graph.Eulerian`: In-degree Handshaking equality, degree balance conditions, trail
+  continuity, Hierholzer's cycle splicing algorithm, and linear operational bound $O(|V| + |E|)$.
+- `Amort.Graph.Prim`: Prim's Minimum Spanning Tree algorithm, priority queue frontier selection,
+  Cut-Property invariant, $O(|E| \log |V|)$ complexity, and comparison with Kruskal's algorithm.
+- `Amort.Graph.AdvancedAsymptotics`: Bridges connecting Dijkstra ($O((|V| + |E|) \log |V|)$),
+  Edmonds-Karp ($O(|V| \cdot |E|^2)$), Kosaraju ($O(|V| + |E|)$), Hierholzer ($O(|V| + |E|)$),
+  and Prim ($O(|E| \log |V|)$) to Mathlib's `Asymptotics.IsBigO` framework under `Filter.atTop`.
 - `Amort.DataStructure.BinaryHeap`: Binary heaps, min-heap order invariant, logarithmic height,
   sift-down and sift-up step bounds, linear build-heap theorem $\sum (n/2^h) h \le 2n$,
   and heapsort comparison complexity $O(n \log n)$.
