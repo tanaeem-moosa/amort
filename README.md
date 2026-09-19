@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, and `Amort/DataStructure/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, and `Amort/NumberTheory/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -116,6 +116,26 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Two-Stack FIFO Queue**: `Amort.DataStructure.TwoStackQueue` formalizing two-stack FIFO queue, potential function $\Phi = 2 \cdot |\text{inStack}|$, amortized push $\hat{c} = 3$, amortized pop $\hat{c} \le 1$, FIFO sequence append soundness, and multi-operation telescoping bound $\sum c_i \le 3m$. Documented in [`Amort/DataStructure/TwoStackQueue.md`](Amort/DataStructure/TwoStackQueue.md).
 - **Asymptotic Complexity Bridges**: `Amort.DataStructure.Asymptotics` connecting linear build-heap ($O(n)$), heapsort ($O(n \log n)$), online median query ($O(1)$) and insert ($O(\log n)$), balanced BST queries ($O(\log n)$), dynamic array pushes ($O(k)$), and two-stack queue operations ($O(m)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.
 - **Documentation**: Suite overview and comparison in [`Amort/DataStructure/DataStructure.md`](Amort/DataStructure/DataStructure.md).
+
+### 12. Greedy Algorithms & Linear Selection (`Amort.Greedy`)
+- **Interval Scheduling / Activity Selection**: `Amort.Greedy.IntervalScheduling` formalizing compatible intervals $start < finish$, greedy earliest-finish-time selection, exchange argument optimality theorem, and $O(n \log n)$ operational step bound. Documented in [`Amort/Greedy/IntervalScheduling.md`](Amort/Greedy/IntervalScheduling.md).
+- **Huffman Coding & Optimal Prefix Trees**: `Amort.Greedy.Huffman` formalizing weighted symbol alphabets, binary prefix trees, equivalence between external path length and internal node weights, greedy choice property for minimal-weight siblings at maximum depth, and $O(n \log n)$ priority queue construction bound. Documented in [`Amort/Greedy/Huffman.md`](Amort/Greedy/Huffman.md).
+- **Median-of-Medians Deterministic Selection (BFPRT)**: `Amort.Greedy.MedianOfMedians` formalizing group-of-5 partitioning, group medians, median-of-medians pivot quality theorem guaranteeing $\ge 3n/10 - 6$ elements bounded by the pivot, recursive branch bound $\le 7n/10 + 6$, and linear-time recurrence $T(n) \le T(\lceil n/5 \rceil) + T(7n/10 + 6) + c \cdot n \implies O(n)$. Documented in [`Amort/Greedy/MedianOfMedians.md`](Amort/Greedy/MedianOfMedians.md).
+- **Asymptotic Complexity Bridges**: `Amort.Greedy.Asymptotics` connecting Interval Scheduling ($O(n \log n)$), Huffman Coding ($O(n \log n)$), and Median-of-Medians ($O(n)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/Greedy/Asymptotics.md`](Amort/Greedy/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/Greedy/Greedy.md`](Amort/Greedy/Greedy.md).
+
+### 13. Computational Geometry (`Amort.Geometry`)
+- **2D Convex Hull (Graham Scan / Monotone Chain)**: `Amort.Geometry.ConvexHull` formalizing 2D points `Point2D`, orientation test via 2D determinant cross product, monotone chain stack hull construction, potential function amortized scanning bound $\le 2n$ stack operations, and $O(n \log n)$ total complexity dominated by sorting. Documented in [`Amort/Geometry/ConvexHull.md`](Amort/Geometry/ConvexHull.md).
+- **Closest Pair of Points**: `Amort.Geometry.ClosestPair` formalizing squared Euclidean distance, divide-and-conquer splitting by median $x$-coordinate, strip geometric sparsity / packing lemma bounding any $\delta \times \delta$ square to $\le 4$ points and strip neighbors to $\le 7$, and divide-and-conquer recurrence $T(n) \le 2T(n/2) + c \cdot n \implies O(n \log n)$. Documented in [`Amort/Geometry/ClosestPair.md`](Amort/Geometry/ClosestPair.md).
+- **Asymptotic Complexity Bridges**: `Amort.Geometry.Asymptotics` connecting 2D Convex Hull ($O(n \log n)$) and Closest Pair of Points ($O(n \log n)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/Geometry/Asymptotics.md`](Amort/Geometry/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/Geometry/Geometry.md`](Amort/Geometry/Geometry.md).
+
+### 14. Number Theoretic Algorithms (`Amort.NumberTheory`)
+- **Fast Modular Exponentiation (Binary Exponentiation)**: `Amort.NumberTheory.ModExp` formalizing repeated squaring computing $a^b \bmod m$, loop state correctness invariant $acc \cdot base^{exp} \equiv a^b \pmod m$, and logarithmic multiplication step bound $\le 2 \cdot \text{Nat.size } b \implies O(\log b)$. Documented in [`Amort/NumberTheory/ModExp.md`](Amort/NumberTheory/ModExp.md).
+- **Extended Euclidean Algorithm**: `Amort.NumberTheory.ExtendedGCD` formalizing extended Euclidean division computing Bézout coefficients $x, y \in \mathbb{Z}$ satisfying $a \cdot x + b \cdot y = \gcd(a, b)$, quotient step linear combination invariants, two-step remainder halving theorem $2 \cdot r_{k+2} < r_k$, and logarithmic step bound $\le 2 \cdot \text{Nat.size}(\min a\ b) + 1 \implies O(\log(\min a\ b))$. Documented in [`Amort/NumberTheory/ExtendedGCD.md`](Amort/NumberTheory/ExtendedGCD.md).
+- **Sieve of Eratosthenes**: `Amort.NumberTheory.Sieve` formalizing composite marking array model over $[2, n]$, correctness theorem proving integer $k \in [2, n]$ remains unmarked iff $k$ is prime, and harmonic operational work bound $\sum_{p \le n} (n / p) \le n \sum_{k=1}^n (1 / k) \le n (1 + \ln n) = O(n \log n)$. Documented in [`Amort/NumberTheory/Sieve.md`](Amort/NumberTheory/Sieve.md).
+- **Asymptotic Complexity Bridges**: `Amort.NumberTheory.Asymptotics` connecting ModExp ($O(\log b)$), Extended GCD ($O(\log(\min a\ b))$), and Sieve of Eratosthenes ($O(n \log n)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/NumberTheory/Asymptotics.md`](Amort/NumberTheory/Asymptotics.md).
+- **Documentation**: Suite overview in [`Amort/NumberTheory/NumberTheory.md`](Amort/NumberTheory/NumberTheory.md).
 
 ## Building and Verification
 

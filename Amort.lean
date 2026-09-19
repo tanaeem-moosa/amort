@@ -52,6 +52,17 @@ import Amort.DataStructure.BalancedBST
 import Amort.DataStructure.DynamicArray
 import Amort.DataStructure.TwoStackQueue
 import Amort.DataStructure.Asymptotics
+import Amort.Greedy.IntervalScheduling
+import Amort.Greedy.Huffman
+import Amort.Greedy.MedianOfMedians
+import Amort.Greedy.Asymptotics
+import Amort.Geometry.ConvexHull
+import Amort.Geometry.ClosestPair
+import Amort.Geometry.Asymptotics
+import Amort.NumberTheory.ModExp
+import Amort.NumberTheory.ExtendedGCD
+import Amort.NumberTheory.Sieve
+import Amort.NumberTheory.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -187,4 +198,34 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.DataStructure.Asymptotics`: Bridges connecting operational and amortized bounds
   for heaps, online median, balanced BSTs, dynamic arrays, and two-stack queues to Mathlib's
   `Asymptotics.IsBigO` framework under `Filter.atTop`.
+- `Amort.Greedy.IntervalScheduling`: Interval representation with positive duration, compatibility
+- `Amort.Greedy.IntervalScheduling`: Interval representation with positive duration, compatibility
+  predicates, greedy earliest-finish-time selection, exchange argument optimality theorem,
+  and $O(n \log n)$ operational step bound dominated by sorting.
+- `Amort.Greedy.Huffman`: Alphabet symbols with positive weights, prefix tree representation,
+  external path length equivalence, greedy choice property for minimal-weight siblings, and
+  $O(n \log n)$ priority queue construction bound.
+- `Amort.Greedy.MedianOfMedians`: Groups of 5, group medians, median-of-medians pivot
+  quality theorem (at least $3n/10 - 6$ elements), branch bound $\le 7n/10 + 6$,
+  and $O(n)$ linear-time divide-and-conquer recurrence.
+- `Amort.Greedy.Asymptotics`: Bridges connecting Interval Scheduling ($O(n \log n)$),
+  Huffman ($O(n \log n)$), and Median-of-Medians ($O(n)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Geometry.ConvexHull`: 2D point representation, orientation determinant cross product,
+  monotone chain stack construction, amortized scanning bound $\le 2n$ stack operations, and
+  $O(n \log n)$ total operational bound.
+- `Amort.Geometry.ClosestPair`: Squared Euclidean distance, divide-and-conquer splitting by
+  median $x$, strip geometric sparsity lemma ($\le 4$ points per cell, $\le 7$ neighbors),
+  and $O(n \log n)$ divide-and-conquer recurrence.
+- `Amort.Geometry.Asymptotics`: Bridges connecting 2D Convex Hull ($O(n \log n)$) and Closest Pair
+  ($O(n \log n)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.NumberTheory.ModExp`: Repeated squaring binary exponentiation ($a^b \bmod m$),
+  loop state correctness invariant, and multiplication bound $\le 2 \cdot \text{size } b$
+  ($O(\log b)$).
+- `Amort.NumberTheory.ExtendedGCD`: Extended Euclidean algorithm computing Bézout coefficients,
+  linear combination invariants, remainder halving $2 \cdot r_{k+2} < r_k$, and logarithmic
+  step bound $\le 2 \cdot \text{size}(\min a\ b) + 1$ ($O(\log(\min a\ b))$).
+- `Amort.NumberTheory.Sieve`: Sieve of Eratosthenes composite marking model, correctness
+  theorem ($k$ unmarked iff prime), and harmonic operational work bound $O(n \log n)$.
+- `Amort.NumberTheory.Asymptotics`: Bridges connecting ModExp ($O(\log b)$), Extended GCD
+  ($O(\log(\min a\ b))$), and Sieve ($O(n \log n)$) to Mathlib `IsBigO` under `Filter.atTop`.
 -/
