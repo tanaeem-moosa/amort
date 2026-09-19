@@ -4,7 +4,7 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, and `Amort/Algebraic/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, `Amort/Algebraic/`, and `Amort/Complexity/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -142,6 +142,13 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Strassen's Sub-Cubic Matrix Multiplication**: `Amort.Algebraic.Strassen` formalizing $2 \times 2$ block matrices over arbitrary rings, Strassen's 7 auxiliary multiplications, algebraic equivalence theorem $C_{ij} = (A \cdot B)_{ij}$, divide-and-conquer recurrence $T(n) \le 7T(n/2) + c \cdot n^2$, and sub-cubic operational bound $O(n^{\log_2 7})$ ($O(n^{2.807})$). Documented in [`Amort/Algebraic/Strassen.md`](Amort/Algebraic/Strassen.md).
 - **Asymptotic Complexity Bridges**: `Amort.Algebraic.Asymptotics` connecting FFT ($O(n \log n)$), polynomial multiplication ($O(n \log n)$), and Strassen's algorithm ($O(n^{\log_2 7})$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`, with rigorous proof that $\log_2 7 < 3$. Documented in [`Amort/Algebraic/Algebraic.md`](Amort/Algebraic/Algebraic.md).
 - **Documentation**: Suite overview in [`Amort/Algebraic/Algebraic.md`](Amort/Algebraic/Algebraic.md).
+ 
+### 16. NP-Completeness, Complexity Classes & Classical Reductions (`Amort.Complexity`)
+- **Complexity Classes P and NP & Polynomial Verifiers**: `Amort.Complexity.Classes` formalizing languages over alphabets, canonical polynomial bounds `polyEval c k n`, deterministic deciders (Class P), polynomial-time verifiers and certificate relations (Class NP) proving constructive embedding $P \subseteq NP$, polynomial-time many-one reductions ($A \le_P B$) with reflexivity and transitivity, preservation of P under reductions, and NP-completeness. Documented in [`Amort/Complexity/Classes.md`](Amort/Complexity/Classes.md).
+- **2-SAT Linear-Time Solver via SCC**: `Amort.Complexity.TwoSAT` formalizing 2-CNF boolean logic, implication digraph ($\neg u \to v$ and $\neg v \to u$), contrapositive symmetry, connection to `Amort.Graph.SCC`, soundness and completeness theorem proving a 2-CNF formula is satisfiable iff no variable $x$ lies in the same SCC as $\neg x$, and $O(|V| + |E|) = O(n + m)$ linear operational step bound. Documented in [`Amort/Complexity/TwoSAT.md`](Amort/Complexity/TwoSAT.md).
+- **Karp's Foundational Reductions & Complement Duality**: `Amort.Complexity.KarpReductions` formalizing simple graphs, Independent Set, Vertex Cover, Clique, the Complement Duality Theorem ($S \text{ IS in } G \iff V \setminus S \text{ VC in } G \iff S \text{ Clique in } \overline{G}$), 3-SAT to Independent Set clause triangle gadget reduction soundness and completeness, and the reduction chain $\text{3-SAT} \le_P \text{Independent Set} \le_P \text{Vertex Cover} \le_P \text{Clique}$. Documented in [`Amort/Complexity/KarpReductions.md`](Amort/Complexity/KarpReductions.md).
+- **Asymptotic Complexity Bridges**: `Amort.Complexity.Asymptotics` connecting 2-SAT linear time ($O(n + m)$), canonical polynomial growth, 3-SAT gadget graph size ($O(m)$ vertices, $O(m^2)$ edges), and complement graph edge complexity ($O(n^2)$) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`. Documented in [`Amort/Complexity/Complexity.md`](Amort/Complexity/Complexity.md).
+- **Documentation**: Suite overview in [`Amort/Complexity/Complexity.md`](Amort/Complexity/Complexity.md).
 
 ## Building and Verification
 
@@ -149,7 +156,7 @@ This repository formalizes algorithms and their computational complexity in `Amo
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2026 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2111 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

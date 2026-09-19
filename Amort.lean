@@ -66,6 +66,10 @@ import Amort.NumberTheory.Asymptotics
 import Amort.Algebraic.FFT
 import Amort.Algebraic.Strassen
 import Amort.Algebraic.Asymptotics
+import Amort.Complexity.Classes
+import Amort.Complexity.TwoSAT
+import Amort.Complexity.KarpReductions
+import Amort.Complexity.Asymptotics
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -241,4 +245,19 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Algebraic.Asymptotics`: Bridges connecting FFT ($O(n \log n)$), polynomial multiplication
   ($O(n \log n)$), and Strassen's matrix multiplication ($O(n^{\log_2 7})$) to Mathlib `IsBigO`
   under `Filter.atTop`, with rigorous proof that $\log_2 7 < 3$.
+- `Amort.Complexity.Classes`: Complexity classes P and NP, polynomial-time verifiers,
+  polynomial certificate relations, embedding $P \subseteq NP$, polynomial-time many-one (Karp)
+  reductions with transitivity, and NP-hardness and NP-completeness.
+- `Amort.Complexity.TwoSAT`: 2-CNF boolean formulas, implication digraph, contrapositive
+  path symmetry, connection to `Amort.Graph.SCC`, soundness and completeness theorem
+  (satisfiable $\iff$ no variable $x$ lies in the same SCC as $\neg x$), and linear operational
+  step bound $O(|V| + |E|) = O(n + m)$.
+- `Amort.Complexity.KarpReductions`: Formalization of 3-SAT, Independent Set, Vertex Cover, and
+  Clique, Complement Duality theorem ($S \text{ IS} \iff S^c \text{ VC} \iff S \text{ Clique in }
+  \overline{G}$), 3-SAT to Independent Set clause gadget reduction soundness and completeness,
+  and reduction chain $\text{3-SAT} \le_P \text{Independent Set} \le_P \text{Vertex Cover}
+  \le_P \text{Clique}$.
+- `Amort.Complexity.Asymptotics`: Bridges connecting 2-SAT linear time, canonical polynomial
+  growth, 3-SAT gadget graph size ($O(m)$ vertices, $O(m^2)$ edges), and complement graph edge
+  complexity to Mathlib's `Asymptotics.IsBigO` framework under `Filter.atTop`.
 -/
