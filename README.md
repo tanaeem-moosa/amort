@@ -4,7 +4,11 @@ AI-assisted formalization of time complexity and correctness of algorithms in Le
 
 ## Modules Overview
 
-This repository formalizes algorithms and their computational complexity in `Amort/GCD/`, `Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`, `Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, `Amort/Algebraic/`, `Amort/Complexity/`, `Amort/Approximation/`, `Amort/Randomized/`, and `Amort/LP/`:
+This repository formalizes algorithms and their computational complexity in `Amort/GCD/`,
+`Amort/Sorting/`, `Amort/Recurrence/`, `Amort/String/`, `Amort/DP/`, `Amort/Graph/`,
+`Amort/DataStructure/`, `Amort/Greedy/`, `Amort/Geometry/`, `Amort/NumberTheory/`, `Amort/Algebraic/`,
+`Amort/Complexity/`, `Amort/Approximation/`, `Amort/Randomized/`, `Amort/LP/`, and
+`Amort/Distributed/`:
 
 ### 1. Binary GCD (Stein's Algorithm)
 - **Formal Definition & Termination**: `Nat.binaryGcd` with well-founded termination measure $a + b$.
@@ -265,13 +269,39 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Documentation**: Comprehensive architecture and proofs in
   [`Amort/Sorting/Quicksort.md`](Amort/Sorting/Quicksort.md).
 
+### 25. Foundational Distributed Systems Canon (`Amort.Distributed`)
+- **Causality & Logical Clocks**: `Amort.Distributed.Causality` formalizing distributed events,
+  Lamport happens-before strict partial order, Lamport scalar clock consistency ($e_1 \to e_2
+  \implies C(e_1) < C(e_2)$), and Vector Clock causal isomorphism ($V(e_1) < V(e_2) \iff e_1 \to
+  e_2$). Documented in [`Amort/Distributed/Causality.md`](Amort/Distributed/Causality.md).
+- **Impossibility Theorems**: `Amort.Distributed.Impossibility` formalizing the Gilbert-Lynch CAP
+  Theorem (Linearizability and Availability cannot both hold across partitions) and Two Generals'
+  impossibility of agreement over lossy channels by backward induction. Documented in
+  [`Amort/Distributed/Impossibility.md`](Amort/Distributed/Impossibility.md).
+- **Crash-Tolerant Consensus (Paxos & Raft)**: `Amort.Distributed.Consensus` formalizing majority
+  quorum intersection ($Q_1 \cap Q_2 \ne \emptyset$), Single-Decree Paxos (Synod) Core Invariant,
+  Learner Agreement ($v_1 = v_2$), Multi-Paxos Replicated Log safety, and Raft leader election
+  and Log Matching invariants. Documented in
+  [`Amort/Distributed/Consensus.md`](Amort/Distributed/Consensus.md).
+- **Byzantine Fault Tolerance ($3f + 1$)**: `Amort.Distributed.BFT` formalizing PBFT quorum
+  intersection ($2f + 1$ quorums intersect in $\ge f + 1$ nodes with $\ge 1$ honest),
+  Lamport-Shostak-Pease $N \le 3f$ impossibility (3-node 1-traitor counterexample), and Oral
+  Messages $OM(m)$ validity and agreement. Documented in
+  [`Amort/Distributed/BFT.md`](Amort/Distributed/BFT.md).
+- **Consistent Global Snapshots**: `Amort.Distributed.Snapshot` formalizing the Chandy-Lamport
+  distributed snapshot algorithm with FIFO marker-passing rules, proving the recorded state
+  forms a consistent cut ($r \le T_q \implies s \le T_p$) and channel state recording soundness.
+  Documented in [`Amort/Distributed/Snapshot.md`](Amort/Distributed/Snapshot.md).
+- **Suite Documentation**: Master architecture in
+  [`Amort/Distributed/Distributed.md`](Amort/Distributed/Distributed.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2136 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2141 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 

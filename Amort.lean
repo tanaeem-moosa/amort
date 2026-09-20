@@ -95,6 +95,11 @@ import Amort.String.SuffixTree.CompactTree
 import Amort.String.SuffixTree.SuffixLink
 import Amort.String.SuffixTree.Ukkonen
 import Amort.String.SuffixTree.Asymptotics
+import Amort.Distributed.Causality
+import Amort.Distributed.Impossibility
+import Amort.Distributed.Consensus
+import Amort.Distributed.BFT
+import Amort.Distributed.Snapshot
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
@@ -342,4 +347,15 @@ algorithms, recurrence relations, and amortized data structures.
   end pointer $O(1)$ amortized leaf extensions, split bounds $\le n$, and $O(n)$ linear time.
 - `Amort.String.SuffixTree.Asymptotics`: Bridges connecting Ukkonen linear time to Mathlib `IsBigO`
   under `Filter.atTop`.
+- `Amort.Distributed.Causality`: Distributed events, Lamport's happens-before strict partial order,
+  Lamport scalar clock consistency, and Vector Clock causal isomorphism:
+  $V(e_1) < V(e_2) \iff e_1 \to e_2$.
+- `Amort.Distributed.Impossibility`: Gilbert-Lynch CAP impossibility theorem (linearizability and
+  availability cannot both hold across partitions) and Two Generals' impossibility of agreement.
+- `Amort.Distributed.Consensus`: Majority quorum intersection lemma, Single-Decree Paxos (Synod)
+  core invariant, learner agreement ($v_1 = v_2$), Multi-Paxos replicated log, and Raft invariants.
+- `Amort.Distributed.BFT`: Byzantine fault tolerance ($3f + 1$), PBFT quorum math,
+  Lamport-Shostak-Pease $N \le 3f$ impossibility, and Oral Messages $OM(m)$ validity and agreement.
+- `Amort.Distributed.Snapshot`: Chandy-Lamport distributed snapshot algorithm, FIFO marker
+  discipline, and consistent cut global state theorem.
 -/
