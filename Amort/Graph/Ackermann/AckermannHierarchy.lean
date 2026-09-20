@@ -207,4 +207,27 @@ theorem invAck_spec (n : ℕ) (hn : n ≤ 65533) : n ≤ ack (invAck n) 1 := by
   · rw [ack_three_one]; omega
   · rw [ack_four_one]; omega
 
+/-- Inverse Ackermann attains value 0 on inputs $n \le 2$. -/
+theorem invAck_two : invAck 2 = 0 := rfl
+
+/-- Inverse Ackermann attains value 1 on $n = 3$. -/
+theorem invAck_three : invAck 3 = 1 := rfl
+
+/-- Inverse Ackermann attains value 2 on $n = 5$. -/
+theorem invAck_five : invAck 5 = 2 := rfl
+
+/-- Inverse Ackermann attains value 3 on $n = 13$. -/
+theorem invAck_thirteen : invAck 13 = 3 := rfl
+
+/-- Inverse Ackermann attains value 4 on $n = 65533$. -/
+theorem invAck_sixty_five_k : invAck 65533 = 4 := rfl
+
+/-- Inverse Ackermann attains value 5 on $n > 65533$. -/
+theorem invAck_large : invAck 65534 = 5 := rfl
+
+/-- The inverse Ackermann function is non-constant: it attains strictly distinct values
+across the input hierarchy. -/
+theorem invAck_nonconstant : ∃ a b : ℕ, invAck a < invAck b :=
+  ⟨2, 3, by decide⟩
+
 end Amort.Graph

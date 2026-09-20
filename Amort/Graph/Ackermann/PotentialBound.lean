@@ -67,6 +67,19 @@ theorem dsuAckermannWork_le_mul_m (m n : ℕ) (h : n ≤ m) :
     nlinarith
   linarith
 
+/-- Lower bound on total work:
+$(m + n)(\alpha(n) + 1) \le \text{dsuAckermannWork}(m, n)$. -/
+theorem dsuAckermannWork_ge_combined (m n : ℕ) :
+    (m + n) * (invAck n + 1) ≤ dsuAckermannWork m n := by
+  dsimp [dsuAckermannWork]
+  nlinarith
+
+/-- Operational cost is also lower-bounded by $m(\alpha(n) + 1)$. -/
+theorem dsuAckermannWork_ge_mul_m (m n : ℕ) :
+    m * (invAck n + 1) ≤ dsuAckermannWork m n := by
+  dsimp [dsuAckermannWork]
+  nlinarith
+
 /-! ### Telescoping Amortized Summation Theorem -/
 
 /-- Tarjan's Amortized Telescoping Summation Theorem:

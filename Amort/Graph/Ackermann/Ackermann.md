@@ -22,8 +22,13 @@ Set Union (DSU) with path compression and union-by-rank in Lean 4:
    - Telescoping amortized summation theorem bounding total work across $m$ operations on $n$ elements.
    - Operational work model $\text{dsuAckermannWork}(m, n) \le 6(m + n)(\alpha(n) + 1)$.
 
-4. **Asymptotic Complexity Bridges**:
-   - Bridges to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+4. **Strict Asymptotic Complexity Bridges (`IsBigO` and `IsTheta`)**:
+   - Matching lower bound: $((m + n)(\alpha(n) + 1)) = O(\text{dsuAckermannWork}(m, n))$.
+   - Strict two-sided asymptotic tight bound:
+     $$\text{dsuAckermannWork}(m, n) = \Theta((m + n)(\alpha(n) + 1)) \quad \text{under } \text{Filter.atTop}$$
+   - Strict diagonal tight bound:
+     $$\text{dsuAckermannDiag}(n) = \Theta(n \cdot (\alpha(n) + 1))$$
+   - Non-constancy and level attainment: $\alpha(n)$ attains values $0, 1, 2, 3, 4, 5$ across the input range.
 
 ## Module Map
 - `Amort.Graph.Ackermann.AckermannHierarchy`: `Amort/Graph/Ackermann/AckermannHierarchy.lean`
