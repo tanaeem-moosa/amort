@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-18T03:15:57Z
+# BRIEFING — 2026-09-20T01:10:10Z
 
 ## Mission
-Sentinel monitoring and routing for Lean 4 formalization of textbook graph algorithms in `Amort.Graph`: Floyd-Warshall ($O(|V|^3)$ via `Amort.Recurrence.DP`), Bellman-Ford ($O(|V| \cdot |E|)$ via loop composition), BFS with Handshaking degree sum ($O(|V| + |E|)$), Kahn's Topological Sort ($O(|V| + |E|)$), DSU with rank bounds ($O((|V| + |E|) \log |V|)$), Kruskal's MST, and Mathlib `IsBigO` asymptotic bridges.
+Sentinel monitoring and routing for Lean 4 formalization of the foundational Distributed Systems Canon in `Amort.Distributed`: Causality & Clocks, CAP & Two Generals Impossibility, Paxos & Raft Consensus, Byzantine Fault Tolerance ($3f+1$), and Chandy-Lamport Distributed Snapshots.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -14,6 +14,14 @@ Sentinel monitoring and routing for Lean 4 formalization of textbook graph algor
 - Victory Auditor (Graph Algorithms): be72993d-a383-4475-922e-b69829a66673 (teamwork_preview_victory_auditor_8) [completed]
 - Progress Cron (Graph Algorithms): 0e1a7a13-75f2-465c-b188-2e8a476dd8f4/task-48 [cancelled]
 - Liveness Cron (Graph Algorithms): 0e1a7a13-75f2-465c-b188-2e8a476dd8f4/task-50 [cancelled]
+- Orchestrator (DSU & Quicksort): fe48bc56-eae3-4969-a500-9be1a797d4a4 (teamwork_preview_pipeline_17) [completed]
+- Victory Auditor: f0db31ec-4021-4d2b-abdf-780a646b0fc9 (teamwork_preview_victory_auditor_17) [completed]
+- Progress Cron: f4eb5102-dd77-4952-93e7-66a829b3da48/task-26 [cancelled]
+- Liveness Cron: f4eb5102-dd77-4952-93e7-66a829b3da48/task-28 [cancelled]
+- Orchestrator (Distributed Systems): e333ea1d-0d1e-4642-b627-bd92ac85e8e7 (teamwork_preview_pipeline_18) [completed]
+- Victory Auditor (Distributed Systems): 6feeab7f-ccde-4e97-9fb9-32203d91919d (teamwork_preview_victory_auditor_18) [completed]
+- Progress Cron (Distributed Systems): ff5dbc78-4e2a-41d7-90dc-ce7ef14a6449/task-30 [cancelled]
+- Liveness Cron (Distributed Systems): ff5dbc78-4e2a-41d7-90dc-ce7ef14a6449/task-32 [cancelled]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -21,21 +29,16 @@ Sentinel monitoring and routing for Lean 4 formalization of textbook graph algor
 - Route per Routing Decision Table: Math/Proof -> teamwork_preview_pipeline
 
 ## User Context
-- **Last user request**: Formalize textbook graph algorithms in Lean 4 within `Amort.Graph`: Floyd-Warshall, Bellman-Ford, BFS, Topological Sort, DSU, Kruskal's MST, and Mathlib `IsBigO` connections.
+- **Last user request**: Formalize the foundational Distributed Systems Canon in Lean 4 within `Amort.Distributed`: Causality & Clocks, CAP & Two Generals Impossibility, Paxos & Raft Consensus, Byzantine Fault Tolerance ($3f+1$), and Chandy-Lamport Distributed Snapshots.
 - **Pending clarifications**: none
 - **Delivered results**:
-  - `Amort/Graph/FloydWarshall.lean`: Floyd-Warshall all-pairs shortest paths 3D DP over `Fin (n + 1) × Fin n × Fin n`, cardinality $(n+1) \cdot n^2$, total cost $\le (n+1) \cdot n^2 = O(n^3)$ via `Amort.Recurrence.DP`.
-  - `Amort/Graph/BellmanFord.lean`: Bellman-Ford single-source shortest paths $(n-1)$ relaxation passes, step counter bounded by $(n-1) \cdot |E| \le n \cdot |E|$ via `Amort.Recurrence.Composition.isBigO_nested_loops_nat`.
-  - `Amort/Graph/Traversal.lean`: Directed Handshaking Lemma $\sum_v \text{outdeg}(v) = |E|$, queue-based BFS traversal bounded by $|V| + |E|$, and unweighted shortest-path distance correctness.
-  - `Amort/Graph/TopologicalSort.lean`: Kahn's in-degree zero queue algorithm bounded by $|V| + |E|$, DAG cycle-freedom, and topological sorting invariants.
-  - `Amort/Graph/DSU.lean`: Disjoint Set Union with union-by-rank, exponential subtree size invariant $2^{\text{rank}} \le n$, logarithmic depth and find step bounds $\le \log_2 n$, sequence bound $\le 3(n + m) \log n$.
-  - `Amort/Graph/Kruskal.lean`: Kruskal's MST algorithm, edge sorting via `Amort.Sorting.MergeSort`, DSU cycle checking, Cut-Property greedy optimality, and total complexity $O(|E| \log |V|)$.
-  - `Amort/Graph/Asymptotics.lean`: Formal Mathlib `IsBigO` bridges under `Filter.atTop` for Floyd-Warshall ($O(n^3)$), Bellman-Ford ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$).
-  - Module re-exports in `Amort.lean` and indexed in `README.md`.
-  - Comprehensive documentation in `Amort/Graph/Graph.md`, `FloydWarshall.md`, `BellmanFord.md`, `Traversal.md`, `TopologicalSort.md`, `DSU.md`, `Kruskal.md`, and `README.md`.
-  - Clean build: `lake build Amort` (2014 jobs, 0 errors, 0 warnings).
-  - Axiom validation: 0 `sorryAx`, all proofs depend strictly on foundational Lean 4 axioms.
-  - Independent Victory Auditor verdict: VICTORY CONFIRMED.
+  - `Amort/Distributed/Causality.lean`: Events, happens-before strict partial order, Lamport scalar clock consistency ($e_1 \to e_2 \implies C(e_1) < C(e_2)$), and vector clock causal isomorphism ($V(e_1) < V(e_2) \iff e_1 \to e_2$).
+  - `Amort/Distributed/Impossibility.lean`: Gilbert-Lynch CAP impossibility theorem under network partitions, and Two Generals' lossy channel impossibility via backward induction.
+  - `Amort/Distributed/Consensus.lean`: Majority quorum intersection lemma ($Q_1 \cap Q_2 \ne \emptyset$), Single-Decree Paxos (Synod) with Core Paxos Invariant and Learner Agreement Theorem ($v_1 = v_2$), Multi-Paxos log replication safety, and Raft invariants (Leader Election Safety, Log Matching Invariant).
+  - `Amort/Distributed/BFT.lean`: PBFT quorum intersection math ($2f+1$ quorums intersect in $\ge f+1$ nodes, $\ge 1$ honest), Lamport-Shostak-Pease Lower Bound ($N \le 3f$ impossibility, 3-node 1-traitor counterexample), Oral Messages $OM(m)$ algorithm validity and agreement for $N \ge 3f+1$.
+  - `Amort/Distributed/Snapshot.lean`: Chandy-Lamport distributed snapshot algorithm over FIFO channels, consistent cut theorem ($r \le T_q \implies s \le T_p$), and channel state recording soundness.
+  - Integration: Exported in `Amort.lean`, textbook documentation in `Amort/Distributed/Distributed.md` and dedicated chapter files, updated `README.md`.
+  - Independent Victory Audit: VICTORY CONFIRMED. Clean build (2141 jobs, 0 errors, 0 warnings), 0 `sorryAx` (standard foundational axioms only), lines $\le 100$ characters.
 
 ## Project Status
 - **Phase**: complete
@@ -47,14 +50,14 @@ Sentinel monitoring and routing for Lean 4 formalization of textbook graph algor
 
 ## Artifact Index
 - /workspace/amort/.agents/ORIGINAL_REQUEST.md — Authoritative record of user requests
-- /workspace/amort/Amort/Graph/FloydWarshall.lean — Floyd-Warshall all-pairs shortest paths DP
-- /workspace/amort/Amort/Graph/BellmanFord.lean — Bellman-Ford single-source shortest paths
-- /workspace/amort/Amort/Graph/Traversal.lean — Handshaking Lemma and BFS traversal
-- /workspace/amort/Amort/Graph/TopologicalSort.lean — Kahn's topological sort algorithm
-- /workspace/amort/Amort/Graph/DSU.lean — Disjoint Set Union with union-by-rank
-- /workspace/amort/Amort/Graph/Kruskal.lean — Kruskal's MST with Cut Property
-- /workspace/amort/Amort/Graph/Asymptotics.lean — Mathlib Asymptotics.IsBigO bridges
-- /workspace/amort/Amort/Graph/Graph.md — Suite architectural overview
+- /workspace/amort/.agents/sentinel/BRIEFING.md — Sentinel state and persistent working memory
+- /workspace/amort/.agents/sentinel/handoff.md — Sentinel handoff report
+- /workspace/amort/Amort/Distributed/Causality.lean — Causality & Logical Clocks
+- /workspace/amort/Amort/Distributed/Impossibility.lean — CAP & Two Generals Impossibility
+- /workspace/amort/Amort/Distributed/Consensus.lean — Crash-Tolerant Consensus (Paxos & Raft)
+- /workspace/amort/Amort/Distributed/BFT.lean — Byzantine Fault Tolerance ($3f+1$)
+- /workspace/amort/Amort/Distributed/Snapshot.lean — Consistent Global Snapshots
+- /workspace/amort/Amort/Distributed/Distributed.md — Master textbook documentation
 - /workspace/amort/Amort.lean — Library exports
-- /workspace/amort/README.md — Project documentation
-- /workspace/amort/.agents/teamwork_preview_victory_auditor_8/handoff.md — Independent audit report
+- /workspace/amort/README.md — Comprehensive project index
+- /workspace/amort/.agents/teamwork_preview_victory_auditor_18/handoff.md — Independent audit report

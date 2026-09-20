@@ -402,3 +402,71 @@ Integrity mode: development
 - [ ] Average-case expected $O(n \log n)$ bound is proven.
 - [ ] Iterative path-compression-only DSU operations and $O(m \log n)$ / $\Omega(n \log n)$ bounds are proven.
 - [ ] All new modules are exported in `Amort.lean` and thoroughly documented.
+
+## 2026-09-20T00:55:13Z
+
+Formalize the foundational Distributed Systems Canon in Lean 4 within `Amort.Distributed`: Causality & Clocks, CAP & Two Generals Impossibility, Paxos & Raft Consensus, Byzantine Fault Tolerance ($3f+1$), and Chandy-Lamport Distributed Snapshots.
+
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. Causality & Logical Clocks (`Amort.Distributed.Causality`)
+- Formalize distributed events and Lamport's happens-before relation ($\to$) as an irreflexive, transitive strict partial order.
+- Formalize Lamport scalar clocks with tick and message-receive update rules, proving clock consistency: $e_1 \to e_2 \implies C(e_1) < C(e_2)$.
+- Formalize Vector Clocks ($V : \text{Event} \to (\text{Fin } N \to \mathbb{N})$) with component-wise update rules, proving the strong causal isomorphism:
+  $$V(e_1) < V(e_2) \iff e_1 \to e_2$$
+
+### R2. Impossibility Theorems: CAP & Two Generals (`Amort.Distributed.Impossibility`)
+- **Gilbert-Lynch CAP Theorem**:
+  - Formalize an asynchronous network model with state transitions, read/write client events, linearizability (consistency C), and response guarantees (availability A).
+  - Model network partitions: disconnected subsets $G_1, G_2$ where all inter-group messages are dropped.
+  - Prove the Gilbert-Lynch impossibility: no distributed protocol can satisfy both linearizability and availability across a partition.
+- **Two Generals' Problem**:
+  - Formalize communication over an unreliable lossy channel where messages may be dropped.
+  - Prove by induction on message delivery count that common knowledge of agreement can never be attained with certainty.
+
+### R3. Crash-Tolerant Consensus: Paxos (Single-Decree & Multi-Paxos) and Raft (`Amort.Distributed.Consensus`)
+- **Quorum Intersection Foundation**:
+  - Prove the majority quorum intersection lemma: for any two quorums $Q_1, Q_2 \subseteq \text{Fin } N$ with $|Q_1|, |Q_2| > N / 2$, $Q_1 \cap Q_2 \ne \emptyset$.
+- **Single-Decree Paxos (Synod Protocol)**:
+  - Formalize ballot identifiers (`Ballot = ℕ × Fin N`) with total lexicographic ordering.
+  - Formalize the two-phase protocol state machine:
+    - Phase 1a (`Prepare(b)`) and Phase 1b (`Promise(b, maxAcceptedBallot, maxAcceptedValue)`).
+    - Phase 2a (`Propose(b, v)`) where proposer chooses $v$ corresponding to the highest ballot among responses in the promise quorum (or client proposed value if none).
+    - Phase 2b (`Accept(b, v)`): acceptors accept if no promise with $b' > b$ was made.
+  - **Core Paxos Invariant**: If a value $v$ is chosen by an acceptance quorum at ballot $b$, then for any higher ballot $b' > b$, any proposal issued at $b'$ must have value $v$.
+  - **Learner Agreement Theorem**: No two learners ever decide different values ($v_1 = v_2$).
+- **Multi-Paxos Replicated Log**:
+  - Formalize slot-indexed instances `Slot ℕ → SingleDecreePaxos`.
+  - Prove state machine replication safety across committed log entries.
+- **Raft Safety Invariants**:
+  - Formalize Raft leader election, term monotonicity, and the Log Matching Invariant.
+
+### R4. Byzantine Fault Tolerance ($3f + 1$) (`Amort.Distributed.BFT`)
+- Formalize the Byzantine Generals problem where up to $f$ out of $N$ nodes can exhibit arbitrary (malicious) behavior.
+- Prove the Lamport-Shostak-Pease Lower Bound: consensus in an unauthenticated system is impossible when $N \le 3f$ (formalize the 3-node, 1-traitor counterexample).
+- Formalize the Oral Messages $OM(m)$ algorithm for $N \ge 3f + 1$, proving agreement and validity.
+- Formalize PBFT Quorum Math: with $N = 3f + 1$, any two quorums of size $2f + 1$ intersect in at least $f + 1$ nodes, ensuring at least one non-faulty (honest) node in the intersection.
+
+### R5. Consistent Global Snapshots (`Amort.Distributed.Snapshot`)
+- Formalize the Chandy-Lamport distributed snapshot algorithm with marker-passing rules.
+- Prove that the recorded global state forms a consistent cut: no message recorded in the channel state was sent after the snapshot was initiated.
+
+### R6. Integration & Textbook Documentation
+- Export all modules under `Amort.Distributed` in `Amort.lean`.
+- Document mathematical architecture, message schemas, inductive invariants, and proof structures in `Amort/Distributed/Distributed.md` and dedicated chapter files.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build Amort` with 0 errors and 0 warnings.
+- [ ] Zero `sorry` or `sorryAx` axioms used in any proof (strictly standard Lean 4 foundational axioms).
+- [ ] All code conforms to the Mathlib line-length limit ($\le 100$ characters).
+- [ ] Vector clock causal isomorphism ($V(e_1) < V(e_2) \iff e_1 \to e_2$) is proven.
+- [ ] Gilbert-Lynch CAP impossibility theorem is proven.
+- [ ] Paxos majority quorum intersection and learner agreement safety are proven.
+- [ ] Byzantine $N \le 3f$ impossibility and $N \ge 3f + 1$ quorum intersection are proven.
+- [ ] Chandy-Lamport consistent cut property is proven.
+- [ ] All modules are exported in `Amort.lean` and documented.

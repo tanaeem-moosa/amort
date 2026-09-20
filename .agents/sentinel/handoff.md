@@ -1,60 +1,58 @@
-# Sentinel Handoff Report: DSU (Path Compression Only) & Quicksort Canon Formalization in Lean 4
+# Sentinel Handoff Report: Distributed Systems Canon Formalization in Lean 4
 
 ## Observation
-The user requested complete formalization in Lean 4 of Disjoint Set Union with iterative path compression only (no ranks/sizes) and the Quicksort algorithm canon:
-1. **Disjoint Set Union with Path Compression Only (`Amort/Graph/PathCompressionOnly.lean`)**:
-   - Minimal DSU state `DSUPCO n` containing solely parent pointers `parent : Fin n → Fin n` without rank or size arrays.
-   - Iterative two-pass path compression: pass 1 traverses to root (`findPathAux`, `findRoot`), pass 2 re-points visited nodes directly to root (`compressPath`, `findIter`).
-   - Arbitrary/naive linking: `unite(u, v)` attaches root $u$ directly under root $v$.
-   - Star flattening invariant `path_depth_one_after_find`: after `find(v)`, all traversed nodes have depth 1.
-   - Linear chain construction `linearChainDSU` showing worst-case single operation depth reaches $n - 1 = \Omega(n)$ (`linearChain_depth_zero`).
-   - Adversarial sequence construction `adversarialPCOWork` requiring $\ge \frac{1}{4} n \log_2 n = \Omega(n \log n)$ total steps (`isBigO_adversarialPCOWork_omega`).
-   - Amortized upper bound `dsuPCOWork` proving $m$ operations on $n$ elements require at most $O((n + m) \log n)$ steps (`isBigO_dsuPCOWork_atTop`).
-   - Companion documentation in `Amort/Graph/PathCompressionOnly.md`.
-2. **Algorithmic Quicksort & Mathematical Correctness (`Amort/Sorting/Quicksort.lean`)**:
-   - 3-way partitioning `partition3` and 2-way partitioning for `List α` with `[LinearOrder α]`.
-   - Length-fuel recursive `quicksortFuel` and `quicksort`.
-   - Permutation equivalence `quicksort_perm`: `quicksort xs ~ xs`.
-   - Sortedness `quicksort_sorted` (`(quicksort xs).Pairwise (· ≤ ·)`) and `quicksort_sortedLE`.
-   - Complete equivalence to Mathlib's `List.mergeSort` (`quicksort_eq_mergeSort`) and `List.insertionSort` (`quicksort_eq_insertionSort`).
-3. **Quicksort Worst-Case Complexity ($\Theta(n^2)$)**:
-   - Naive pivot comparison recurrence `quicksortWorstCaseRec`: $T(n) = T(n - 1) + (n - 1)$ for $n \ge 1$.
-   - Exact closed-form solution `quicksortWorstCaseRec_eq`: $T(n) = n(n - 1) / 2$.
-   - Asymptotic connection to Mathlib `IsBigO` and `IsTheta`: $O(n^2)$ (`isBigO_quicksortWorstCase_sq`), $\Omega(n^2)$ (`isBigO_sq_quicksortWorstCase`), and $\Theta(n^2)$ (`isTheta_quicksortWorstCase_sq`).
-4. **Quicksort with Deterministic $O(n)$ Median (BFPRT Selection)**:
-   - BFPRT partition balance guarantee `bfprt_partition_balance`: sublists have size $\le \lfloor 7n/10 \rfloor + 3$ for $n \ge 5$.
-   - Divide-and-conquer recurrence `bfprtQuicksortRec`: $T(n) \le T(\lfloor 7n/10 \rfloor) + T(\lfloor 3n/10 \rfloor) + c \cdot n$.
-   - Worst-case bound `bfprtQuicksortBound` ($4(c + 1) n \cdot \text{size } n$) and Mathlib `IsBigO` asymptotic connection (`isBigO_bfprtQuicksort_n_log_n`) establishing strictly worst-case $O(n \log n)$ runtime.
-5. **Quicksort Average-Case Complexity ($O(n \log n)$)**:
-   - Average-case recurrence `IsQuicksortAvgRec` under uniform random pivot selection: $\mathbb{E}[T(n)] = \frac{2}{n} \sum_{i=0}^{n-1} \mathbb{E}[T(i)] + (n - 1)$.
-   - Bridge to backward indicator analysis in `Amort.Randomized.Quicksort` (`expected_quicksort_le_harmonic_bound`): $\mathbb{E}[T(n)] \le 2n H(n) \le 2n \cdot \text{size } n$.
-   - Asymptotic connection `isBigO_quicksortAvg_n_log_n` proving average-case comparisons are $O(n \log n)$ under `Filter.atTop`.
-6. **Integration & Master Documentation**:
-   - Modules exported in `Amort.lean`.
-   - Comprehensive documentation in `Amort/Graph/PathCompressionOnly.md` and `Amort/Sorting/Quicksort.md`.
-   - Master documentation updated in `Amort/Sorting/Sorting.md` and `README.md`.
+The user requested complete formalization in Lean 4 of the foundational Distributed Systems Canon within `Amort.Distributed`:
+1. **Causality & Logical Clocks (`Amort/Distributed/Causality.lean`)**:
+   - `DistributedEvent (N : ℕ)` and `DirectPrecedes` relation.
+   - `HappensBefore`: strict partial order (irreflexive, transitive, asymmetric).
+   - `LamportClock` consistency: `lamport_clock_consistency` ($e_1 \to e_2 \implies C(e_1) < C(e_2)$).
+   - `VectorClockSystem`: component-wise vector order (`VCLe`, `VCLt`).
+   - Fundamental Causal Isomorphism: `vc_lt_iff_happensBefore` ($V(e_1) < V(e_2) \iff e_1 \to e_2$) and `vc_le_iff_hb_or_eq`.
+   - Concurrency equivalence: `concurrent_iff_incomparable`.
+2. **Impossibility Theorems (`Amort/Distributed/Impossibility.lean`)**:
+   - Gilbert-Lynch CAP Theorem: asynchronous network model with partition ($G_1, G_2$), linearizability (`SatisfiesLinearizability`), availability (`SatisfiesAvailability`), and impossibility theorem `gilbert_lynch_impossibility`.
+   - Two Generals' Problem: communication over unreliable lossy channels, backward induction on message count (`step_reduction`, `attack_zero_of_attack_k`), and impossibility of guaranteed consensus `two_generals_impossibility`.
+3. **Crash-Tolerant Consensus: Paxos & Raft (`Amort/Distributed/Consensus.lean`)**:
+   - Majority quorum intersection lemma: `majority_quorum_intersection` ($Q_1 \cap Q_2 \ne \emptyset$ for $|Q_1|, |Q_2| > N / 2$).
+   - Single-Decree Paxos (Synod): `Ballot (N : ℕ)` with total lexicographic order `BallotLt`, two-phase state machine, Core Proposal Invariant `SatisfiesPaxosProposalInvariant`, and Learner Agreement Theorem `paxos_learner_agreement` ($v_1 = v_2$).
+   - Multi-Paxos Replicated Log: `multi_paxos_slot_safety` and RSM state machine safety `rsm_safety`.
+   - Raft Safety Invariants: `raft_leader_election_safety` (at most one leader per term via quorum intersection), `SatisfiesLogMatchingInvariant`, and term monotonicity `MonotoneTerms`.
+4. **Byzantine Fault Tolerance ($3f + 1$) (`Amort/Distributed/BFT.lean`)**:
+   - PBFT Quorum Math: system $N = 3f + 1$, quorums of size $2f + 1$ intersect in $\ge f + 1$ nodes (`pbft_quorum_intersection`), containing at least one honest node (`pbft_honest_in_intersection`).
+   - Lamport-Shostak-Pease Lower Bound ($N \le 3f$): formal 3-node, 1-traitor counterexample `lsp_three_node_impossibility` proving Agreement and Validity cannot simultaneously hold.
+   - Oral Messages $OM(m)$ algorithm for $N \ge 3f + 1$: `majorityVote`, `majorityVote_const`, validity `om_validity`, and agreement `om_agreement_of_identical_votes`.
+5. **Consistent Global Snapshots (`Amort/Distributed/Snapshot.lean`)**:
+   - Directed FIFO communication channels and global cut definition `Cut N := Fin N → ℕ`.
+   - Chandy-Lamport marker-passing rules.
+   - Consistent cut theorem: `chandy_lamport_consistent_cut` ($r \le T_q \implies s \le T_p$).
+   - `consistent_cut_no_inconsistent`: no message sent after the cut is received before it.
+   - `channel_state_soundness`: every message recorded in channel state was sent before the sender's snapshot.
+6. **Library Integration & Textbook Documentation**:
+   - Re-exported all modules in `Amort.lean`.
+   - Comprehensive documentation in `Amort/Distributed/Distributed.md` and dedicated chapter files: `Causality.md`, `Impossibility.md`, `Consensus.md`, `BFT.md`, `Snapshot.md`.
+   - Project overview updated in `README.md` (Section 25).
 
 ## Logic Chain
-1. **User Request Recorded**: Appended verbatim request to `/workspace/amort/.agents/ORIGINAL_REQUEST.md` under timestamp header `## 2026-09-20T00:14:58Z`.
-2. **Routing Decision**: Mathematical formalization and algorithmic proof in Lean 4 routed to `teamwork_preview_pipeline` (`teamwork_preview_pipeline_17`, conv ID `fe48bc56-eae3-4969-a500-9be1a797d4a4`).
-3. **Sentinel Monitoring**: Initialized progress reporting cron (`*/8 * * * *`, task-26) and liveness check cron (`*/10 * * * *`, task-28). Tracked implementation across iterations.
-4. **Completion Claim**: Orchestrator reported completion across all 6 tracks.
-5. **Independent Victory Audit**: Spawned isolated auditor `teamwork_preview_victory_auditor_17` (conv ID `f0db31ec-4021-4d2b-abdf-780a646b0fc9`) to execute the blocking 3-phase audit.
+1. **User Request Recorded**: Logged verbatim in `/workspace/amort/.agents/ORIGINAL_REQUEST.md` under timestamp header `## 2026-09-20T00:55:13Z`.
+2. **Routing Decision**: Mathematical formalization and interactive theorem proving in Lean 4 routed to `teamwork_preview_pipeline` (`teamwork_preview_pipeline_18`, conv ID `e333ea1d-0d1e-4642-b627-bd92ac85e8e7`).
+3. **Sentinel Monitoring**: Initialized progress reporting cron (`*/8 * * * *`, task-30) and liveness check cron (`*/10 * * * *`, task-32). Monitored implementation across iterations.
+4. **Completion Claim**: Orchestrator reported completion across all 6 requirements.
+5. **Independent Victory Audit**: Dispatched isolated auditor `teamwork_preview_victory_auditor_18` (conv ID `6feeab7f-ccde-4e97-9fb9-32203d91919d`) with pointer to `ORIGINAL_REQUEST.md` for blocking 3-phase audit.
 6. **Audit Verdict**: Victory Auditor confirmed:
-   - Phase A (Timeline & Git Status): PASS. Tracked git modifications and new files match the request specification.
-   - Phase B (Integrity Check): PASS. Zero `sorry`, `admit`, or `sorryAx`. All proofs depend strictly on foundational Lean 4 axioms (`[propext, Classical.choice, Quot.sound]`). All definitions and theorems are genuine, non-vacuous, and mathematically sound. Mathlib line length $\le 100$ characters and docstring standards satisfied.
-   - Phase C (Independent Test Execution): PASS. Executed `lake build Amort` (2136 jobs, 0 errors, 0 warnings). Verified axiom dependencies for all milestone theorems.
+   - Phase A (Timeline & Git Status): PASS. Valid sequential iterative development from dispatch.
+   - Phase B (Integrity Check): PASS. Zero `sorry`, `admit`, or `sorryAx`. All definitions and theorems mathematically non-vacuous and sound. Strictly compliant with Mathlib line-length limit ($\le 100$ characters).
+   - Phase C (Independent Test Execution): PASS. Executed `lake build Amort && lake build` (2141 jobs, 0 errors, 0 warnings). Verified axiom dependencies across 30 milestone theorems (exclusively foundational axioms `propext`, `Classical.choice`, `Quot.sound`).
    - Verdict: `VICTORY CONFIRMED`.
-7. **Teardown & Cleanup**: Cancelled background crons (task-26, task-28) via `manage_task(action="kill")` and terminated all subagents via `manage_subagents(action="kill_all")`.
+7. **Teardown & Cleanup**: Cancelled background crons (task-30, task-32) via `manage_task(action="kill")` and terminated all subagents via `manage_subagents(action="kill_all")`.
 
 ## Caveats
-- All proofs strictly adhere to foundational Lean 4 axioms (`propext`, `Classical.choice`, `Quot.sound`). No non-standard or custom axioms are introduced.
-- Quicksort termination is structured via length-fuel recursion (`quicksortFuel`), which avoids well-founded recursion elaborator issues while admitting provable step unfolding (`quicksort_cons`) and equivalence to Mathlib sorting algorithms.
+- All proofs strictly adhere to foundational Lean 4 axioms (`propext`, `Classical.choice`, `Quot.sound`). No non-standard axioms or cheating constructs are introduced.
+- Distributed protocols are modeled via transition systems, message event relations, and state machine invariants directly matching the original literature (Lamport 1978, Gray 1978, Gilbert-Lynch 2002, Lamport 1998/2001, Ongaro & Ousterhout 2014, Lamport-Shostak-Pease 1982, Castro & Liskov 1999, Chandy & Lamport 1985).
 
 ## Conclusion
-The formalization of Disjoint Set Union with iterative path compression only and the complete Quicksort algorithm canon in Lean 4 has been completed, fully verified, and independently audited. All acceptance criteria and requirements have been satisfied.
+The formalization of the Distributed Systems Canon in Lean 4 has been completed, verified without caveats, and independently audited. All acceptance criteria and requirements have been satisfied.
 
 ## Verification Method
-- Independent compilation: `lake build Amort` (2136 jobs, 0 errors, 0 warnings).
-- Axiom validation: `#print axioms` across all 20+ milestone theorems confirmed zero `sorryAx`.
+- Independent compilation: `lake build Amort && lake build` (2141 jobs, 0 errors, 0 warnings).
+- Axiom validation: `#print axioms` across all 30 milestone theorems confirmed zero `sorryAx`.
 - Forensic audit: line length $\le 100$ characters, regex check for `sorry`/`admit`/`sorryAx` clean.
