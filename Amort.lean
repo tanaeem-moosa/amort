@@ -10,6 +10,7 @@ import Amort.GCD.Asymptotics
 import Amort.Sorting.InsertionSort
 import Amort.Sorting.MergeSort
 import Amort.Sorting.Asymptotics
+import Amort.Sorting.Quicksort
 import Amort.Sorting.DecisionTree
 import Amort.Sorting.LowerBound
 import Amort.Recurrence.Composition
@@ -40,6 +41,7 @@ import Amort.Graph.TopologicalSort
 import Amort.Graph.DSU
 import Amort.Graph.Kruskal
 import Amort.Graph.Asymptotics
+import Amort.Graph.PathCompressionOnly
 import Amort.Graph.Dijkstra
 import Amort.Graph.MaxFlow
 import Amort.Graph.SCC
@@ -115,6 +117,9 @@ algorithms, recurrence relations, and amortized data structures.
   recurrence bounds, and concrete $O(n \log n)$ bounds for Merge Sort.
 - `Amort.Sorting.Asymptotics`: Bridges connecting concrete sorting comparison bounds to Mathlib's
   `Asymptotics.IsBigO` framework.
+- `Amort.Sorting.Quicksort`: 3-way partitioning, length-fueled recursion, permutation equivalence,
+  sortedness, Mathlib equivalence, worst-case $\Theta(n^2)$, deterministic median BFPRT
+  worst-case $O(n \log n)$, and average-case expected $O(n \log n)$.
 - `Amort.Sorting.DecisionTree`: Abstract binary decision tree model, depth, leaf count,
   structural induction bound `leafCount T ≤ 2 ^ depth T`, and tree evaluation.
 - `Amort.Sorting.LowerBound`: Permutation coverage, factorial bound $n! \le 2^{\text{depth}}$,
@@ -196,6 +201,9 @@ algorithms, recurrence relations, and amortized data structures.
 - `Amort.Graph.Asymptotics`: Bridges connecting Floyd-Warshall ($O(n^3)$), Bellman-Ford
   ($O(|V| \cdot |E|)$), BFS ($O(|V| + |E|)$), Topological Sort ($O(|V| + |E|)$), DSU
   ($O((n + m) \log n)$), and Kruskal ($O(|E| \log |V|)$) to Mathlib `IsBigO` under `Filter.atTop`.
+- `Amort.Graph.PathCompressionOnly`: Minimal DSU with path compression only (no ranks/sizes),
+  iterative two-pass compression, depth-one star post-condition, linear chain $\Omega(n)$
+  depth, $\Omega(n \log n)$ adversarial lower bound, and $O((n + m) \log n)$ amortized bound.
 - `Amort.Graph.Dijkstra`: Dijkstra's algorithm for directed graphs with non-negative edge weights,
   greedy choice invariant, and operational step bound $(|V| + |E|) \cdot \text{Nat.size } |V|$.
 - `Amort.Graph.MaxFlow`: Flow networks, capacity constraints, flow conservation, $s$-$t$ cuts,

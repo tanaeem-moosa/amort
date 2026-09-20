@@ -335,3 +335,70 @@ Integrity mode: demo
 - [ ] All step bounds are connected to Mathlib `IsBigO`.
 - [ ] Comprehensive Markdown proof documentation is provided for each module.
 - [ ] All new modules are exported in `Amort.lean` and indexed in `README.md`.
+
+## 2026-09-20T00:14:58Z
+
+Formalize Disjoint Set Union with iterative path compression only (no ranks/sizes) and the complete Quicksort algorithm canon (correctness, worst-case $O(n^2)$, worst-case $O(n \log n)$ with $O(n)$ median-of-medians selection, and average-case $O(n \log n)$ with random pivot) in Lean 4.
+
+Working directory: /workspace/amort
+Integrity mode: development
+
+## Requirements
+
+### R1. Disjoint Set Union with Path Compression Only (Iterative & Arbitrary Linking)
+- Formalize minimal DSU state containing only parent pointers (`parent : Fin n → Fin n`) without rank or size arrays.
+- Formalize iterative two-pass / while-loop path compression: traverse to root, then re-point visited nodes directly to the root.
+- Formalize arbitrary/naive linking: `unite(u, v)` attaches root $u$ directly under root $v$ (`parent[find u] := find v`).
+- Invariant & Post-condition: prove that after `find(v)`, all traversed nodes along the path have depth 1 (flattened star).
+- Worst-case single operation: formalize the linear chain construction showing depth can reach $\Omega(n)$.
+- Adversarial total work lower bound: formalize the adversarial construction demonstrating that $n$ operations can require $\Omega(n \log n)$ total steps.
+- Amortized upper bound: prove that $m$ operations on $n$ elements require at most $O((n + m) \log n)$ steps.
+- Implement in `Amort/Graph/PathCompressionOnly.lean` and document in `Amort/Graph/PathCompressionOnly.md`.
+
+### R2. Algorithmic Quicksort & Mathematical Correctness
+- Formalize 3-way partitioning (`partition3`) or standard partitioning for `List α` with `[LinearOrder α]`.
+- Define `quicksort` with well-founded recursion or fuel on list length.
+- Prove complete algorithmic correctness:
+  - Multiset/Permutation equivalence: `quicksort xs ~ xs`.
+  - Sortedness: `(quicksort xs).Sorted (· ≤ ·)`.
+  - Equivalence to Mathlib's `List.mergeSort` and `List.insertionSort`.
+- Implement in `Amort/Sorting/Quicksort.lean`.
+
+### R3. Quicksort Worst-Case Complexity ($\Theta(n^2)$)
+- Formalize comparison counting for naive pivot selection (e.g. head element on sorted or reverse-sorted input).
+- Establish the recurrence $T(n) = T(n - 1) + (n - 1)$ for $n \ge 1$.
+- Prove exact solution: $T(n) = \frac{n(n - 1)}{2}$.
+- Connect with Mathlib `IsBigO`: worst-case comparison complexity is $\Theta(n^2)$ ($O(n^2)$ upper bound and $\Omega(n^2)$ lower bound under `Filter.atTop`).
+
+### R4. Quicksort with Deterministic $O(n)$ Median (BFPRT Selection)
+- Formalize the Blum-Floyd-Pratt-Rivest-Tarjan (BFPRT) "Median-of-Medians" selection invariant: selecting the median of block medians guarantees a balanced partition where both sublists have size $\le \lfloor \frac{7n}{10} \rfloor + 3$ for $n \ge 5$.
+- Formalize the divide-and-conquer recurrence with deterministic median selection:
+  $$T(n) \le T(\lfloor 7n/10 \rfloor) + T(\lfloor 3n/10 \rfloor) + c \cdot n$$
+- Prove by induction / recurrence mapping to `Amort.Recurrence.MasterTheorem` that $T(n) \le C \cdot n \cdot \text{Nat.size } n$.
+- Deduce that deterministic median-of-medians Quicksort has a **strictly worst-case $O(n \log n)$ runtime**.
+
+### R5. Quicksort Average-Case Complexity ($O(n \log n)$)
+- Formalize the average-case recurrence assuming uniform random pivot selection:
+  $$\mathbb{E}[T(n)] = \frac{2}{n} \sum_{i=0}^{n-1} \mathbb{E}[T(i)] + (n - 1)$$
+- Bridge this recurrence to the pairwise indicator backward analysis in `Amort.Randomized.Quicksort` establishing $\mathbb{E}[T(n)] \le 2n H(n) \le 2n \cdot \text{Nat.size } n$.
+- Connect to Mathlib `IsBigO`: average-case expected comparisons are $O(n \log n)$ under `Filter.atTop`.
+
+### R6. Integration & Textbook Documentation
+- Expose all modules in `Amort.lean`.
+- Document mathematical architecture, comparative analysis, and recurrence proofs in:
+  - `Amort/Graph/PathCompressionOnly.md`
+  - `Amort/Sorting/Quicksort.md`
+  - Master documents `Amort/Sorting/Sorting.md` and `README.md`.
+
+## Acceptance Criteria
+
+### Correctness and Build
+- [ ] The entire project builds cleanly with `lake build Amort` with 0 errors and 0 warnings.
+- [ ] Zero `sorry` or `sorryAx` axioms used in any proof (verified with `#print axioms` / audit script).
+- [ ] All code conforms to the Mathlib line-length limit ($\le 100$ characters).
+- [ ] `quicksort_perm` and `quicksort_sorted` are proven without caveats.
+- [ ] Worst-case $O(n^2)$ recurrence and exact closed form $\frac{n(n-1)}{2}$ are proven.
+- [ ] Deterministic median-of-medians $O(n \log n)$ worst-case bound is proven.
+- [ ] Average-case expected $O(n \log n)$ bound is proven.
+- [ ] Iterative path-compression-only DSU operations and $O(m \log n)$ / $\Omega(n \log n)$ bounds are proven.
+- [ ] All new modules are exported in `Amort.lean` and thoroughly documented.

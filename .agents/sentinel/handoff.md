@@ -1,45 +1,60 @@
-# Sentinel Handoff Report: Graph Algorithms Formalization in Lean 4
+# Sentinel Handoff Report: DSU (Path Compression Only) & Quicksort Canon Formalization in Lean 4
 
 ## Observation
-The user requested formalization in Lean 4 of textbook graph algorithms within `Amort.Graph`:
-1. **Graph Dynamic Programming & Shortest Paths**:
-   - Floyd-Warshall: all-pairs shortest paths 3D DP over $(k, i, j) \in \text{Fin}(n+1) \times \text{Fin } n \times \text{Fin } n$, proving total operations bounded by $(n+1) \cdot n^2 = O(n^3)$ via `Amort.Recurrence.DP`.
-   - Bellman-Ford: single-source shortest paths via $(n-1)$ edge relaxation passes, proving $O(|V| \cdot |E|)$ operations via `Amort.Recurrence.Composition.isBigO_nested_loops_nat`.
-2. **Foundational Linear Graph Traversals & Handshaking Lemma ($O(|V| + |E|)$)**:
-   - Adjacency list representation and the Handshaking Lemma: $\sum_{v \in V} \text{outdeg}(v) = |E|$.
-   - Breadth-First Search (BFS): queue-based traversal visiting vertices at most once and scanning outgoing edges, proving total work bounded by $|V| + |E|$ ($O(|V| + |E|)$) and unweighted shortest-path distance correctness.
-   - Topological Sort: Kahn's in-degree zero queue algorithm, proving $O(|V| + |E|)$ step bound and topological sort correctness on DAGs (cycle-freedom).
-3. **Amortized Data Structures & Minimum Spanning Trees**:
-   - Disjoint Set Union (Union-Find): union-by-rank, proving tree depth bounded by $\log_2 n$ and $m$ operations on $n$ elements bounded by $O((n+m) \log n)$.
-   - Kruskal's MST Algorithm: edge sorting (connecting to `Amort.Sorting.MergeSort`) followed by DSU cycle checking, proving overall time complexity $O(|E| \log |V|)$ and Cut-Property greedy optimality.
-4. **Asymptotics Bridges & Module Integration**:
-   - Bridges to Mathlib `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop` for all 6 graph algorithms.
-   - Modular implementation across `Amort/Graph/FloydWarshall.lean`, `BellmanFord.lean`, `Traversal.lean`, `TopologicalSort.lean`, `DSU.lean`, `Kruskal.lean`, and `Asymptotics.lean`.
-   - Modules re-exported in `Amort.lean` and indexed in `README.md`.
-   - Mathematical documentation in `Amort/Graph/Graph.md` and individual algorithm `.md` documents.
+The user requested complete formalization in Lean 4 of Disjoint Set Union with iterative path compression only (no ranks/sizes) and the Quicksort algorithm canon:
+1. **Disjoint Set Union with Path Compression Only (`Amort/Graph/PathCompressionOnly.lean`)**:
+   - Minimal DSU state `DSUPCO n` containing solely parent pointers `parent : Fin n → Fin n` without rank or size arrays.
+   - Iterative two-pass path compression: pass 1 traverses to root (`findPathAux`, `findRoot`), pass 2 re-points visited nodes directly to root (`compressPath`, `findIter`).
+   - Arbitrary/naive linking: `unite(u, v)` attaches root $u$ directly under root $v$.
+   - Star flattening invariant `path_depth_one_after_find`: after `find(v)`, all traversed nodes have depth 1.
+   - Linear chain construction `linearChainDSU` showing worst-case single operation depth reaches $n - 1 = \Omega(n)$ (`linearChain_depth_zero`).
+   - Adversarial sequence construction `adversarialPCOWork` requiring $\ge \frac{1}{4} n \log_2 n = \Omega(n \log n)$ total steps (`isBigO_adversarialPCOWork_omega`).
+   - Amortized upper bound `dsuPCOWork` proving $m$ operations on $n$ elements require at most $O((n + m) \log n)$ steps (`isBigO_dsuPCOWork_atTop`).
+   - Companion documentation in `Amort/Graph/PathCompressionOnly.md`.
+2. **Algorithmic Quicksort & Mathematical Correctness (`Amort/Sorting/Quicksort.lean`)**:
+   - 3-way partitioning `partition3` and 2-way partitioning for `List α` with `[LinearOrder α]`.
+   - Length-fuel recursive `quicksortFuel` and `quicksort`.
+   - Permutation equivalence `quicksort_perm`: `quicksort xs ~ xs`.
+   - Sortedness `quicksort_sorted` (`(quicksort xs).Pairwise (· ≤ ·)`) and `quicksort_sortedLE`.
+   - Complete equivalence to Mathlib's `List.mergeSort` (`quicksort_eq_mergeSort`) and `List.insertionSort` (`quicksort_eq_insertionSort`).
+3. **Quicksort Worst-Case Complexity ($\Theta(n^2)$)**:
+   - Naive pivot comparison recurrence `quicksortWorstCaseRec`: $T(n) = T(n - 1) + (n - 1)$ for $n \ge 1$.
+   - Exact closed-form solution `quicksortWorstCaseRec_eq`: $T(n) = n(n - 1) / 2$.
+   - Asymptotic connection to Mathlib `IsBigO` and `IsTheta`: $O(n^2)$ (`isBigO_quicksortWorstCase_sq`), $\Omega(n^2)$ (`isBigO_sq_quicksortWorstCase`), and $\Theta(n^2)$ (`isTheta_quicksortWorstCase_sq`).
+4. **Quicksort with Deterministic $O(n)$ Median (BFPRT Selection)**:
+   - BFPRT partition balance guarantee `bfprt_partition_balance`: sublists have size $\le \lfloor 7n/10 \rfloor + 3$ for $n \ge 5$.
+   - Divide-and-conquer recurrence `bfprtQuicksortRec`: $T(n) \le T(\lfloor 7n/10 \rfloor) + T(\lfloor 3n/10 \rfloor) + c \cdot n$.
+   - Worst-case bound `bfprtQuicksortBound` ($4(c + 1) n \cdot \text{size } n$) and Mathlib `IsBigO` asymptotic connection (`isBigO_bfprtQuicksort_n_log_n`) establishing strictly worst-case $O(n \log n)$ runtime.
+5. **Quicksort Average-Case Complexity ($O(n \log n)$)**:
+   - Average-case recurrence `IsQuicksortAvgRec` under uniform random pivot selection: $\mathbb{E}[T(n)] = \frac{2}{n} \sum_{i=0}^{n-1} \mathbb{E}[T(i)] + (n - 1)$.
+   - Bridge to backward indicator analysis in `Amort.Randomized.Quicksort` (`expected_quicksort_le_harmonic_bound`): $\mathbb{E}[T(n)] \le 2n H(n) \le 2n \cdot \text{size } n$.
+   - Asymptotic connection `isBigO_quicksortAvg_n_log_n` proving average-case comparisons are $O(n \log n)$ under `Filter.atTop`.
+6. **Integration & Master Documentation**:
+   - Modules exported in `Amort.lean`.
+   - Comprehensive documentation in `Amort/Graph/PathCompressionOnly.md` and `Amort/Sorting/Quicksort.md`.
+   - Master documentation updated in `Amort/Sorting/Sorting.md` and `README.md`.
 
 ## Logic Chain
-1. **User Request Recorded**: Appended verbatim request to `/workspace/amort/.agents/ORIGINAL_REQUEST.md` under timestamp header `## 2026-09-18T03:15:57Z`.
-2. **Routing Decision**: Evaluated routing per Routing Decision Table: classified as Math / Proof; routed to `teamwork_preview_pipeline` (`teamwork_preview_pipeline_8`, conv ID `286411f6-6311-408f-8cbc-a52d53281986`).
-3. **Sentinel Monitoring**: Scheduled progress reporting cron (`*/8 * * * *`, task-48) and liveness check cron (`*/10 * * * *`, task-50). Tracked implementation across iterations.
-4. **Completion Claim**: `teamwork_preview_pipeline_8` completed implementation across all 7 Lean modules, 7 markdown documents, `Amort.lean` re-exports, and `README.md` indexing with clean build and 0 `sorryAx`.
-5. **Independent Victory Audit**: Dispatched isolated auditor `teamwork_preview_victory_auditor_8` (conv ID `be72993d-a383-4475-922e-b69829a66673`) with zero shared context from the implementation swarm to execute the blocking 3-phase audit.
+1. **User Request Recorded**: Appended verbatim request to `/workspace/amort/.agents/ORIGINAL_REQUEST.md` under timestamp header `## 2026-09-20T00:14:58Z`.
+2. **Routing Decision**: Mathematical formalization and algorithmic proof in Lean 4 routed to `teamwork_preview_pipeline` (`teamwork_preview_pipeline_17`, conv ID `fe48bc56-eae3-4969-a500-9be1a797d4a4`).
+3. **Sentinel Monitoring**: Initialized progress reporting cron (`*/8 * * * *`, task-26) and liveness check cron (`*/10 * * * *`, task-28). Tracked implementation across iterations.
+4. **Completion Claim**: Orchestrator reported completion across all 6 tracks.
+5. **Independent Victory Audit**: Spawned isolated auditor `teamwork_preview_victory_auditor_17` (conv ID `f0db31ec-4021-4d2b-abdf-780a646b0fc9`) to execute the blocking 3-phase audit.
 6. **Audit Verdict**: Victory Auditor confirmed:
-   - Phase A (Timeline): PASS. Implementation timeline and git tracking verified.
-   - Phase B (Integrity): PASS. Zero `sorry`, `admit`, or `sorryAx` across all files. All 58 declarations across `Amort/Graph/*.lean` rely strictly on foundational Lean 4 axioms (`propext`, `Classical.choice`, `Quot.sound`). All lines $\le 100$ characters. Mathlib `/-- ... -/` docstrings present. Full mathematical correctness and algorithmic bounds proven.
-   - Phase C (Execution): PASS. `lake build Amort` independently executed and compiled 2014 jobs with 0 errors and 0 warnings.
+   - Phase A (Timeline & Git Status): PASS. Tracked git modifications and new files match the request specification.
+   - Phase B (Integrity Check): PASS. Zero `sorry`, `admit`, or `sorryAx`. All proofs depend strictly on foundational Lean 4 axioms (`[propext, Classical.choice, Quot.sound]`). All definitions and theorems are genuine, non-vacuous, and mathematically sound. Mathlib line length $\le 100$ characters and docstring standards satisfied.
+   - Phase C (Independent Test Execution): PASS. Executed `lake build Amort` (2136 jobs, 0 errors, 0 warnings). Verified axiom dependencies for all milestone theorems.
    - Verdict: `VICTORY CONFIRMED`.
-7. **Teardown & Cleanup**: Background crons task-48 and task-50 cancelled via `manage_task(action="kill")`, and all subagents terminated via `manage_subagents(action="kill_all")`.
+7. **Teardown & Cleanup**: Cancelled background crons (task-26, task-28) via `manage_task(action="kill")` and terminated all subagents via `manage_subagents(action="kill_all")`.
 
 ## Caveats
-- All proofs strictly depend on foundational Lean 4 axioms (`propext`, `Classical.choice`, `Quot.sound`). No custom axioms or `sorryAx` are used.
-- Asymptotic bounds for graph algorithms are formalized under `Filter.atTop` on $\mathbb{N}$ (Floyd-Warshall) and on $\mathbb{N} \times \mathbb{N}$ (Bellman-Ford, BFS, Topological Sort, DSU, and Kruskal).
+- All proofs strictly adhere to foundational Lean 4 axioms (`propext`, `Classical.choice`, `Quot.sound`). No non-standard or custom axioms are introduced.
+- Quicksort termination is structured via length-fuel recursion (`quicksortFuel`), which avoids well-founded recursion elaborator issues while admitting provable step unfolding (`quicksort_cons`) and equivalence to Mathlib sorting algorithms.
 
 ## Conclusion
-The textbook graph algorithms formalization milestone in Lean 4 within `Amort.Graph` has been successfully completed, verified, and independently audited. All algorithms, correctness proofs, operational step bounds, and asymptotic complexity theorems build cleanly in Lean 4 without unresolved axioms.
+The formalization of Disjoint Set Union with iterative path compression only and the complete Quicksort algorithm canon in Lean 4 has been completed, fully verified, and independently audited. All acceptance criteria and requirements have been satisfied.
 
 ## Verification Method
-- Independent build execution: `lake build Amort` (2014 jobs, 0 errors, 0 warnings).
-- Axiom validation: `#print axioms` run on all declarations confirms zero `sorryAx`.
-- Style verification: All Lean source files verified at 0 lines exceeding 100 characters and Mathlib-compliant `/-- ... -/` docstrings.
-- Independent victory audit: `teamwork_preview_victory_auditor_8` returned `VICTORY CONFIRMED`.
+- Independent compilation: `lake build Amort` (2136 jobs, 0 errors, 0 warnings).
+- Axiom validation: `#print axioms` across all 20+ milestone theorems confirmed zero `sorryAx`.
+- Forensic audit: line length $\le 100$ characters, regex check for `sorry`/`admit`/`sorryAx` clean.

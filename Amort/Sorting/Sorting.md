@@ -9,7 +9,7 @@ for comparison-based sorting algorithms in the `Amort.Sorting` namespace, integr
 
 ## 1. Architectural Overview
 
-The sorting complexity formalization comprises five dedicated modules under `Amort/Sorting/`:
+The sorting complexity formalization comprises six dedicated modules under `Amort/Sorting/`:
 
 ```
 Amort/
@@ -18,9 +18,11 @@ Amort/
 └── Sorting/
     ├── InsertionSort.lean      -- Comparison counting, instrumented sort, triangular & O(n²) bounds
     ├── MergeSort.lean          -- Merge comparison counting, D&C recurrence, O(n * size n) bounds
+    ├── Quicksort.lean          -- Algorithmic quicksort canon, Θ(n²), BFPRT, avg O(n log n)
     ├── Asymptotics.lean        -- Asymptotic bridges connecting concrete bounds to Mathlib IsBigO
     ├── DecisionTree.lean       -- Abstract binary decision trees, depth, leaf count bound (R1)
     ├── LowerBound.lean         -- Permutation coverage, clog bound, and Ω(n log n) asymptotics (R2, R3)
+    ├── Quicksort.md            -- Dedicated Quicksort architecture and complexity documentation
     └── Sorting.md              -- Architectural and mathematical documentation
 ```
 
@@ -372,7 +374,46 @@ theorem isBigO_n_log_n_depth {β : (n : ℕ) → Type*}
 
 ---
 
-## 8. Axiom Integrity Verification
+---
+
+## 8. Quicksort Algorithm Canon: Correctness, $\Theta(n^2)$, BFPRT, and Average-Case (R2-R5)
+
+Module `Amort.Sorting.Quicksort` formalizes the complete algorithmic Quicksort canon:
+
+### 8.1 Partitioning & Algorithmic Correctness (R2)
+- **Length-Fueled Recursion**: `quicksortFuel` and `quicksort` avoid well-founded termination
+  issues and elaborate cleanly.
+- **Invariance & Step Equality**: `quicksortFuel_eq_of_ge` and `quicksort_cons`.
+- **Permutation Equivalence**: `quicksort_perm` proves `∀ xs, quicksort xs ~ xs`.
+- **Sortedness**: `quicksort_sorted` proves `∀ xs, (quicksort xs).Pairwise (· ≤ ·)`, and
+  `quicksort_sortedLE` establishes `List.SortedLE`.
+- **Equivalence to Mathlib**: `quicksort_eq_mergeSort` and `quicksort_eq_insertionSort` prove
+  exact equality with Mathlib's sorting algorithms via `Perm.eq_of_pairwise'`.
+
+### 8.2 Worst-Case Quadratic Complexity ($\Theta(n^2)$) (R3)
+- **Recurrence**: $T(n+1) = T(n) + n$ with $T(0) = 0$ (`quicksortWorstCaseRec`).
+- **Exact Closed Form**: `quicksortWorstCaseRec_eq` establishes $T(n) = n(n - 1) / 2$.
+- **Asymptotic Tight Bound**: `isBigO_quicksortWorstCase_sq` ($O(n^2)$) and
+  `isBigO_sq_quicksortWorstCase` ($\Omega(n^2)$) combine to yield
+  `isTheta_quicksortWorstCase_sq` ($\Theta(n^2)$) under `Filter.atTop`.
+
+### 8.3 Deterministic Median (BFPRT) Worst-Case $O(n \log n)$ (R4)
+- **Partition Invariant**: `bfprt_partition_balance` proves subproblems
+  $\le \lfloor 7n/10 \rfloor + 3$.
+- **Divide-and-Conquer Recurrence**:
+  $T(n) \le T(\lfloor 7n/10 \rfloor) + T(\lfloor 3n/10 \rfloor) + cn$.
+- **Worst-Case Asymptotics**: `isBigO_bfprtQuicksort_n_log_n` establishes worst-case $O(n \log n)$.
+
+### 8.4 Average-Case Expected Complexity ($O(n \log n)$) (R5)
+- **Expected Recurrence**: `IsQuicksortAvgRec` characterizes
+  $\mathbb{E}[T(n)] = \frac{2}{n}\sum \mathbb{E}[T(i)] + (n - 1)$.
+- **Harmonic Bound**: `expected_quicksort_le_harmonic_bound` bridges to
+  `Amort.Randomized.Quicksort`.
+- **Average-Case Asymptotics**: `isBigO_quicksortAvg_n_log_n` establishes expected $O(n \log n)$.
+
+---
+
+## 9. Axiom Integrity Verification
 
 All definitions, auxiliary lemmas, and main theorems adhere strictly to standard foundational
 axioms. `#print axioms` confirms zero reliance on `sorryAx`:
@@ -409,13 +450,29 @@ axioms. `#print axioms` confirms zero reliance on `sorryAx`:
 | `isBigO_log_factorial_clog_factorial` | `[propext, Classical.choice, Quot.sound]` | Clean |
 | `isBigO_n_log_n_clog_factorial` | `[propext, Classical.choice, Quot.sound]` | Clean |
 | `isBigO_n_log_n_depth` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `quicksort_perm` | `[propext, Quot.sound]` | Clean |
+| `quicksort_sorted` | `[propext, Quot.sound]` | Clean |
+| `quicksort_sortedLE` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `quicksort_eq_mergeSort` | `[propext, Quot.sound]` | Clean |
+| `quicksort_eq_insertionSort` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `quicksortWorstCaseRec_eq` | `[propext, Quot.sound]` | Clean |
+| `isBigO_quicksortWorstCase_sq` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_sq_quicksortWorstCase` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isTheta_quicksortWorstCase_sq` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `bfprt_partition_balance` | `[propext, Quot.sound]` | Clean |
+| `bfprtQuicksortRec_step` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_bfprtQuicksort_mul_size` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_bfprtQuicksort_n_log_n` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `expected_quicksort_le_harmonic_bound` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_quicksortAvg_mul_size` | `[propext, Classical.choice, Quot.sound]` | Clean |
+| `isBigO_quicksortAvg_n_log_n` | `[propext, Classical.choice, Quot.sound]` | Clean |
 
 ---
 
-## 9. Style & Linter Conformance
+## 10. Style & Linter Conformance
 
 - **Namespacing**: Scoped under `namespace Amort.Sorting` (and `List` for list sorting algorithms).
 - **Classification**: `lemma` for auxiliaries, `theorem` for milestones.
 - **Documentation**: All public definitions and theorems documented with docstrings `/-- ... -/`.
 - **Line Length**: All lines across all Lean source files $\le 100$ characters.
-- **Build Status**: `lake build` succeeds with 0 errors and 0 warnings (1992 jobs).
+- **Build Status**: `lake build` succeeds with 0 errors and 0 warnings (2136 jobs).

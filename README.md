@@ -236,13 +236,42 @@ This repository formalizes algorithms and their computational complexity in `Amo
 - **Asymptotic Complexity Bridges**: `Amort.String.SuffixTree.Asymptotics` connecting Ukkonen operational work to Mathlib `IsBigO` under `Filter.atTop` on $\mathbb{N}$. Documented in [`Amort/String/SuffixTree/Asymptotics.md`](Amort/String/SuffixTree/Asymptotics.md).
 - **Documentation**: Suite overview in [`Amort/String/SuffixTree/SuffixTree.md`](Amort/String/SuffixTree/SuffixTree.md).
 
+### 23. Disjoint Set Union with Path Compression Only (`Amort.Graph.PathCompressionOnly`)
+- **Minimal State & Arbitrary Linking**: `Amort.Graph.DSUPCO` containing parent pointers only
+  (`parent : Fin n → Fin n`) without rank or size arrays, with arbitrary linking `unite(u, v)`.
+- **Iterative Two-Pass Path Compression**: `findPath`, `findRoot`, and `compressPath` re-pointing
+  all traversed nodes directly to root, proving post-condition `path_depth_one_after_find`.
+- **Worst-Case Operations & Asymptotic Bounds**:
+  - `linearChain_depth_zero`: linear chain has depth $n - 1$ ($\Omega(n)$ depth).
+  - `isBigO_adversarialPCOWork_omega`: adversarial sequence requires $\Omega(n \log n)$ steps.
+  - `isBigO_dsuPCOWork_atTop`: $m$ operations on $n$ elements bounded by $O((n + m) \log n)$.
+- **Documentation**: Detailed architecture and invariant proofs in
+  [`Amort/Graph/PathCompressionOnly.md`](Amort/Graph/PathCompressionOnly.md).
+
+### 24. Quicksort Algorithm Canon (`Amort.Sorting.Quicksort`)
+- **Algorithmic Correctness**: 3-way partitioning (`partition3`), length-fueled recursion
+  (`quicksortFuel`, `quicksort`), permutation equivalence (`quicksort_perm`), sortedness
+  (`quicksort_sorted`, `quicksort_sortedLE`), and exact equivalence to Mathlib
+  (`quicksort_eq_mergeSort`, `quicksort_eq_insertionSort`).
+- **Worst-Case Quadratic Complexity**: `quicksortWorstCaseRec` step identity, exact closed-form
+  solution $T(n) = n(n - 1) / 2$ (`quicksortWorstCaseRec_eq`), and tight $\Theta(n^2)$ asymptotics
+  (`isTheta_quicksortWorstCase_sq`).
+- **Deterministic Median (BFPRT) Worst-Case $O(n \log n)$**: Median-of-medians partition balance
+  $\le \lfloor 7n/10 \rfloor + 3$ (`bfprt_partition_balance`), divide-and-conquer recurrence, and
+  strictly worst-case $O(n \log n)$ asymptotics (`isBigO_bfprtQuicksort_n_log_n`).
+- **Average-Case Expected $O(n \log n)$**: Expected recurrence $\mathbb{E}[T(n)]$, bridge to
+  harmonic indicator bound in `Amort.Randomized.Quicksort` (`expected_quicksort_le_harmonic_bound`),
+  and average-case $O(n \log n)$ asymptotics (`isBigO_quicksortAvg_n_log_n`).
+- **Documentation**: Comprehensive architecture and proofs in
+  [`Amort/Sorting/Quicksort.md`](Amort/Sorting/Quicksort.md).
+
 ## Building and Verification
 
 ```bash
 lake build
 ```
 
-Full build executes with 0 warnings and 0 errors across 2111 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
+Full build executes with 0 warnings and 0 errors across 2136 jobs. All theorems rely exclusively on standard Lean axioms (`propext`, `Classical.choice`, `Quot.sound`) with 0 `sorryAx`.
 
 ## Disclaimer
 
