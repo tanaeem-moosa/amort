@@ -599,3 +599,80 @@ Systematically rebuild and verify the core and advanced algorithmic canons to me
 - [ ] All `IsBigO` complexity statements bound the execution of an instrumented function `(fooWithCount x).2`.
 - [ ] All documentation reflects the exact scope of genuinely verified theorems.
 </USER_REQUEST>
+
+## 2026-09-24T01:01:20Z
+
+<USER_REQUEST>
+Comprehensively resolve the remaining proof gaps, vacuous definitions, and verification targets identified in Claude's Round 3 review (§8 of `proof_review.md`) across `Amort/`, with strict mechanical validation and independent adversarial review before considering any item complete.
+
+Working directory: `/workspace/amort`
+Integrity mode: development
+Reference: `proof_review.md` (§8, §8.2, §8.3, §7.3, §1, §2)
+
+---
+
+## Core Targets & Mechanical Acceptance Requirements
+
+### 1. KMP Failure Table Self-Reference (§8.2-K)
+- **Target File**: `Amort/String/KMP.lean`
+- **Issue**: `computePiLoop` was calling `kmpStep P (piSpec P) (piSpec_lt P) …`, running the cubic brute-force spec instead of indexing `prevTable`.
+- **Requirements**:
+  - In `computePiLoop`, the fallback function passed to `kmpStep` must read `prevTable`, e.g. `fun k ↦ min (prevTable.getD k 0) (k - 1)`. The clamp supplies the `pi k < k` proof obligation; prove that the clamp never fires because every entry equals `piSpec`.
+  - Maintain `computePi_getD` and `computePiWithCount_snd_le`.
+  - Ensure `kmpWithCount` counts the scan that `kmpMatch` actually executes (the `computePi`-based one).
+- **Mechanical Check**:
+  `awk '/^def /{d=$2} /^(theorem|lemma)/{d=""} d!="" && d!="piSpec" && d!="piSpecAux" && /piSpec/' Amort/String/KMP.lean` MUST print NOTHING.
+
+### 2. BFS Executable Algorithm Equivalence & Unclamped Counting (§8.2-B)
+- **Target File**: `Amort/Graph/Traversal.lean`
+- **Issue**: Spec was renamed `bfs`, algorithm had no optimality theorem, and the loop counter was clamped behind `if u ∈ remaining`.
+- **Requirements**:
+  - Rename the noncomputable spec `bfs` to `bfsDist`, keeping `bfsDist_eq_top_iff` and `bfsDist_eq_coe_iff`.
+  - For the executable algorithm, prove:
+    ```lean
+    theorem bfsWithCount_fst_eq (adj) (s : Fin n) : (bfsWithCount adj s).1 = bfsDist adj s
+    ```
+    (two-sided: completeness [reachable => finite] and optimality [distance found <= every walk length]).
+  - Remove the `if u ∈ remaining` guard from the counter: `new_count := count + 1 + next_edges.length` unconditionally. Prove `(bfsWithCount adj s).2 ≤ n + edgeCount adj` from the invariant that each vertex is enqueued at most once.
+  - Replace `bfsLoop_fuel_invariant` with a real statement: `bfsLoop adj s (n + k) [s] [s] … = bfsLoop adj s n [s] [s] …`.
+  - Delete `bfs_fuel_exhaustion_le`, `bfs_fuel_sufficient`, and `bfs_le_path_source` (tautological/unneeded). Rename `bfsWithCount_fst` appropriately.
+- **Mechanical Check**:
+  Right-hand side of `bfsWithCount_fst_eq` mentions `bfsDist`, and `bfsDist` is the ONLY `noncomputable def` in `Traversal.lean`. The `bfsLoop` counter has NO `if`.
+
+### 3. Bellman-Ford Genuine Cycle Definitions & Removal (§8.2-N)
+- **Target File**: `Amort/Graph/BellmanFord.lean`
+- **Issue**: `NoNegCycle` was defined as the cycle-removal lemma, and `HasReachableNegCycle` was defined as the post-condition relaxation check.
+- **Requirements**:
+  - Define genuine cycle predicates:
+    ```lean
+    def NoNegCycle (edges : List (Edge n)) : Prop :=
+      ∀ (v : Fin n) (c : List (Edge n)), isEdgePath v c v → (∀ e ∈ c, e ∈ edges) →
+        0 ≤ edgePathWeight c
+
+    def HasReachableNegCycle (n) (edges) (s : Fin n) : Prop :=
+      ∃ (v : Fin n) (p c : List (Edge n)), isEdgePath s p v ∧ isEdgePath v c v ∧
+        (∀ e ∈ p ++ c, e ∈ edges) ∧ edgePathWeight c < 0
+    ```
+  - Prove cycle removal from vertex pigeonhole principle: under `NoNegCycle`, every path `s ⇝ v` has a path with <= n - 1 edges that is no heavier. Keep `bellmanFord_optimal` on top of it.
+  - Prove detection: `hasNegCycleCheck n edges s = true ↔ HasReachableNegCycle n edges s`.
+- **Mechanical Check**:
+  Neither `NoNegCycle` nor `HasReachableNegCycle` mentions `bellmanFord`, `bellmanFordPasses`, `CanRelax`, or a length bound `<= n - 1`.
+
+### 4. Docs Truthfulness & Hygiene (§8.2-D, §8.2-H)
+- Fix doc overclaiming:
+  - `Amort/Complexity/TwoSAT.md:5` and `Amort/Complexity/Classes.lean:35`: replace "linear-time 2-SAT" with "2-SAT characterization".
+  - `Amort/Graph/Traversal.md` and `README.md` graph matrix: ensure statements match reality.
+- Fix all 4 linter warnings (`TopologicalSort.lean:64` and `KarpReductions.lean:14`) so build is 100% warning-free.
+- Ensure no scratch files remain in the working tree.
+
+---
+
+## Adversarial Verification Protocol
+
+1. **Role Separation**: Implementation agents propose code; an adversarial auditor agent verifies against the mechanical checks and runs `lake build Amort` and `lake build`.
+2. **Acceptance Gate**:
+   - Zero `sorry`, `admit`, or `sorryAx`.
+   - All mechanical checks pass.
+   - `lake build Amort && lake build` succeeds with 0 errors and 0 warnings.
+   - `Amort/Audit.lean` validates `#print axioms` across all headline theorems.
+</USER_REQUEST>

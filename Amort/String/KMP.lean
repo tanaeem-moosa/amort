@@ -511,6 +511,37 @@ theorem kmpStep_piSpec (P : List α) (q : ℕ) (hq1 : 1 ≤ q) (hq : q < P.lengt
   have h_le := piSpec_succ_le P q hq
   exact kmpStep_eq_piSpec_aux P q (piSpec P q) hq hj hj_lt h_le
 
+/-- Fallback function reading previous failure table entries with an upper clamp `k - 1`. -/
+def piFallback (prevTable : List ℕ) : ℕ → ℕ :=
+  fun k ↦ min (prevTable.getD k 0) (k - 1)
+
+/-- The clamp `k - 1` guarantees the strict contraction property `piFallback prevTable k < k`. -/
+lemma piFallback_lt (prevTable : List ℕ) (k : ℕ) (hk : 0 < k) :
+    piFallback prevTable k < k := by
+  dsimp [piFallback]
+  have : k - 1 < k := by omega
+  exact Nat.lt_of_le_of_lt (Nat.min_le_right _ _) this
+
+/-- When previous table entries match `piSpec`, the upper clamp never fires. -/
+lemma piFallback_eq_piSpec (P : List α) (prevTable : List ℕ) (q : ℕ)
+    (h_eq : ∀ k ≤ q, prevTable.getD k 0 = piSpec P k) :
+    ∀ k ≤ q, piFallback prevTable k = piSpec P k := by
+  intro k hk
+  dsimp [piFallback]
+  rw [h_eq k hk]
+  cases k with
+  | zero =>
+    have : piSpec P 0 = 0 := rfl
+    rw [this]
+    rfl
+  | succ k =>
+    have hk_pos : 0 < k + 1 := by omega
+    have h_lt := piSpec_lt P (k + 1) hk_pos
+    have h_sub : (k + 1) - 1 = k := rfl
+    rw [h_sub]
+    have : piSpec P (k + 1) ≤ k := by omega
+    exact Nat.min_eq_left this
+
 /-- Fallback loop constructing the failure table entry-by-entry using KMP character transitions
 while accumulating the operational comparison and backtracking steps. -/
 def computePiLoop (P : List α) : ℕ → List ℕ × ℕ
@@ -520,7 +551,7 @@ def computePiLoop (P : List α) : ℕ → List ℕ × ℕ
     let (prevTable, prevSteps) := computePiLoop P q
     let j := prevTable.getD q 0
     if hq : q < P.length then
-      let (j', steps) := kmpStep P (piSpec P) (piSpec_lt P) j P[q]
+      let (j', steps) := kmpStep P (piFallback prevTable) (piFallback_lt prevTable) j P[q]
       (prevTable ++ [j'], prevSteps + steps)
     else
       (prevTable ++ [0], prevSteps)
@@ -616,12 +647,25 @@ theorem computePiLoop_getD (P : List α) (n q : ℕ) (hq : q ≤ n) (hn : n ≤ 
         rw [List.getElem?_append_right h_len_le]
         have : n + 1 + 1 - (computePiLoop P (n + 1)).1.length = 0 := by omega
         rw [this]
-        change (kmpStep P (piSpec P) (piSpec_lt P)
+        change (kmpStep P (piFallback (computePiLoop P (n + 1)).1) (piFallback_lt _)
             ((computePiLoop P (n + 1)).1.getD (n + 1) 0) P[n + 1]).1 =
           piSpec P (n + 1 + 1)
         have h_prev : (computePiLoop P (n + 1)).1.getD (n + 1) 0 = piSpec P (n + 1) :=
           ih (n + 1) (by omega) hn_le
         rw [h_prev]
+        have hj_le : piSpec P (n + 1) ≤ n + 1 := by
+          have := piSpec_lt P (n + 1) (by omega)
+          omega
+        have h_fb_eq : ∀ k ≤ piSpec P (n + 1),
+            piFallback (computePiLoop P (n + 1)).1 k = piSpec P k := by
+          intro k hk
+          have hk_le : k ≤ n + 1 := by omega
+          exact piFallback_eq_piSpec P (computePiLoop P (n + 1)).1 (n + 1)
+            (fun m hm ↦ ih m hm hn_le) k hk_le
+        have h_step_congr := kmpStep_congr P (piFallback (computePiLoop P (n + 1)).1)
+          (piSpec P) (piFallback_lt _) (piSpec_lt P)
+          (piSpec P (n + 1)) h_fb_eq P[n + 1]
+        rw [h_step_congr]
         have h_step := kmpStep_piSpec P (n + 1) (by omega) hq_lt
         exact h_step
 
@@ -671,9 +715,9 @@ theorem computePiLoop_bound (P : List α) (n : ℕ) (hn : n ≤ P.length) :
         rw [if_neg hP_ne] at this
         exact this
       have h_getD : ((computePiLoop P (n + 1)).1 ++
-          [(kmpStep P (piSpec P) (piSpec_lt P)
+          [(kmpStep P (piFallback (computePiLoop P (n + 1)).1) (piFallback_lt _)
             ((computePiLoop P (n + 1)).1.getD (n + 1) 0) P[n + 1]).1]).getD (n + 1 + 1) 0 =
-          (kmpStep P (piSpec P) (piSpec_lt P)
+          (kmpStep P (piFallback (computePiLoop P (n + 1)).1) (piFallback_lt _)
             ((computePiLoop P (n + 1)).1.getD (n + 1) 0) P[n + 1]).1 := by
         dsimp [List.getD]
         rw [List.getElem?_append_right (by omega)]
@@ -681,7 +725,7 @@ theorem computePiLoop_bound (P : List α) (n : ℕ) (hn : n ≤ P.length) :
         rw [this]
         rfl
       rw [h_getD]
-      have h_step_b := kmpStep_bound P (piSpec P) (piSpec_lt P)
+      have h_step_b := kmpStep_bound P (piFallback (computePiLoop P (n + 1)).1) (piFallback_lt _)
         ((computePiLoop P (n + 1)).1.getD (n + 1) 0) P[n + 1]
       omega
 
@@ -990,14 +1034,15 @@ theorem kmpScan_eq_computePi (P : List α) (T : List α) (pos j : ℕ) (hj : j �
 
 /-- Combined KMP execution step counter: preprocessing steps + text scanning steps. -/
 def kmpTotalSteps (P T : List α) : ℕ :=
-  (computePiWithCount P).2 + (kmpScan P (piSpec P) (piSpec_lt P) T 0 0).2
+  (computePiWithCount P).2 +
+    (kmpScan P (fun j ↦ (computePi P).getD j 0) (computePi_lt P) T 0 0).2
 
 /-- Combined linear step bound: total KMP execution is bounded by `2 * (n + m)`. -/
 theorem kmpTotalSteps_le (P T : List α) :
     kmpTotalSteps P T ≤ 2 * (T.length + P.length) := by
   dsimp [kmpTotalSteps]
   have hprep := computePiWithCount_snd_le P
-  have hscan := kmpScan_le_two_mul P (piSpec P) (piSpec_lt P) T
+  have hscan := kmpScan_le_two_mul P (fun j ↦ (computePi P).getD j 0) (computePi_lt P) T
   omega
 
 /-- KMP string matching: reports all shift indices where pattern `P` occurs in text `T`.
@@ -1026,7 +1071,7 @@ theorem mem_kmpMatch_iff (P T : List α) (hP : P ≠ []) (s : ℕ) :
 the operational transition/comparison steps executed during preprocessing and text scanning. -/
 def kmpWithCount (P T : List α) : List ℕ × ℕ :=
   let pRes := computePiWithCount P
-  let sRes := kmpScan P (piSpec P) (piSpec_lt P) T 0 0
+  let sRes := kmpScan P (fun j ↦ (computePi P).getD j 0) (computePi_lt P) T 0 0
   (kmpMatch P T, pRes.2 + sRes.2)
 
 /-- First projection of instrumented KMP equals `kmpMatch`. -/

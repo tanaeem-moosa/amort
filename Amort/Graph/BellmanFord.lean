@@ -7,6 +7,8 @@ import Amort.Recurrence.Composition
 import Mathlib.Algebra.Order.Ring.WithTop
 import Mathlib.Order.WithBot
 import Mathlib.Data.List.Basic
+import Mathlib.Data.Fintype.Card
+import Mathlib.Data.List.Dedup
 
 /-!
 # Bellman-Ford Single-Source Shortest Paths
@@ -473,15 +475,163 @@ theorem bellmanFord_achieved {n : ℕ} (edges : List (Edge n)) (s v : Fin n) (d 
     ∃ p, isEdgePath s p v ∧ (∀ e ∈ p, e ∈ edges) ∧ edgePathWeight p = d :=
   bellmanFordPasses_realizable edges s (n - 1) v d h
 
+/-! ### Path Decomposition and Cycle Removal -/
+
+/-- The sequence of vertices visited by an edge path starting from `s`. -/
+def pathVertices {n : ℕ} (s : Fin n) : List (Edge n) → List (Fin n)
+  | [] => [s]
+  | e :: es => s :: pathVertices e.v es
+
+theorem pathVertices_length {n : ℕ} (s : Fin n) (p : List (Edge n)) :
+    (pathVertices s p).length = p.length + 1 := by
+  induction p generalizing s with
+  | nil => rfl
+  | cons e es ih =>
+    dsimp [pathVertices]
+    simp [ih e.v]
+
+theorem edgePathWeight_append {n : ℕ} (p1 p2 : List (Edge n)) :
+    edgePathWeight (p1 ++ p2) = edgePathWeight p1 + edgePathWeight p2 := by
+  dsimp [edgePathWeight]
+  simp
+
+lemma pathVertices_split {n : ℕ} (s : Fin n) (p : List (Edge n)) (v : Fin n)
+    (h_path : isEdgePath s p v) (x : Fin n) (hx : x ∈ pathVertices s p) :
+    ∃ p1 p2, p = p1 ++ p2 ∧ isEdgePath s p1 x ∧ isEdgePath x p2 v ∧
+      (∀ e ∈ p1, e ∈ p) ∧ (∀ e ∈ p2, e ∈ p) := by
+  induction p generalizing s with
+  | nil =>
+    dsimp [pathVertices] at hx
+    simp only [List.mem_singleton] at hx
+    subst hx
+    dsimp [isEdgePath] at h_path
+    subst h_path
+    exact ⟨[], [], rfl, rfl, rfl, by simp, by simp⟩
+  | cons e es ih =>
+    dsimp [pathVertices] at hx
+    simp only [List.mem_cons] at hx
+    dsimp [isEdgePath] at h_path
+    rcases h_path with ⟨rfl, hes⟩
+    cases hx with
+    | inl hx_eq =>
+      subst hx_eq
+      exact ⟨[], e :: es, rfl, rfl, ⟨rfl, hes⟩, by simp, fun _ he ↦ he⟩
+    | inr hx_in =>
+      rcases ih e.v hes hx_in with ⟨p1, p2, rfl, hp1, hp2, hp1_sub, hp2_sub⟩
+      refine ⟨e :: p1, p2, rfl, ⟨rfl, hp1⟩, hp2, ?_, ?_⟩
+      · intro e' he'
+        simp only [List.mem_cons] at he' ⊢
+        cases he' with
+        | inl he'_eq => exact Or.inl he'_eq
+        | inr he'_in => exact Or.inr (hp1_sub e' he'_in)
+      · intro e' he'
+        simp only [List.mem_cons]
+        exact Or.inr (hp2_sub e' he')
+
+lemma path_duplicate_cycle {n : ℕ} (s : Fin n) (p : List (Edge n)) (v : Fin n)
+    (h_path : isEdgePath s p v) (h_not_nodup : ¬ (pathVertices s p).Nodup) :
+    ∃ (u : Fin n) (p1 c p2 : List (Edge n)),
+      p = p1 ++ c ++ p2 ∧ c ≠ [] ∧ isEdgePath s p1 u ∧ isEdgePath u c u ∧
+      isEdgePath u p2 v ∧ isEdgePath s (p1 ++ p2) v ∧
+      (∀ e ∈ p1 ++ p2, e ∈ p) ∧ (∀ e ∈ c, e ∈ p) ∧
+      edgePathWeight p = edgePathWeight (p1 ++ p2) + edgePathWeight c := by
+  induction p generalizing s with
+  | nil =>
+    dsimp [pathVertices] at h_not_nodup
+    exact False.elim (h_not_nodup (List.nodup_singleton s))
+  | cons e es ih =>
+    dsimp [pathVertices] at h_not_nodup
+    dsimp [isEdgePath] at h_path
+    rcases h_path with ⟨rfl, hes⟩
+    have h_cases : e.u ∈ pathVertices e.v es ∨ ¬ (pathVertices e.v es).Nodup := by
+      by_contra! h_both
+      have h_nd : (pathVertices e.u (e :: es)).Nodup := by
+        dsimp [pathVertices]
+        rw [List.nodup_cons]
+        exact ⟨h_both.1, h_both.2⟩
+      exact h_not_nodup h_nd
+    cases h_cases with
+    | inl hs_in =>
+      rcases pathVertices_split e.v es v hes e.u hs_in with
+        ⟨c, p2, rfl, hc_path, hp2_path, hc_sub, hp2_sub⟩
+      refine ⟨e.u, [], e :: c, p2, rfl, by simp, rfl, ⟨rfl, hc_path⟩, hp2_path, hp2_path,
+        ?_, ?_, ?_⟩
+      · intro e' he'
+        simp only [List.nil_append] at he'
+        exact List.mem_cons_of_mem e (hp2_sub e' he')
+      · intro e' he'
+        simp only [List.mem_cons] at he' ⊢
+        cases he' with
+        | inl he'_eq => exact Or.inl he'_eq
+        | inr he'_in => exact Or.inr (hc_sub e' he'_in)
+      · dsimp [edgePathWeight]
+        simp only [List.map_cons, List.sum_cons, List.map_append, List.sum_append]
+        omega
+    | inr hes_not_nodup =>
+      rcases ih e.v hes hes_not_nodup with
+        ⟨u, p1, c, p2, rfl, hc_ne, hp1_path, hc_cyc, hp2_path, hp12_path, hp12_sub, hc_sub, h_wt⟩
+      refine ⟨u, e :: p1, c, p2, rfl, hc_ne, ⟨rfl, hp1_path⟩, hc_cyc, hp2_path, ⟨rfl, hp12_path⟩,
+        ?_, ?_, ?_⟩
+      · intro e' he'
+        simp only [List.cons_append, List.mem_cons] at he' ⊢
+        cases he' with
+        | inl he'_eq => exact Or.inl he'_eq
+        | inr he'_in => exact Or.inr (hp12_sub e' he'_in)
+      · intro e' he'
+        exact List.mem_cons_of_mem e (hc_sub e' he')
+      · dsimp [edgePathWeight]
+        simp only [List.map_cons, List.sum_cons]
+        dsimp [edgePathWeight] at h_wt
+        omega
+
+/-- Distinct vertex list length is bounded by the cardinality of the vertex type. -/
+theorem list_length_le_card_of_nodup {α : Type*} [Fintype α]
+    (L : List α) (hL : L.Nodup) :
+    L.length ≤ Fintype.card α := by
+  classical
+  have h_card := List.toFinset_card_of_nodup hL
+  have h_le : L.toFinset.card ≤ Fintype.card α := Finset.card_le_univ L.toFinset
+  omega
+
 /-! ### Optimality Under No Negative Cycles -/
 
-/-- A graph has no negative cycles if any edge path can be replaced by an edge path
-of length at most `n - 1` with weight at most the original path weight. -/
+/-- Genuine negative cycle predicate: every directed cycle in `edges` has non-negative weight. -/
 def NoNegCycle {n : ℕ} (edges : List (Edge n)) : Prop :=
-  ∀ (s v : Fin n) (p : List (Edge n)),
-    isEdgePath s p v → (∀ e ∈ p, e ∈ edges) →
+  ∀ (v : Fin n) (c : List (Edge n)), isEdgePath v c v → (∀ e ∈ c, e ∈ edges) →
+    0 ≤ edgePathWeight c
+
+/-- Cycle removal: under `NoNegCycle`, every edge path can be shortened to length at most `n - 1`
+without increasing its total weight. -/
+theorem noNegCycle_path_le_len {n : ℕ} (edges : List (Edge n)) (hneg : NoNegCycle edges)
+    (s v : Fin n) (p : List (Edge n))
+    (hpath : isEdgePath s p v) (hedges : ∀ e ∈ p, e ∈ edges) :
     ∃ (p' : List (Edge n)), isEdgePath s p' v ∧ (∀ e ∈ p', e ∈ edges) ∧
-      p'.length ≤ n - 1 ∧ edgePathWeight p' ≤ edgePathWeight p
+      p'.length ≤ n - 1 ∧ edgePathWeight p' ≤ edgePathWeight p := by
+  by_cases h_nodup : (pathVertices s p).Nodup
+  · have hlen : (pathVertices s p).length ≤ n := by
+      have h := list_length_le_card_of_nodup (pathVertices s p) h_nodup
+      simp only [Fintype.card_fin] at h
+      exact h
+    rw [pathVertices_length] at hlen
+    refine ⟨p, hpath, hedges, by omega, le_rfl⟩
+  · rcases path_duplicate_cycle s p v hpath h_nodup with
+      ⟨u, p1, c, p2, hp_eq, hc_ne, _, hc_cyc, _, hp12_path, hp12_edges, hc_edges, h_wt⟩
+    have hc_in : ∀ e ∈ c, e ∈ edges := fun e he ↦ hedges e (hc_edges e he)
+    have h_c_ge : 0 ≤ edgePathWeight c := hneg u c hc_cyc hc_in
+    have hp12_in : ∀ e ∈ p1 ++ p2, e ∈ edges := fun e he ↦ hedges e (hp12_edges e he)
+    have ih := noNegCycle_path_le_len edges hneg s v (p1 ++ p2) hp12_path hp12_in
+    rcases ih with ⟨p', hp'_path, hp'_edges, hp'_len, hp'_wt⟩
+    refine ⟨p', hp'_path, hp'_edges, hp'_len, ?_⟩
+    have : edgePathWeight (p1 ++ p2) ≤ edgePathWeight p := by
+      rw [h_wt]
+      omega
+    exact hp'_wt.trans this
+termination_by p.length
+decreasing_by
+  have : c.length > 0 := List.length_pos_of_ne_nil hc_ne
+  rw [hp_eq]
+  simp only [List.length_append]
+  omega
 
 /-- Bellman-Ford optimality under the `NoNegCycle` condition: for any edge path
 from `s` to `v` of arbitrary length, `bellmanFord n edges s v` is bounded above
@@ -490,7 +640,8 @@ theorem bellmanFord_optimal {n : ℕ} (edges : List (Edge n)) (hneg : NoNegCycle
     (s v : Fin n) (p : List (Edge n))
     (hpath : isEdgePath s p v) (hedges : ∀ e ∈ p, e ∈ edges) :
     bellmanFord n edges s v ≤ ((edgePathWeight p : ℤ) : WithTop ℤ) := by
-  rcases hneg s v p hpath hedges with ⟨p', hp'_path, hp'_edges, hp'_len, hp'_wt⟩
+  rcases noNegCycle_path_le_len edges hneg s v p hpath hedges with
+    ⟨p', hp'_path, hp'_edges, hp'_len, hp'_wt⟩
   have h_bf := bellmanFord_le_path_weight edges s v p' hp'_path hp'_edges hp'_len
   have h_le : ((edgePathWeight p' : ℤ) : WithTop ℤ) ≤ ((edgePathWeight p : ℤ) : WithTop ℤ) := by
     rw [WithTop.coe_le_coe]
@@ -547,11 +698,11 @@ lemma canRelaxEdge_iff {n : ℕ} (dist : Fin n → WithTop ℤ) (e : Edge n) :
         rw [hv, h_cast, WithTop.coe_lt_coe] at hlt
         exact decide_eq_true hlt
 
-/-- A reachable negative cycle condition in the Bellman-Ford framework: an edge in `edges`
-whose source has a finite distance estimate from `s` after `n - 1` passes, and whose relaxation
-would strictly decrease the distance estimate of its target. -/
+/-- Genuine reachable negative cycle condition: a directed cycle `c` at `v` reachable from `s`
+via path `p` having strictly negative total weight. -/
 def HasReachableNegCycle (n : ℕ) (edges : List (Edge n)) (s : Fin n) : Prop :=
-  ∃ e ∈ edges, CanRelax (bellmanFord n edges s) e
+  ∃ (v : Fin n) (p c : List (Edge n)), isEdgePath s p v ∧ isEdgePath v c v ∧
+    (∀ e ∈ p ++ c, e ∈ edges) ∧ edgePathWeight c < 0
 
 /-- Full Bellman-Ford negative cycle check: returns `true` if any edge can be relaxed
 on the `n`-th pass after `n - 1` relaxation rounds. -/
@@ -559,46 +710,200 @@ def hasNegCycleCheck (n : ℕ) (edges : List (Edge n)) (s : Fin n) : Bool :=
   let dist := bellmanFord n edges s
   edges.any (canRelaxEdge dist)
 
-/-- The `n`-th pass relaxation check returns `true` if and only if there exists
-a reachable negative cycle witness. -/
-theorem hasNegCycleCheck_iff (n : ℕ) (edges : List (Edge n)) (s : Fin n) :
-    hasNegCycleCheck n edges s = true ↔ HasReachableNegCycle n edges s := by
-  dsimp [hasNegCycleCheck, HasReachableNegCycle]
-  rw [List.any_eq_true]
-  simp only [canRelaxEdge_iff]
+/-- Cycle removal on reachable paths when no reachable negative cycles exist. -/
+theorem reachable_path_le_len {n : ℕ} (edges : List (Edge n)) (s : Fin n)
+    (h_no_neg : ¬ HasReachableNegCycle n edges s)
+    (v : Fin n) (p : List (Edge n))
+    (hpath : isEdgePath s p v) (hedges : ∀ e ∈ p, e ∈ edges) :
+    ∃ (p' : List (Edge n)), isEdgePath s p' v ∧ (∀ e ∈ p', e ∈ edges) ∧
+      p'.length ≤ n - 1 ∧ edgePathWeight p' ≤ edgePathWeight p := by
+  by_cases h_nodup : (pathVertices s p).Nodup
+  · have hlen : (pathVertices s p).length ≤ n := by
+      have h := list_length_le_card_of_nodup (pathVertices s p) h_nodup
+      simp only [Fintype.card_fin] at h
+      exact h
+    rw [pathVertices_length] at hlen
+    refine ⟨p, hpath, hedges, by omega, le_rfl⟩
+  · rcases path_duplicate_cycle s p v hpath h_nodup with
+      ⟨u, p1, c, p2, hp_eq, hc_ne, hp1_path, hc_cyc, _, hp12_path, hp12_edges, hc_edges, h_wt⟩
+    have hp1_c_edges : ∀ e ∈ p1 ++ c, e ∈ edges := by
+      intro e he
+      simp only [List.mem_append] at he
+      cases he with
+      | inl hin =>
+        have : e ∈ p1 ++ p2 := List.mem_append_left p2 hin
+        exact hedges e (hp12_edges e this)
+      | inr hin => exact hedges e (hc_edges e hin)
+    have h_c_ge : 0 ≤ edgePathWeight c := by
+      by_contra! hlt
+      have : HasReachableNegCycle n edges s := ⟨u, p1, c, hp1_path, hc_cyc, hp1_c_edges, hlt⟩
+      exact h_no_neg this
+    have hp12_in : ∀ e ∈ p1 ++ p2, e ∈ edges := fun e he ↦ hedges e (hp12_edges e he)
+    have ih := reachable_path_le_len edges s h_no_neg v (p1 ++ p2) hp12_path hp12_in
+    rcases ih with ⟨p', hp'_path, hp'_edges, hp'_len, hp'_wt⟩
+    refine ⟨p', hp'_path, hp'_edges, hp'_len, ?_⟩
+    have : edgePathWeight (p1 ++ p2) ≤ edgePathWeight p := by
+      rw [h_wt]
+      omega
+    exact hp'_wt.trans this
+termination_by p.length
+decreasing_by
+  have : c.length > 0 := List.length_pos_of_ne_nil hc_ne
+  rw [hp_eq]
+  simp only [List.length_append]
+  omega
 
-/-- Under the `NoNegCycle` property, no edge reachable from `s` can be relaxed
-after `n - 1` passes. -/
-theorem noNegCycle_not_hasReachableNegCycle {n : ℕ} (edges : List (Edge n))
-    (hneg : NoNegCycle edges) (s : Fin n) :
-    ¬ HasReachableNegCycle n edges s := by
-  intro ⟨e, he_in, hu_ne, hlt⟩
+lemma no_hasReachableNegCycle_not_canRelax {n : ℕ} (edges : List (Edge n)) (s : Fin n)
+    (h_no_neg : ¬ HasReachableNegCycle n edges s) (e : Edge n) (he : e ∈ edges) :
+    ¬ CanRelax (bellmanFord n edges s) e := by
+  intro ⟨hu_ne, hlt⟩
   cases hu : bellmanFord n edges s e.u with
   | top => exact hu_ne hu
   | coe du =>
     rcases bellmanFord_achieved edges s e.u du hu with ⟨p, hp_path, hp_edges, hp_wt⟩
-    have h_p_ext : isEdgePath s (p ++ [e]) e.v := by
+    have h_pe_path : isEdgePath s (p ++ [e]) e.v := by
       rw [isEdgePath_append_singleton]
       exact ⟨hp_path, rfl⟩
-    have h_edges_ext : ∀ e' ∈ p ++ [e], e' ∈ edges := by
+    have h_pe_edges : ∀ e' ∈ p ++ [e], e' ∈ edges := by
       intro e' he'
       simp only [List.mem_append, List.mem_singleton] at he'
       cases he' with
       | inl hin => exact hp_edges e' hin
-      | inr hin => subst hin; exact he_in
-    have h_opt := bellmanFord_optimal edges hneg s e.v (p ++ [e]) h_p_ext h_edges_ext
-    rw [edgePathWeight_append_singleton, hp_wt] at h_opt
+      | inr hin => subst hin; exact he
+    rcases reachable_path_le_len edges s h_no_neg e.v (p ++ [e]) h_pe_path h_pe_edges with
+      ⟨p', hp'_path, hp'_edges, hp'_len, hp'_wt⟩
+    have h_bf := bellmanFord_le_path_weight edges s e.v p' hp'_path hp'_edges hp'_len
+    rw [edgePathWeight_append_singleton, hp_wt] at hp'_wt
     rw [hu] at hlt
-    have h_opt' : bellmanFord n edges s e.v ≤ (du : WithTop ℤ) + (e.w : WithTop ℤ) := by
-      have h_cast : ((du + e.w : ℤ) : WithTop ℤ) = (du : WithTop ℤ) + (e.w : WithTop ℤ) := by
-        exact WithTop.coe_add du e.w
-      rwa [h_cast] at h_opt
-    have h_contra : bellmanFord n edges s e.v < bellmanFord n edges s e.v :=
-      h_opt'.trans_lt hlt
+    have h_cast : ((du + e.w : ℤ) : WithTop ℤ) = (du : WithTop ℤ) + (e.w : WithTop ℤ) :=
+      WithTop.coe_add du e.w
+    have hp'_wt_top : ((edgePathWeight p' : ℤ) : WithTop ℤ) ≤
+        (du : WithTop ℤ) + (e.w : WithTop ℤ) := by
+      rw [← h_cast, WithTop.coe_le_coe]
+      exact hp'_wt
+    have h_le := h_bf.trans hp'_wt_top
+    have h_contra := h_le.trans_lt hlt
     exact lt_irrefl _ h_contra
 
-/-- Detecting a relaxable edge on the `n`-th pass certifies that the graph does not
-satisfy `NoNegCycle`. -/
+lemma no_hasReachableNegCycle_hasNegCycleCheck_false {n : ℕ} (edges : List (Edge n)) (s : Fin n)
+    (h : ¬ HasReachableNegCycle n edges s) :
+    hasNegCycleCheck n edges s = false := by
+  dsimp [hasNegCycleCheck]
+  rw [List.any_eq_false]
+  intro e he
+  rw [canRelaxEdge_iff]
+  exact no_hasReachableNegCycle_not_canRelax edges s h e he
+
+lemma dist_le_of_no_relax {n : ℕ} (edges : List (Edge n)) (dist : Fin n → WithTop ℤ)
+    (h_no_relax : ∀ e ∈ edges, ¬ CanRelax dist e)
+    (x y : Fin n) (p : List (Edge n))
+    (hp : isEdgePath x p y) (hedges : ∀ e ∈ p, e ∈ edges)
+    (hx : dist x ≠ ⊤) :
+    dist y ≤ dist x + (edgePathWeight p : WithTop ℤ) := by
+  induction p generalizing x with
+  | nil =>
+    dsimp [isEdgePath] at hp
+    subst hp
+    dsimp [edgePathWeight]
+    simp
+  | cons e es ih =>
+    dsimp [isEdgePath] at hp
+    rcases hp with ⟨rfl, hes⟩
+    have he_in : e ∈ edges := hedges e (List.mem_cons.mpr (Or.inl rfl))
+    have hes_in : ∀ e' ∈ es, e' ∈ edges := fun e' he' ↦ hedges e' (List.mem_cons_of_mem e he')
+    have h_nr := h_no_relax e he_in
+    dsimp [CanRelax] at h_nr
+    have he_le : dist e.v ≤ dist e.u + (e.w : WithTop ℤ) := by
+      by_contra! hlt
+      exact h_nr ⟨hx, hlt⟩
+    have hev_ne_top : dist e.v ≠ ⊤ := by
+      intro h_top
+      rw [h_top] at he_le
+      cases h_eu : dist e.u with
+      | top => exact hx h_eu
+      | coe du =>
+        rw [h_eu] at he_le
+        have : (du : WithTop ℤ) + (e.w : WithTop ℤ) = ((du + e.w : ℤ) : WithTop ℤ) :=
+          WithTop.coe_add du e.w
+        rw [this] at he_le
+        exact WithTop.not_top_le_coe (du + e.w) he_le
+    have ih_res := ih e.v hes hes_in hev_ne_top
+    dsimp [edgePathWeight]
+    simp only [List.map_cons, List.sum_cons]
+    have h_cast : ((e.w + (es.map Edge.w).sum : ℤ) : WithTop ℤ) =
+        (e.w : WithTop ℤ) + ((es.map Edge.w).sum : WithTop ℤ) := WithTop.coe_add _ _
+    rw [h_cast, ← add_assoc]
+    have h_mono : dist e.v + ((es.map Edge.w).sum : WithTop ℤ) ≤
+        dist e.u + (e.w : WithTop ℤ) + ((es.map Edge.w).sum : WithTop ℤ) := by
+      exact withTop_int_add_le_add_right _ _ _ he_le
+    exact ih_res.trans h_mono
+
+lemma hasReachableNegCycle_hasNegCycleCheck_true {n : ℕ} (edges : List (Edge n)) (s : Fin n)
+    (h : HasReachableNegCycle n edges s) :
+    hasNegCycleCheck n edges s = true := by
+  by_contra h_not_true
+  have h_false : hasNegCycleCheck n edges s = false := by
+    revert h_not_true; cases hasNegCycleCheck n edges s <;> simp
+  dsimp [hasNegCycleCheck] at h_false
+  rw [List.any_eq_false] at h_false
+  have h_no_relax : ∀ e ∈ edges, ¬ CanRelax (bellmanFord n edges s) e := by
+    intro e he
+    have := h_false e he
+    rwa [canRelaxEdge_iff] at this
+  rcases h with ⟨v, p, c, hp_path, hc_path, hedges, hc_wt⟩
+  have hp_edges : ∀ e ∈ p, e ∈ edges := fun e he ↦ hedges e (List.mem_append_left c he)
+  have hc_edges : ∀ e ∈ c, e ∈ edges := fun e he ↦ hedges e (List.mem_append_right p he)
+  have hs_ne_top : bellmanFord n edges s s ≠ ⊤ := by
+    have h_self := bellmanFordPasses_self edges s (n - 1)
+    intro h_top
+    dsimp [bellmanFord] at h_top
+    rw [h_top] at h_self
+    contradiction
+  have hv_le := dist_le_of_no_relax edges (bellmanFord n edges s) h_no_relax
+    s v p hp_path hp_edges hs_ne_top
+  have hv_ne_top : bellmanFord n edges s v ≠ ⊤ := by
+    intro h_top
+    rw [h_top] at hv_le
+    cases hs : bellmanFord n edges s s with
+    | top => exact hs_ne_top hs
+    | coe ds =>
+      rw [hs] at hv_le
+      have : (ds : WithTop ℤ) + (edgePathWeight p : WithTop ℤ) =
+          ((ds + edgePathWeight p : ℤ) : WithTop ℤ) := WithTop.coe_add _ _
+      rw [this] at hv_le
+      exact WithTop.not_top_le_coe _ hv_le
+  have hc_le := dist_le_of_no_relax edges (bellmanFord n edges s) h_no_relax
+    v v c hc_path hc_edges hv_ne_top
+  cases hv : bellmanFord n edges s v with
+  | top => exact hv_ne_top hv
+  | coe dv =>
+    have h_add : (dv : WithTop ℤ) + (edgePathWeight c : WithTop ℤ) =
+        ((dv + edgePathWeight c : ℤ) : WithTop ℤ) := WithTop.coe_add dv (edgePathWeight c)
+    rw [hv, h_add, WithTop.coe_le_coe] at hc_le
+    omega
+
+/-- The `n`-th pass relaxation check returns `true` if and only if there exists
+a reachable negative cycle. -/
+theorem hasNegCycleCheck_iff (n : ℕ) (edges : List (Edge n)) (s : Fin n) :
+    hasNegCycleCheck n edges s = true ↔ HasReachableNegCycle n edges s := by
+  constructor
+  · intro h
+    by_contra h_not
+    have h_false := no_hasReachableNegCycle_hasNegCycleCheck_false edges s h_not
+    rw [h_false] at h
+    contradiction
+  · exact hasReachableNegCycle_hasNegCycleCheck_true edges s
+
+/-- Under the `NoNegCycle` property, no reachable negative cycle exists in the graph. -/
+theorem noNegCycle_not_hasReachableNegCycle {n : ℕ} (edges : List (Edge n))
+    (hneg : NoNegCycle edges) (s : Fin n) :
+    ¬ HasReachableNegCycle n edges s := by
+  intro ⟨v, p, c, _, hc_path, hedges, hc_wt⟩
+  have hc_edges : ∀ e ∈ c, e ∈ edges := fun e he ↦ hedges e (List.mem_append_right p he)
+  have hge := hneg v c hc_path hc_edges
+  omega
+
+/-- Detecting a reachable negative cycle certifies that the graph does not satisfy `NoNegCycle`. -/
 theorem hasReachableNegCycle_not_noNegCycle {n : ℕ} (edges : List (Edge n))
     (s : Fin n) (h : HasReachableNegCycle n edges s) :
     ¬ NoNegCycle edges := fun hneg ↦

@@ -32,7 +32,7 @@ $\le_P$ preorder, transitivity, and preservation under reduction). Note that `De
 `Verifier` define operational interfaces rather than formal Turing machine models
 (e.g., Mathlib's `Turing.TM2ComputableInPolyTime`). Concrete, fully formal combinatorial complexity
 theorems are established in `Amort.Complexity.KarpReductions` (3SAT to Independent Set reduction)
-and `Amort.Complexity.TwoSAT` (linear-time 2-SAT correctness and completeness).
+and `Amort.Complexity.TwoSAT` (2-SAT characterization: soundness and completeness).
 
 ## Mathematical Architecture
 

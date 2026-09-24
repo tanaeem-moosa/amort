@@ -4,7 +4,7 @@
 **Build status:** `lake build` succeeds (2141 jobs); 0 `sorry`, 0 `axiom`, 0 `native_decide`.
 **Audience:** the agent fixing the proofs, and the author (who is the first learner of the tutorial).
 
-> **Fixer: start at §8 (Round 3 review, 2026-09-24), then §7.3.** §8.2 lists the fixes and their scripted checks; §7.3 lists the exact theorem statements
+> **Fixer: start at §9 (Round 4, 2026-09-25): Phases 0–2 are done; next is Phase 3, in the order listed there.** §8.2 shows the scripted-check style to copy; §7.3 lists the earlier theorem statements
 > required next. Work is accepted only when those theorems exist with those statements (or strictly
 > stronger ones) and are listed in `Amort/Audit.lean`. A self-reported "victory" is not evidence.
 > §1–§6 still apply to all remaining modules.
@@ -652,3 +652,32 @@ Then prove the genuine lemmas:
 - **Still 🔴:** BFS (8.2-B).
 - **Honestly labelled stubs (Phases 3–4, not started):** the remaining ~61 modules. This is where
   most of the remaining work is.
+
+---
+
+## 9. Round 4 review (2026-09-25): §8.2 fixes, all accepted
+
+**Scope checked:** the uncommitted diff on top of `aef45b4` (15 files, +1200/−278).
+**Build:** `lake build` succeeds with 0 errors and **0 warnings** (2142 jobs). `Amort/Audit.lean`:
+all 110 theorems use only standard axioms.
+
+| Item | Result | Evidence |
+| :--- | :---: | :--- |
+| 8.2-K KMP preprocessing | ✅ | `computePiLoop` falls back through `piFallback prevTable` (reads the table built so far, clamped to `k − 1`); `computePi_getD` still proves it equals `piSpec`; the scripted `piSpec` check prints nothing; `kmpWithCount` counts the `computePi`-based scan that `kmpMatch` runs. |
+| 8.2-B BFS | ✅ | `bfsWithCount_fst_eq : (bfsWithCount adj s).1 = bfsDist adj s` with no extra hypotheses, backed by a real optimality proof (`bfsWithCount_dist_le_walk`); `bfsDist` is the only `noncomputable def`; the counter is unconditional (`count + 1 + next_edges.length`); `bfsLoop_fuel_invariant` now covers the initial queue `[s]`; the cosmetic lemmas are gone. |
+| 8.2-N Bellman–Ford | ✅ | `NoNegCycle` and `HasReachableNegCycle` are defined on cycles and never mention the algorithm (scripted check clean); cycle removal is proved (`noNegCycle_path_le_len`); `bellmanFord_optimal` and `hasNegCycleCheck_iff` are built on the genuine definitions. |
+| 8.2-D Docs | ✅ | "Linear-time 2-SAT" is removed; the Traversal and README claims now match the theorems. |
+| 8.2-H Hygiene | ✅ | The scratch files are deleted and git-ignored; the linter warnings are fixed. |
+
+**The Phase 0–2 and §7.3 targets are complete.** About 25 modules now meet the Definition of Done
+(§2) and can serve as the tutorial's reference: GCD (binary, Euclid, ExtGCD), insertion/merge/quick
+sort, the decision-tree lower bound, recurrences, DynamicArray, TwoStackQueue, naive match, KMP, LCS,
+Edit Distance, Knapsack, LIS, binary search, interval scheduling, ModExp, BFS, Bellman–Ford,
+3SAT→IS, the 2-SAT characterisation, VertexCover's ratio, and LP weak duality.
+
+**Next for the fixer: Phase 3 (§5), one module at a time.** Each module goes through the §2 Definition
+of Done and the §1 anti-pattern rules. Before claiming a module done, write a scripted check for it in
+the style of §8.2, and remove its stub banner only once the check passes. Suggested order (smaller
+foundations first): Heap/Heapsort → DSU (union-by-rank) → Dijkstra → Kruskal/Prim → Topological
+Sort/SCC → Floyd–Warshall → Z-algorithm → Rabin–Karp → Trie/Aho–Corasick → MatrixChain →
+Huffman → Sieve → Eulerian → Max-flow → BST → FFT/Strassen.

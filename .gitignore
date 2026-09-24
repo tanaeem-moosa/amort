@@ -8,3 +8,6 @@ lake-packages/
 *.o
 /.lake
 .agents/
+test_*.lean
+scratch_*.lean
+.pipeline_progress*

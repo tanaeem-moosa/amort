@@ -181,15 +181,14 @@ namespace Amort.Audit
 #print axioms Amort.Graph.hasReachableNegCycle_not_noNegCycle
 #print axioms Amort.Graph.isBigO_bellmanFord_totalRelaxations_atTop
 #print axioms Amort.Graph.handshaking_lemma
-#print axioms Amort.Graph.bfs_eq_top_iff
-#print axioms Amort.Graph.bfs_eq_coe_iff
-#print axioms Amort.Graph.bfs_source
-#print axioms Amort.Graph.bfs_fuel_exhaustion_le
-#print axioms Amort.Graph.bfs_fuel_sufficient
+#print axioms Amort.Graph.bfsDist_eq_top_iff
+#print axioms Amort.Graph.bfsDist_eq_coe_iff
+#print axioms Amort.Graph.bfsDist_source
 #print axioms Amort.Graph.bfsWork_le
+#print axioms Amort.Graph.bfsLoop_fuel_invariant
 #print axioms Amort.Graph.bfsWithCount_source
 #print axioms Amort.Graph.bfsWithCount_walk
-#print axioms Amort.Graph.bfsWithCount_fst
+#print axioms Amort.Graph.bfsWithCount_fst_eq
 #print axioms Amort.Graph.bfsWithCount_snd_le
 
 /-! ### 9. Complexity & Reduction Axiom Verification -/

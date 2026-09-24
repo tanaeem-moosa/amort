@@ -1,8 +1,8 @@
-# 2-SAT Linear-Time Solver via Strongly Connected Components
+# 2-SAT Characterization via Strongly Connected Components
 
 ## Overview
 
-The `Amort.Complexity.TwoSAT` module formalizes the linear-time 2-SAT algorithm via reduction
+The `Amort.Complexity.TwoSAT` module formalizes the 2-SAT characterization via reduction
 to Strongly Connected Components (SCC) in the implication digraph:
 1. **2-CNF Formulas**: Collections of 2-literal disjunctions $(l_1 \vee l_2)$ over variables `Fin n`.
 2. **Implication Digraph**: Each clause $(u \vee v)$ generates two directed edges $\neg u \to v$

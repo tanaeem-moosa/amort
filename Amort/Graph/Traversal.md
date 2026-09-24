@@ -51,7 +51,7 @@ def bfsBound (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
 
 ### Operational Bound
 ```lean
-theorem bfsBound_map_sum_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
+theorem bfsWork_map_sum_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
     (L.map (fun u ↦ outdeg adj u)).sum ≤ edgeCount adj
 
 theorem bfsWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) :
@@ -61,46 +61,41 @@ theorem bfsWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) :
 Since $L.dedup.length \le |V| = n$ and the edge scan sum is bounded by $|E| = edgeCount(adj)$,
 the total work is unconditionally bounded by $|V| + |E|$ ($O(|V| + |E|)$).
 
-### 2.2 Executable Queue BFS & Instrumented In-Loop Execution
+### 2.2 Executable Queue BFS & Unclamped In-Loop Execution
 
 To satisfy the 7-point Definition of Done and eliminate stand-in algorithm anti-patterns,
-`Amort.Graph.Traversal` defines an executable, computable queue and visited-state BFS loop:
+`Amort.Graph.Traversal` defines an executable, computable queue and visited-state BFS loop
+with unconditional step accumulation (no membership check on the counter):
 ```lean
 def bfsLoop (adj : Fin n → List (Fin n)) (s : Fin n) :
-    ℕ → List (Fin n) → List (Fin n) → Finset (Fin n) → (Fin n → WithTop ℕ) → ℕ →
+    ℕ → List (Fin n) → List (Fin n) → (Fin n → WithTop ℕ) → ℕ →
     (Fin n → WithTop ℕ) × ℕ
-  | 0, _, _, _, dist, count => (dist, count)
-  | _fuel + 1, [], _, _, dist, count => (dist, count)
-  | fuel + 1, u :: queue, visited, remaining, dist, count =>
+  | 0, _, _, dist, count => (dist, count)
+  | _fuel + 1, [], _, dist, count => (dist, count)
+  | fuel + 1, u :: queue, visited, dist, count =>
     let next_edges := adj u
-    let unvisited := next_edges.filter (· ∉ visited)
+    let unvisited := (next_edges.filter (· ∉ visited)).dedup
     let new_visited := visited ++ unvisited
     let new_dist := fun v ↦ if v ∈ unvisited then dist u + 1 else dist v
     let new_queue := queue ++ unvisited
-    let new_count := if u ∈ remaining then count + 1 + next_edges.length else count
-    let new_remaining := remaining.erase u
-    bfsLoop adj s fuel new_queue new_visited new_remaining new_dist new_count
+    let new_count := count + 1 + next_edges.length
+    bfsLoop adj s fuel new_queue new_visited new_dist new_count
 ```
 
-- **Functional Correctness & Distance Soundness**:
+- **Functional Correctness & Two-Sided Equivalence**:
+  `bfsWithCount_fst_eq : (bfsWithCount adj s).1 = bfsDist adj s`
   `bfsWithCount_source : (bfsWithCount adj s).1 s = 0`
   `bfsWithCount_walk : (bfsWithCount adj s).1 v = d → IsWalkOfLength adj s v d`
-  `bfs_le_bfsWithCount : (bfsWithCount adj s).1 v = d → bfs adj s v ≤ d`
-- **Linear Operational Bound (In-Loop Counter)**:
+- **Unclamped Linear Operational Bound**:
   `bfsWithCount_snd_le : (bfsWithCount adj s).2 ≤ n + edgeCount adj`
-- **Conserved Potential Invariant**:
-  `bfsLoop_count_le : (bfsLoop adj s fuel queue visited remaining dist count).2 ≤ count + remaining.card + ∑ v ∈ remaining, outdeg adj v`
-- **Fuel Exhaustiveness & Invariance**:
-  `bfs_fuel_exhaustion_le : L.Nodup → L.length ≤ n`
-  `bfs_fuel_sufficient : (Finset.univ : Finset (Fin n)).card ≤ n`
-  `bfsLoop_nil : bfsLoop adj s fuel [] visited remaining dist count = (dist, count)`
-  `bfsLoop_fuel_invariant : bfsLoop adj s (n + k) [] [s] ... = bfsLoop adj s n [] [s] ...`
+- **Fuel Sufficiency & Invariance on Initial State**:
+  `bfsLoop_fuel_invariant : bfsLoop adj s (n + k) [s] [s] ... = bfsLoop adj s n [s] [s] ...`
 
 ---
 
-## 3. Shortest-Path Distance Correctness
+## 3. Canonical Shortest-Path Distance Specification
 
-Shortest paths are characterized independently via reachability and walks:
+Shortest paths are characterized independently via reachability and directed walks:
 - **Reachability**:
   `Reachable adj s v : Prop` defined via reflexive-transitive closure `Relation.ReflTransGen`.
 - **Walk of Length $d$**:
@@ -112,16 +107,21 @@ Shortest paths are characterized independently via reachability and walks:
 
 1. **Unreachability / Infinite Distance**:
    ```lean
-   theorem bfs_eq_top_iff (adj : Fin n → List (Fin n)) (s v : Fin n) :
-       bfs adj s v = ⊤ ↔ ¬ Reachable adj s v
+   theorem bfsDist_eq_top_iff (adj : Fin n → List (Fin n)) (s v : Fin n) :
+       bfsDist adj s v = ⊤ ↔ ¬ Reachable adj s v
    ```
 2. **Finite Shortest-Path Distance**:
    ```lean
-   theorem bfs_eq_coe_iff (adj : Fin n → List (Fin n)) (s v : Fin n) (d : ℕ) :
-       bfs adj s v = d ↔ IsWalkOfLength adj s v d ∧ ∀ k, IsWalkOfLength adj s v k → d ≤ k
+   theorem bfsDist_eq_coe_iff (adj : Fin n → List (Fin n)) (s v : Fin n) (d : ℕ) :
+       bfsDist adj s v = d ↔ IsWalkOfLength adj s v d ∧ ∀ k, IsWalkOfLength adj s v k → d ≤ k
    ```
 3. **Source Distance**:
    ```lean
-   theorem bfs_source (adj : Fin n → List (Fin n)) (s : Fin n) :
-       bfs adj s s = 0
+   theorem bfsDist_source (adj : Fin n → List (Fin n)) (s : Fin n) :
+       bfsDist adj s s = 0
+   ```
+4. **Algorithm Two-Sided Equivalence**:
+   ```lean
+   theorem bfsWithCount_fst_eq (adj : Fin n → List (Fin n)) (s : Fin n) :
+       (bfsWithCount adj s).1 = bfsDist adj s
    ```

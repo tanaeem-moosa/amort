@@ -11,9 +11,6 @@ import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Tactic.Ring
 
-set_option linter.style.openClassical false
-open scoped Classical
-
 /-!
 # Karp's Foundational Reductions: 3-SAT, Independent Set, Vertex Cover, and Clique
 
@@ -50,6 +47,9 @@ This module formalizes:
 - `Amort.Complexity.sat3_to_independentSet_completeness`: Size-$m$ IS implies satisfiability.
 - `Amort.Complexity.sat3_to_independentSet_correct`: Equivalence theorem.
 -/
+
+set_option linter.style.openClassical false
+open scoped Classical
 
 namespace Amort.Complexity
 

@@ -61,7 +61,7 @@ def kahnBound (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
   bfsBound adj L
 
 /-- Kahn's algorithm total work on any distinct sequence of vertices is bounded by `|V| + |E|`. -/
-theorem kahnWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
+theorem kahnWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (_hL : L.Nodup) :
     kahnBound adj L ≤ n + edgeCount adj :=
   bfsWork_le adj L
 
