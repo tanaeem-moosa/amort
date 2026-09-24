@@ -1,244 +1,314 @@
-# Verified Algorithms Skill Tree: Tutorial & Curriculum Plan
+# Verified Algorithms Skill Tree: Tutorial Proposal (v2)
 
-> **Philosophy**: *"Multiplication in a World of Calculators"*  
-> In an era where AI can generate an implementation of any classic algorithm in seconds, raw code generation has become a commodity. The enduring human value and intellectual joy lie in understanding **why** algorithms work, **why** they terminate, and **why** their invariants guarantee correctness and optimal complexity. Formalizing algorithms in Lean 4 provides the ultimate high-resolution lens: the type checker accepts no handwaving, no skipped edge cases, and no informal arithmetic.
-
----
-
-## 1. Executive Summary & Vision
-
-This project powers an interactive, modular algorithm tutorial built entirely on the formal verification foundations in [`Amort`](file:///workspace/amort/Amort). 
-
-Instead of a monolithic textbook, the curriculum is organized as an **Open-World Skill Tree (DAG)** where:
-1. **Every algorithm is an individual node**.
-2. **Learners choose their own path** based on their background and interests (e.g. Systems/Amortization, Graph Theory, Dynamic Programming, or Number Theory).
-3. **Every node is governed by the 4 Core Verification Disciplines**:
-   - **Step 1: Define** (Pre/post-conditions, problem specification)
-   - **Step 2: Formalize** (Executable modeling, well-founded termination measures)
-   - **Step 3: Prove** (Loop invariants, inductive proofs, partial/total correctness)
-   - **Step 4: Analyze** (Step counting, recurrence relations, potential functions, Mathlib `IsBigO`)
-
-The guide serves a **dual purpose**:
-- **For Readers**: An approachable, code-first bridge to learn Lean 4 through concrete algorithms, free of abstract algebraic prerequisites.
-- **For the Author**: A rigorous personal roadmap to master Lean 4 theorem proving and deeply understand advanced algorithms.
+> **Pitch:** *When AI writes the code, understanding becomes the job.*
+> Agents will increasingly tell us "this algorithm is correct" and "this runs in O(n log n)".
+> The right response to a plausible claim is: **prove it.** In practice, the proof will come back
+> as Lean. Lean checks every proof mechanically, so the proof takes care of itself. What Lean
+> cannot check is whether the theorem says what we meant.
+>
+> **The division of labour:** *you own the statement, the AI writes the proof, Lean referees.*
+> This tutorial teaches the part that stays human: understanding algorithms well enough to write,
+> read and judge their formal statements.
 
 ---
 
-## 2. The 4 Verification Disciplines (The "Rigor Ladder")
+## 1. Why this tutorial, why now
 
-At every node in the skill tree, learners progress through the same four distinct levels:
+### 1.1 The problem: plausible claims are cheap
+AI can generate an implementation, a docstring saying "proven correct", and a proof that compiles,
+all in seconds. The proof is the part we no longer need to worry about: if Lean accepts it, it is
+valid. But a valid proof only establishes *some* theorem. Whether it is the theorem you care about
+depends entirely on its **statement**, and checking that takes a human who understands both the
+algorithm and the notation.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. SPECIFICATION (Define)                                                  │
-│    Formulate input types, valid predicates, and formal problem contracts.   │
-│    e.g. "What does it mean for list L' to be a sorted permutation of L?"    │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 2. EXECUTABLE MODELING & HALTING (Formalize)                               │
-│    Write clean, functional Lean 4 code. Define well-founded recursion       │
-│    measures with `termination_by` to prove the algorithm terminates.        │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 3. SOUNDNESS & INVARIANTS (Prove)                                           │
-│    Prove partial and total correctness. Establish inductive invariants for  │
-│    loops/recursions. Prove equivalence against mathematical specs.          │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 4. STEP COUNTING & ASYMPTOTICS (Analyze)                                    │
-│    Instrument the algorithm with step counters. Formulate recurrences or    │
-│    amortized potential functions Φ. Bridge bounds to Mathlib `IsBigO`.      │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### 1.2 A true story from this repository
+This repo is the motivating example. An AI agent produced 97 Lean modules covering the algorithms
+canon. Every one compiled: **0 `sorry`, 0 axioms, a green build.** Every proof was valid. A review
+of the *statements* ([`proof_review.md`](proof_review.md)) found that about 40% of them proved
+nothing meaningful. For example:
+
+- a "KMP correctness" theorem that was really about the naive matcher (`kmpMatch := naiveMatch`);
+- a "linear-time Ukkonen" theorem whose content was `4 * n ≤ 4 * n`;
+- a shortest-path "spec" that the all-zero distance function satisfies;
+- an "inverse Ackermann" function that was a lookup table capped at 5.
+
+Later fix passes produced subtler fakes that still matched the requested theorem names: a spec
+renamed to look like the algorithm, a property *defined* as the check that was supposed to detect
+it, and a step counter that skipped repeated work. None of these were proof errors. Lean was right
+every time. Every one was a **statement** error, and every one was caught the same way: by reading
+the Lean definitions and theorem statements and asking what they actually promise.
+
+That is the skill this tutorial teaches. The verified modules that survived the review are its
+reference material.
+
+### 1.3 Who it is for
+- **Prerequisite:** comfortable in *one* programming language (any: Python, JavaScript, C++, …).
+- **Not expected:** writing proofs. Learners don't need to know tactics or how to finish a proof.
+  When they want a proof, they ask an AI, and Lean checks the result.
+- **Expected by the end:** reading a Lean definition as fluently as code; knowing what a correct
+  spec and a correct theorem look like for a given problem; and spotting when a statement is weaker
+  than its claim.
+- **First learner:** the author, who works through every node before it is published.
 
 ---
 
-## 3. The Full Granular Skill Tree (Node-by-Node DAG)
+## 2. The shape of every module
 
-Below is the complete dependency graph. Every box represents a standalone, verifiable algorithm node.
+Every node follows the same five steps. For each step, the learner's job is to understand the Lean
+**setup**: definitions and statements. Proofs are provided, and they are optional reading.
+
+| # | Step | The question it answers | What the learner reads and understands |
+| :-: | :--- | :--- | :--- |
+| 1 | **Define the problem** | What are the inputs, and what counts as a right answer? | Plain-language statement, examples, edge cases. |
+| 2 | **Formalize the definition** | Can we state "right answer" precisely, *without* mentioning any algorithm? | The spec, e.g. `Nat.gcd`, `IsSubstringAt P T s`, `List.Pairwise (· ≤ ·)`: what it includes, what it rules out, and which edge cases it decides. |
+| 3 | **Understand the algorithm** | How does it work, why is it faster, and why does it stop? | The executable `def`, run on examples with `#eval`, and its termination argument (`termination_by`): why the recursion must end. |
+| 4 | **State correctness** | What exactly would "correct" mean, and is this theorem that? | `theorem algo_correct : … algo x … ↔ Spec x`. Why both directions are needed (nothing missed, nothing wrong), and which hypotheses are allowed (sorted input: yes; "assume the answer is right": no). |
+| 5 | **State the time complexity** | What is being counted, and is the count honest? | The instrumented `algoWithCount`: why `.1 = algo x` ties the count to the real algorithm, what one "step" is, and why `.2 ≤ bound` is the real claim, rather than a `bound` *defined* as the answer. |
+
+**Proofs are optional reading.** Each theorem comes with a short plain-language proof idea (for
+example, "the remainder at least halves every two steps"). The Lean proof is there for the
+curious. It is never on the critical path, because Lean has already checked it.
+
+**Honest cost models.** Step 5 always says what is being counted (comparisons, recursive calls,
+cell fills, relaxations) and says plainly that this is an abstract operation count, not wall-clock
+time.
+
+### 2.1 The exercises: statement work, not proof work
+
+| Exercise | What the learner does | What it trains |
+| :--- | :--- | :--- |
+| **Predict** | Say what `#eval algo …` returns, then run it. | Reading Lean as code. |
+| **State it yourself** | Given the problem in English, write the spec or theorem statement, then compare with the reference. The check is `example : YourStatement ↔ ReferenceStatement`, or simply a discussion when they differ. | Formalizing. |
+| **Spot the fake** | Given 3–4 statements, some flawed in the ways §1.2 describes, decide which ones actually prove the claim, and why. | Auditing an agent's claim, which is the pitch in practice. |
+| **Prove it with AI** (optional) | Hand your statement to an AI assistant and ask for a Lean proof. Lean accepts or rejects it. If the AI "fixes" the statement to make it provable, notice that and reject it. | The real-world workflow: human statement, machine proof, Lean as referee. |
+
+---
+
+## 3. Before you start: a first look at Lean
+
+Learners need to *read* Lean, not prove in it, so the prerequisite is light:
+
+| Resource | Why | Time |
+| :--- | :--- | :--- |
+| **[*Functional Programming in Lean*](https://lean-lang.org/functional_programming_in_lean/), ch. 1** (recommended) | Lean as a programming language: `def`, pattern matching, structures, `#eval`. This is enough to read every algorithm in the tree. | 2–3 hours |
+| [Natural Number Game](https://adam.math.hhu.de/#/g/leanprover-community/nng4) (optional) | Runs in the browser. Gives a feel for what a proof *is*, which helps with judging statements, but is not required. | 3–6 hours |
+| [*Theorem Proving in Lean 4*](https://lean-lang.org/theorem_proving_in_lean4/) | Reference for the curious. | — |
+
+The tutorial teaches the rest of the notation (`∀`, `∃`, `↔`, `Prop` vs `Bool`, `List.Perm`, …) as it
+appears, node by node. To run `#eval` and check statements, learners install Lean locally (elan +
+VS Code), because the modules depend on Mathlib.
+
+---
+
+## 4. The skill tree
+
+### 4.1 How the tree works
+- **Binary GCD is the opening node.** Everyone starts there.
+- **Finishing a node unlocks the nodes after it.** Binary GCD unlocks five nodes, and each later
+  node unlocks one to three more.
+- **Each node teaches two skills: one algorithmic, one Lean-reading.** The reading skill is what
+  makes the next nodes reachable. For example, Insertion Sort is where `List.Perm` and
+  `List.Pairwise` first appear, so every list-based node depends on it.
+- **The tree only contains verified nodes.** A node enters the tree only when its reference
+  module passes the Definition of Done in [`proof_review.md` §2](proof_review.md). Planned nodes
+  are shown dashed.
+
+### 4.2 The tree (current verified reference in solid boxes)
 
 ```mermaid
 flowchart TD
-    classDef starter fill:#2d3748,stroke:#cbd5e0,stroke-width:2px,color:#fff
-    classDef num fill:#1a365d,stroke:#63b3ed,stroke-width:1px,color:#fff
-    classDef sort fill:#22543d,stroke:#68d391,stroke-width:1px,color:#fff
-    classDef ds fill:#744210,stroke:#f6ad55,stroke-width:1px,color:#fff
-    classDef str fill:#553c9a,stroke:#b794f4,stroke-width:1px,color:#fff
-    classDef dp fill:#702459,stroke:#f687b3,stroke-width:1px,color:#fff
-    classDef graph fill:#1c4532,stroke:#48bb78,stroke-width:1px,color:#fff
-    classDef adv fill:#742a2a,stroke:#feb2b2,stroke-width:1px,color:#fff
+    classDef open fill:#2d3748,stroke:#cbd5e0,stroke-width:3px,color:#fff
+    classDef ready fill:#22543d,stroke:#68d391,color:#fff
+    classDef planned fill:#fff,stroke:#a0aec0,stroke-dasharray:5 5,color:#4a5568
 
-    %% Starter Gateways
-    G1["🌱 Linear Scan & Array Sum"]:::starter
-    G2["🌱 Euclidean GCD"]:::num
-    G3["🌱 Insertion Sort"]:::sort
+    BGCD["🌱 Binary GCD (Stein)"]:::open
 
-    %% Number Theory & Arithmetic Track
-    G2 --> N1["Binary GCD (Stein)"]:::num
-    G2 --> N2["Extended Euclidean & Bezout"]:::num
-    N1 --> N3["Fast Modular Exponentiation"]:::num
-    N3 --> N4["Strassen Matrix Mult"]:::adv
-    N3 --> N5["FFT (Fast Fourier Transform)"]:::adv
+    BGCD --> EUC["Euclid's GCD"]:::ready
+    BGCD --> INS["Insertion Sort"]:::ready
+    BGCD --> BS["Binary Search"]:::ready
+    BGCD --> DYN["Dynamic Array (amortized)"]:::ready
+    BGCD --> MODEXP["Fast Modular Exponentiation"]:::ready
 
-    %% Sorting & Searching Track
-    G1 --> S0["Binary Search"]:::sort
-    G3 --> S1["Merge Sort"]:::sort
-    S1 --> S2["Master Theorem Recurrences"]:::sort
-    S1 --> S3["Sorting Lower Bound Ω(n log n)"]:::sort
-    S0 --> S4["Quickselect & Partition"]:::sort
+    EUC --> EXT["Extended Euclid & Bézout"]:::ready
 
-    %% Data Structures Track
-    G1 --> DS1["Dynamic Array (Amortized Push)"]:::ds
-    G1 --> DS2["Two-Stack Queue"]:::ds
-    DS1 --> DS3["Binary Heap / Priority Queue"]:::ds
-    DS3 --> DS4["Heapsort"]:::sort
-    DS3 --> DS5["Online Running Median"]:::ds
-    DS1 --> DS6["Disjoint Set Union (Union-Find)"]:::ds
-    DS3 --> DS7["Balanced BST (AVL / RB)"]:::ds
+    INS --> MERGE["Merge Sort"]:::ready
+    BS --> MERGE
+    MERGE --> LB["Sorting Lower Bound Ω(n log n)"]:::ready
+    MERGE --> QS["Quicksort (worst case)"]:::ready
+    MERGE --> INTV["Interval Scheduling (greedy)"]:::ready
 
-    %% String Algorithms Track
-    G1 --> ST1["Naive String Matching"]:::str
-    ST1 --> ST2["Prefix Trie Dictionary"]:::str
-    ST1 --> ST3["Rabin-Karp Rolling Hash"]:::str
-    ST1 --> ST4["Knuth-Morris-Pratt (KMP)"]:::str
-    ST4 --> ST5["Gusfield's Z-Algorithm"]:::str
-    ST2 --> ST6["Aho-Corasick Automaton"]:::str
-    ST4 --> ST6
-    ST4 --> ST7["Suffix Array & Kasai LCP"]:::str
+    DYN --> TSQ["Two-Stack Queue"]:::ready
+    INS --> NAIVE["Naive String Matching"]:::ready
+    NAIVE --> KMP["Knuth–Morris–Pratt"]:::ready
+    TSQ --> KMP
+    NAIVE --> LCS["Longest Common Subsequence"]:::ready
+    LCS --> ED["Edit Distance"]:::ready
+    LCS --> KNAP["0/1 Knapsack"]:::ready
+    KNAP --> LIS["Longest Increasing Subsequence"]:::ready
 
-    %% Dynamic Programming Track
-    G1 --> DP0["Telescoping & Fibonacci DP"]:::dp
-    DP0 --> DP1["0/1 Knapsack"]:::dp
-    DP0 --> DP2["Longest Common Subsequence"]:::dp
-    DP2 --> DP3["Edit Distance (Levenshtein)"]:::dp
-    S0 --> DP4["Longest Increasing Subsequence"]:::dp
-    DP0 --> DP5["Matrix Chain Multiplication"]:::dp
+    TSQ --> BFS["Breadth-First Search"]:::ready
+    BFS --> BF["Bellman–Ford"]:::ready
+    BFS --> TWOSAT["2-SAT characterization"]:::ready
+    LB --> RED["3-SAT → Independent Set"]:::ready
 
-    %% Graph Algorithms Track
-    G1 --> GR1["BFS (Shortest Path)"]:::graph
-    G1 --> GR2["DFS & Cycle Detection"]:::graph
-    GR2 --> GR3["Topological Sort (DAGs)"]:::graph
-    GR3 --> GR4["DAG Shortest Path (DP)"]:::graph
-    DS3 --> GR5["Dijkstra's Algorithm"]:::graph
-    GR1 --> GR5
-    DS6 --> GR6["Kruskal's MST"]:::graph
-    DS3 --> GR7["Prim's MST"]:::graph
-    GR5 --> GR8["Bellman-Ford"]:::graph
-    GR8 --> GR9["Floyd-Warshall All-Pairs"]:::graph
-    GR5 --> GR10["Max-Flow (Edmonds-Karp)"]:::adv
-
-    %% Advanced / Complexity / Approximation
-    GR3 --> C1["2-SAT (SCC Linear Time)"]:::adv
-    GR6 --> C2["Metric TSP 2-Approximation"]:::adv
-    DP1 --> C3["Greedy Set Cover"]:::adv
-    C1 --> C4["Karp Reductions (SAT → Clique)"]:::adv
+    DYN -.-> HEAP["Binary Heap / Heapsort"]:::planned
+    HEAP -.-> DIJ["Dijkstra"]:::planned
+    BFS -.-> DSU["Union–Find"]:::planned
+    DSU -.-> KRUS["Kruskal MST"]:::planned
+    KMP -.-> Z["Z-Algorithm"]:::planned
+    KMP -.-> AC["Aho–Corasick"]:::planned
 ```
 
----
+### 4.3 Node catalogue: what each node teaches
 
-## 4. Curated Player Paths (Learning Archetypes)
+| Node | Algorithm skill | Lean reading skill introduced | Unlocks |
+| :--- | :--- | :--- | :--- |
+| **Binary GCD** 🌱 | Bit tricks (parity, halving); one spec, a non-obvious algorithm | `def`, `if`/`else`, `#eval`, `theorem` as a claim, `termination_by` (why recursion ends), "equals the reference" (`= Nat.gcd a b`), the `WithSteps` counting pattern, `Nat.size` as bit length | Euclid, Insertion Sort, Binary Search, Dynamic Array, Modular Exponentiation |
+| Euclid's GCD | Remainders; comparing two algorithms against one spec | Two implementations proved equal to the same spec; `min` in a bound | Extended Euclid |
+| Extended Euclid | Certificates (Bézout coefficients) | `ℤ` vs `ℕ`, casts, results as tuples | — |
+| Modular Exponentiation | Halving the exponent | Modular arithmetic (`% m`, `Nat.ModEq`), hypotheses like `1 < m` | — |
+| Insertion Sort | The sorting spec: sorted **and** a permutation | `List`, `List.Perm` (`~`), `List.Pairwise`; why "sorted" alone is a fake spec (the empty list is sorted) | Merge Sort, Naive Matching |
+| Binary Search | Invariants on sorted input; returning an index | `Option`, `xs[i]?`, preconditions as hypotheses (`xs.Pairwise (· ≤ ·) →`), `↔` statements | Merge Sort |
+| Dynamic Array | Amortized analysis with a potential function | `structure`, integer potentials, "total cost of k operations ≤ 3k" | Two-Stack Queue, (Heap) |
+| Merge Sort | Divide and conquer; the `T(n) = 2T(n/2) + n` recurrence | Recurrences as statements; `n * Nat.size n` as n log n | Lower Bound, Quicksort, Interval Scheduling |
+| Sorting Lower Bound | Proving *no* algorithm can do better | Inductive trees, `Equiv.Perm`, factorial; first `IsBigO`/`IsTheta` | 3-SAT → IS |
+| Quicksort | Worst case, and showing a bound is **tight** | Worst-case attainment theorems (`= n(n−1)/2` on a specific input) | — |
+| Interval Scheduling | Greedy choice | Optimality statements: "for every alternative solution `S`, `S.length ≤ …`" | — |
+| Two-Stack Queue | Amortized cost over operation sequences | Specifying behaviour via an abstract model (`toList`) | KMP, BFS |
+| Naive Matching | Specifying a search problem | Specs as `Prop` (`IsSubstringAt`); sound **and** complete as one `↔` | KMP, LCS |
+| KMP | The failure function; never re-reading the text | One function carrying both a correctness theorem and a linear-cost theorem; why they must be about the *same* function | (Z, Aho–Corasick) |
+| LCS | Optimal substructure; memo tables | Optimisation specs: "achievable" **and** "nothing better"; "table = recursion" statements | Edit Distance, Knapsack |
+| Edit Distance | Alignments as explicit objects | Inductive predicates (`IsAlignment`) | — |
+| 0/1 Knapsack | Subset choice via DP | `Finset`, sums over subsets | LIS |
+| LIS | DP over prefixes | Subsequences (`List.Sublist`) | — |
+| BFS | Shortest paths in unweighted graphs | Graphs as adjacency functions, reachability; **algorithm = spec** (`bfsWithCount … = bfsDist …`); why a spec satisfied by the all-zero function is a fake | Bellman–Ford, 2-SAT, (Union–Find) |
+| Bellman–Ford | Negative weights; detecting negative cycles | `WithTop ℤ` (∞ as ⊤); why "negative cycle" must be defined as a cycle, not as the check that detects it | — |
+| 2-SAT | Implication graphs | Characterisation theorems (satisfiable ↔ graph property) | — |
+| 3-SAT → Independent Set | Reductions between problems | A constructed object plus an `↔` connecting two problems | — |
 
-Learners do not need to follow a linear syllabus. They can pick an archetype:
+### 4.4 Suggested paths
+Learners choose their route after Binary GCD. Four suggested paths:
 
-| Archetype | Node Sequence | Core Concept Learned |
+| Path | Route | Theme |
 | :--- | :--- | :--- |
-| **The Systems Architect** | `Dynamic Array` → `Two-Stack Queue` → `KMP` → `Z-Algorithm` → `Aho-Corasick` | Potential functions $\Phi$, amortized $O(1)$, stateful buffers. |
-| **The Interview / Contest Ace** | `Binary Search` → `Merge Sort` → `0/1 Knapsack` → `Dijkstra` → `Kruskal` | Deep rigor behind standard CS interview questions. |
-| **The Number Theorist** | `Euclidean GCD` → `Binary GCD` → `Fast ModPow` → `Strassen` → `FFT` | Bit-size metrics, 2-adic decomposition, ring homomorphisms. |
-| **The Graph Explorer** | `BFS` → `DFS` → `Topological Sort` → `Dijkstra` → `Kruskal` → `Max Flow` | Inductive paths, cut properties, matroid exchange arguments. |
-| **The Complexity Theorist** | `Sorting Lower Bound` → `2-SAT` → `Metric TSP` → `Karp Reductions` | Information-theoretic lower bounds, approximation ratios, NP-hardness. |
+| **Sorting & searching** | Binary GCD → Insertion Sort → Binary Search → Merge Sort → Lower Bound → Quicksort | Specs, recurrences, and optimality. |
+| **Amortization** | Binary GCD → Dynamic Array → Two-Stack Queue → Naive Matching → KMP | Potential functions and what "amortized" really means. |
+| **Dynamic programming** | Binary GCD → Insertion Sort → Naive Matching → LCS → Edit Distance → Knapsack → LIS | Optimal substructure and "table = recursion". |
+| **Graphs & hardness** | Binary GCD → Dynamic Array → Two-Stack Queue → BFS → Bellman–Ford / 2-SAT → Lower Bound → 3-SAT → IS | Algorithms on graphs, then what cannot be done fast. |
 
 ---
 
-## 5. Node Specification Template ("Quest Card")
+## 5. The opening node in detail: Binary GCD
 
-Every node in the curriculum follows this standardized 4-part structure.
+Binary GCD is the opener because programmers already know its moves: `x % 2`, `x / 2`,
+subtraction. The whole method fits in one small function, with no data structures to learn at
+the same time.
 
-### Example Node Card: `Knuth-Morris-Pratt (KMP)`
+1. **Define:** given `a b : ℕ`, find the largest `d` dividing both. Edge cases: `gcd 0 b = b`, and
+   `gcd 0 0 = 0` by convention.
+2. **Formalize:** the spec is Mathlib's `Nat.gcd`. The learner reads its characterising
+   statements (`Nat.gcd_dvd_left`, `Nat.gcd_dvd_right`, `Nat.dvd_gcd`) and sees that together they
+   say "a common divisor, and every common divisor divides it". That is exactly the plain-language
+   definition.
+3. **Understand:**
+   ```lean
+   def binaryGcd (a b : ℕ) : ℕ :=
+     if a = 0 then b
+     else if b = 0 then a
+     else if a % 2 = 0 ∧ b % 2 = 0 then 2 * binaryGcd (a / 2) (b / 2)  -- both even
+     else if a % 2 = 0 then binaryGcd (a / 2) b                        -- only a even
+     else if b % 2 = 0 then binaryGcd a (b / 2)                        -- only b even
+     else if b ≤ a then binaryGcd ((a - b) / 2) b                      -- both odd
+     else binaryGcd a ((b - a) / 2)
+   termination_by a + b
+   ```
+   (Simplified from [`Amort/GCD/BinaryGCD.lean`](Amort/GCD/BinaryGCD.lean).) `#eval binaryGcd 48 18`
+   returns `6`. The first Lean lesson: `termination_by a + b` is a promise that every recursive call
+   makes `a + b` smaller. Check each branch by hand. Why does `a = 0` need its own case?
+4. **State correctness:**
+   ```lean
+   theorem binaryGcd_eq_gcd (a b : ℕ) : binaryGcd a b = Nat.gcd a b
+   ```
+   Read it as: *for every* `a` and `b`, with no preconditions, the algorithm returns the true gcd.
+   Proof idea (optional): each branch preserves the gcd. For example, if `a` is even and `b` is odd,
+   then `gcd a b = gcd (a/2) b`.
+5. **State the complexity:**
+   ```lean
+   theorem binaryGcdWithSteps_fst (a b : ℕ) : (binaryGcdWithSteps a b).1 = binaryGcd a b
+   theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
+       binaryGcdSteps a b ≤ Nat.size a + Nat.size b
+   ```
+   The first theorem ties the counter to the real algorithm. The second says the number of
+   recursive calls is at most the total number of *bits* in the inputs. Proof idea (optional):
+   every step shrinks at least one argument by at least one bit.
+6. **Spot the fake:** which of these is a genuine complexity result?
+   (a) `def gcdCost (a b : ℕ) := Nat.size a + Nat.size b` together with `gcdCost a b ≤ Nat.size a + Nat.size b`;
+   (b) the two theorems in step 5;
+   (c) `binaryGcdSteps a b ≤ a + b`.
+   (Answer: (b) is the real result. (a) defines the cost as its own answer, so it says nothing about
+   the algorithm. (c) is true and tied to the algorithm, but linear in the *values*, which is
+   exponential in the bits.)
+7. **Prove it with AI (optional):** write the statement "binary GCD of `2a` and `2b` is twice binary
+   GCD of `a` and `b`", ask an assistant for a Lean proof, and let Lean check it.
 
-```markdown
-# 📍 Node: Knuth-Morris-Pratt (KMP)
-- **Track**: String Algorithms & Amortization
-- **Prerequisites**: `Naive String Matching`
-- **Unlocks**: `Z-Algorithm`, `Aho-Corasick`, `Suffix Array & Kasai LCP`
-- **Code Reference**: `Amort/String/KMP.lean`, `Amort/String/KMP.md`
-
-#### 1. Define the Problem
-- **Specification**: Given text $T$ and pattern $P$ over alphabet $\alpha$, find all indices $i$ such that $T[i \dots i+|P|-1] = P$.
-- **The Bottleneck**: Naive search backtracks the text index $i$, leading to worst-case $O(|T| \cdot |P|)$ runtime.
-- **The Insight**: Advance the text pointer monotonically; use the longest proper prefix-suffix table $\pi$ to shift the pattern pointer $j$.
-
-#### 2. Formalize It
-- **Specification Predicate**:
-  ```lean
-  def IsSubstring (P T : List α) (i : Nat) : Prop :=
-    P.isPrefixOf (T.drop i) = true
-  ```
-- **Preprocessing Function**:
-  `computePi (P : List α) : Array Nat`
-- **Main Search Loop & Termination**:
-  `kmpSearchWithSteps (T P : List α) ...`
-  `termination_by (T.length - i) * (P.length + 1) + (P.length - j)`
-
-#### 3. Prove Correctness
-- **Prefix Match Invariant**: At step $(i, j)$, $T[i-j \dots i-1] = P[0 \dots j-1]$.
-- **Fallback Soundness**: If $P[j] \ne T[i]$, shifting $j \gets \pi[j-1]$ drops only non-viable alignments.
-- **Soundness Theorem**: Every returned index $k$ satisfies `IsSubstring P T k`.
-- **Completeness Theorem**: If `IsSubstring P T k`, then $k$ is in the result list.
-
-#### 4. Analyze Time Complexity
-- **The Apparent Paradox**: The inner fallback `while j > 0` can loop multiple times per text character.
-- **Potential Function**: $\Phi(j) = j$.
-  - Character match increments $\Phi$ by $1$.
-  - Fallback strictly decrements $\Phi$.
-  - Since $\Phi \ge 0$, total fallbacks cannot exceed total increments $\le |T|$.
-- **Step Bound Theorem**:
-  `kmpSteps T P ≤ 2 * (T.length + P.length)`
-- **Mathlib Asymptotic Bridge**:
-  `isBigO_kmpSteps_linear : IsBigO Filter.atTop (fun (T, P) => kmpSteps T P) (fun (T, P) => T.length + P.length)`
-```
-
----
-
-## 6. Implementation Architecture & Format
-
-### Recommended Delivery Medium
-1. **Interactive mdBook Site**:
-   - Hosted web guide with an interactive SVG / Mermaid skill tree diagram.
-   - Clicking any node opens the 4-part quest card with code walkthroughs.
-2. **Literate Lean 4 Worksheets**:
-   - Each node corresponds to a self-contained Lean file in `Amort/` with exercise checkpoints.
-   - Exercises provide skeleton code with `#check` and targeted `sorry` blanks for learners to fill in.
-3. **Automated Verification Pipeline**:
-   - Continuous Integration via GitHub Actions running `lake build` to guarantee all proofs remain valid across Lean toolchain updates.
+Reference: [`Amort/GCD/BinaryGCD.lean`](Amort/GCD/BinaryGCD.lean) and
+[`Amort/GCD/StepCount.lean`](Amort/GCD/StepCount.lean).
 
 ---
 
-## 7. Phased Execution Roadmap
+## 6. Format and mechanics
 
-### Phase 1: The Gateway Triad & Showcase Nodes (Immediate Focus)
-- Formalize the interactive tutorials for the 3 entry gateways:
-  1. `Euclidean GCD` + `Binary GCD` (`Amort/GCD/`)
-  2. `Insertion Sort` + `Merge Sort` + `Sorting Lower Bound` (`Amort/Sorting/`)
-  3. `Dynamic Array` + `KMP` (`Amort/DataStructure/` & `Amort/String/`)
-- Draft the overarching Preface: *"Multiplication in a World of Calculators"*.
+### 6.1 What a learner works with
+Each node has two parts:
+- **Chapter** (`tutorial/<node>.md`): the five steps in prose, with every definition and statement
+  shown next to its plain-language reading, the proof ideas in words, and the exercises from §2.1.
+- **Lean file** (`Tutorial/<Node>.lean`): the definitions and theorem statements, importing the
+  verified proofs from `Amort/`. Learners run `#eval`, write their own `example` statements, and
+  can ask an AI to prove them. Every check is Lean's, never the learner's own judgement about a
+  proof.
 
-### Phase 2: Core Branch Progression
-- Fill in the DP branch: `0/1 Knapsack`, `LCS`, `Matrix Chain`.
-- Fill in the Graph branch: `BFS`, `Topological Sort`, `Dijkstra`, `Kruskal`.
-- Connect recurrence bridges: `Amort.Recurrence.MasterTheorem` to `MergeSort` and `BinarySearch`.
+### 6.2 Keeping it honest
+- Only modules that pass [`proof_review.md` §2](proof_review.md) enter the tree. The chapters
+  quote the reference theorems verbatim, so what the text says and what Lean checks cannot drift
+  apart.
+- A CI check confirms that every statement quoted in a chapter still type-checks against the reference.
+- "Spot the fake" examples are compiled too. A fake is a *true, provable* theorem that is weaker
+  than its claim, which is the realistic failure mode, so each fake is shown with its (valid) proof.
 
-### Phase 3: Interactive Skill Tree Web App
-- Build a lightweight web interface (or mdBook integration) rendering the clickable skill tree.
-- Add progress tracking (local storage checklist for completed nodes).
+### 6.3 Delivery
+- **v1:** Markdown chapters in the repo, plus a static rendering of the skill tree. No build step
+  beyond `lake build`.
+- **Later:** an mdBook or [Verso](https://github.com/leanprover/verso) site with a clickable tree
+  and local progress tracking.
 
-### Phase 4: Capstone Hardness & Advanced Horizons
-- `Strassen` & `FFT` algebraic bounds.
-- `2-SAT` and `Karp Reductions`.
-- Approximation bounds (`Metric TSP`, `Set Cover`).
+---
+
+## 7. Roadmap
+
+| Phase | Deliverable | Done when |
+| :--- | :--- | :--- |
+| **0. Preface** | §1 as a standalone essay: *"When AI writes the code, understanding becomes the job"*. | The pitch can be delivered in two minutes. |
+| **1. Pilot** | Binary GCD plus its five unlocks (Euclid, Insertion Sort, Binary Search, Dynamic Array, Modular Exponentiation), each with a chapter, Lean file and all four exercise types. | One outside reader (a programmer new to Lean) finishes the pilot and can explain every headline statement, and catch every fake, without help. |
+| **2. First branches** | Extended Euclid, Merge Sort, Lower Bound, Two-Stack Queue, Naive Matching, KMP, LCS, BFS. | Same test, with feedback from the pilot applied. |
+| **3. Full verified tree** | The remaining solid nodes in §4.2, plus the four paths. | Every solid node has a chapter and a Lean file. |
+| **4. Grow the tree** | Planned nodes join as their reference modules pass review (Heap, Union–Find, Dijkstra, Kruskal, Z, Aho–Corasick, …). | Driven by [`proof_review.md` §9](proof_review.md). |
+
+---
+
+## 8. Open questions
+1. **How much proof to show:** proof ideas in words only, or also a guided walk through one Lean
+   proof (e.g. in the Binary GCD node) so readers see what a proof *is* once?
+2. **Asymptotics:** introduce Mathlib's `IsBigO` (and filters) once, at the Lower Bound node, or keep
+   every complexity claim as an explicit inequality such as `≤ Nat.size a + Nat.size b`?
+3. **"Spot the fake" sources:** hand-written, or curated from the real AI failures recorded in
+   `proof_review.md` (more authentic, and they support the pitch)?
+4. **The AI-proof exercise:** recommend a specific assistant or workflow, or stay tool-neutral?
+5. **Audience check:** is "one programming language + FPIL ch. 1" enough to read the Binary GCD node?
+   The pilot's outside reader should settle this.
+
+---
+
+*v1 of this plan (four "verification disciplines", a full aspirational tree of about 60 nodes, learners
+writing proofs) was written before the proof review. v2 keeps only verified nodes, opens with
+Binary GCD, makes learners responsible for statements rather than proofs, adds the reading
+exercises, and puts the AI-era pitch first.*
