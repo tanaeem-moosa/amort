@@ -188,4 +188,69 @@ theorem pushSeqCost_le_three_mul_add (k : ℕ) (s : DynArrayState)
   have h_tel := pushSeqCost_telescope k s hle
   linarith
 
+/-- Number of elements after `k` pushes increases by exactly `k`. -/
+theorem pushSeq_size (k : ℕ) (s : DynArrayState) :
+    (pushSeq k s).size = s.size + k := by
+  induction k with
+  | zero => simp [pushSeq]
+  | succ k ih =>
+    dsimp [pushSeq, pushState]
+    split_ifs <;> dsimp <;> omega
+
+/-- Invariant that size remains bounded by capacity across pushes starting from `initOne`. -/
+theorem pushSeq_size_le_capacity_initOne (k : ℕ) :
+    (pushSeq k DynArrayState.initOne).size ≤ (pushSeq k DynArrayState.initOne).capacity :=
+  pushSeq_size_le_capacity k DynArrayState.initOne (by decide) (by decide)
+
+/-- After at least one push from `initOne`, capacity is bounded by twice the size. -/
+theorem pushSeq_capacity_le_two_mul_size (k : ℕ) (hk : 0 < k) :
+    (pushSeq k DynArrayState.initOne).capacity ≤ 2 * (pushSeq k DynArrayState.initOne).size := by
+  induction k with
+  | zero => contradiction
+  | succ k ih =>
+    cases k with
+    | zero =>
+      decide
+    | succ k =>
+      have hk : 0 < k + 1 := Nat.succ_pos k
+      have ih' := ih hk
+      have hle := pushSeq_size_le_capacity_initOne (k + 1)
+      change (pushState (pushSeq (k + 1) DynArrayState.initOne)).capacity ≤
+        2 * (pushState (pushSeq (k + 1) DynArrayState.initOne)).size
+      dsimp [pushState]
+      split_ifs with h
+      · dsimp
+        omega
+      · dsimp
+        omega
+
+/-- Potential after at least one push from `initOne` is non-negative. -/
+theorem phi_pushSeq_initOne_nonneg (k : ℕ) (hk : 0 < k) :
+    0 ≤ phi (pushSeq k DynArrayState.initOne) :=
+  phi_nonneg (pushSeq k DynArrayState.initOne) (pushSeq_capacity_le_two_mul_size k hk)
+
+/-- Unconditional telescoping formula for pushes starting from `initOne`. -/
+theorem pushSeqCost_telescope_initOne (k : ℕ) :
+    (pushSeqCost k DynArrayState.initOne : ℤ) =
+      3 * (k : ℤ) - phi (pushSeq k DynArrayState.initOne) - 1 := by
+  have h_tel := pushSeqCost_telescope k DynArrayState.initOne
+    (fun j _ => pushSeq_size_le_capacity_initOne j)
+  have h_phi0 : phi DynArrayState.initOne = -1 := by decide
+  rw [h_tel, h_phi0]
+  ring
+
+/-- Milestone Theorem: total actual cost of `k` pushes starting from `initOne`
+is unconditionally bounded by `3 * k`. -/
+theorem pushSeqCost_initOne_le (k : ℕ) :
+    pushSeqCost k DynArrayState.initOne ≤ 3 * k := by
+  cases k with
+  | zero =>
+    dsimp [pushSeqCost]
+    omega
+  | succ k =>
+    have hk : 0 < k + 1 := Nat.succ_pos k
+    have _h_tel := pushSeqCost_telescope_initOne (k + 1)
+    have _h_phi := phi_pushSeq_initOne_nonneg (k + 1) hk
+    omega
+
 end Amort.DataStructure

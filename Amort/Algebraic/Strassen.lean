@@ -14,6 +14,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Strassen's Sub-Cubic Matrix Multiplication
 
+> **Status: stub — not verified** (Phase 4 canon stub; algebraic ring identities for 7
+> products are proven, but operational block matrix recurrence is a specification stub).
+
 This module formalizes Volker Strassen's (1969) sub-cubic matrix multiplication algorithm:
 
 1. **$2 \times 2$ Block Matrix Representation**:
@@ -41,7 +44,7 @@ This module formalizes Volker Strassen's (1969) sub-cubic matrix multiplication 
 4. **Divide-and-Conquer Recurrence & Sub-Cubic Bound**:
    - Recurrence relation $T(n) \le 7T(n/2) + c \cdot n^2$.
    - Dyadic closed form bound $T(2^k) \le (T(1) + 2c) \cdot 7^k$.
-   - Operational work model `strassenWork n = 7 ^ (Nat.size n)`.
+   - Operational work model `strassenBound n = 7 ^ (Nat.size n)`.
    - Sub-cubic exponent: $\log_2 7 < 3$, yielding $O(n^{\log_2 7}) \approx O(n^{2.807})$.
 
 ## Key Definitions and Theorems
@@ -183,12 +186,12 @@ end Matrix2x2
 /-! ### Recurrence Relations and Sub-Cubic Complexity -/
 
 /-- Standard cubic matrix multiplication operational work model: $2 n^3$. -/
-def standardMatrixMulWork (n : ℕ) : ℕ :=
+def standardMatrixMulBound (n : ℕ) : ℕ :=
   2 * n ^ 3
 
 /-- Standard matrix multiplication has cubic complexity $2 n^3$. -/
 theorem standardMatrixMulWork_cubic (n : ℕ) :
-    standardMatrixMulWork n = 2 * n ^ 3 :=
+    standardMatrixMulBound n = 2 * n ^ 3 :=
   rfl
 
 /-- Strassen's divide-and-conquer recurrence:
@@ -281,18 +284,18 @@ theorem strassen_dyadic_bound (T : ℕ → ℕ) (c : ℕ) (hrec : StrassenRecurr
 
 /-- Concrete operational work model for Strassen's algorithm:
 $W(n) = 7^{\text{Nat.size } n}$. -/
-def strassenWork (n : ℕ) : ℕ :=
+def strassenBound (n : ℕ) : ℕ :=
   7 ^ (Nat.size n)
 
 /-- Operational work is bounded by $7^{\text{Nat.size } n}$. -/
 theorem strassenWork_le (n : ℕ) (_hn : 1 ≤ n) :
-    strassenWork n ≤ 7 ^ (Nat.size n) :=
+    strassenBound n ≤ 7 ^ (Nat.size n) :=
   le_rfl
 
 /-- Operational work bounded by $7^{k+1}$ when $n \le 2^k$. -/
 theorem strassenWork_le_pow7 (n k : ℕ) (_hn : 1 ≤ n) (hle : n ≤ 2 ^ k) :
-    strassenWork n ≤ 7 ^ (k + 1) := by
-  unfold strassenWork
+    strassenBound n ≤ 7 ^ (k + 1) := by
+  unfold strassenBound
   have hsize_le : Nat.size n ≤ k + 1 := by
     rw [Nat.size_le]
     calc n ≤ 2 ^ k := hle

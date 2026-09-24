@@ -14,6 +14,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Sieve of Eratosthenes & Harmonic Complexity Bound
 
+> **Status: stub — not verified** (Phase 3 canon stub; prime characterization is proven,
+> but operational array composite marking sieve is a specification stub).
+
 This module formalizes the classical Sieve of Eratosthenes algorithm:
 - Composite marking specification: an integer $k \in [2, n]$ is marked if and only if
   it can be factored as $k = m \cdot p$ with prime $p$ and $m \ge 2$.
@@ -25,7 +28,7 @@ This module formalizes the classical Sieve of Eratosthenes algorithm:
 ## Key Definitions and Theorems
 - `Amort.NumberTheory.IsCompositeMarked`: Predicate defining composite markings.
 - `Amort.NumberTheory.sieve_correctness`: Correctness theorem: $k$ unmarked $\iff$ $k$ is prime.
-- `Amort.NumberTheory.sieveWork`: Concrete operational step model $n \cdot \text{Nat.size } n + n$.
+- `Amort.NumberTheory.sieveBound`: Concrete operational step model $n \cdot \text{Nat.size } n + n$.
 - `Amort.NumberTheory.sieveWork_le`: Linear-logarithmic bound $O(n \log n)$.
 -/
 
@@ -83,13 +86,13 @@ lemma markings_per_prime_le (n p : ℕ) :
 
 /-- Concrete operational work model for the Sieve of Eratosthenes on input $n$:
 bounded by $n \cdot \text{Nat.size } n + n$, reflecting the harmonic sum $\sum_{k=1}^n (n / k)$. -/
-def sieveWork (n : ℕ) : ℕ :=
+def sieveBound (n : ℕ) : ℕ :=
   n * Nat.size n + n
 
 /-- Concrete upper bound: $W(n) \le 2n \cdot \text{Nat.size } n$ for all $n \ge 1$. -/
 theorem sieveWork_le (n : ℕ) (hn : 1 ≤ n) :
-    sieveWork n ≤ 2 * n * Nat.size n := by
-  unfold sieveWork
+    sieveBound n ≤ 2 * n * Nat.size n := by
+  unfold sieveBound
   have h_size : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
   have h_n_le : n ≤ n * Nat.size n := by
     calc n = n * 1 := by ring

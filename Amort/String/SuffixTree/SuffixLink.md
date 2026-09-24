@@ -1,5 +1,9 @@
 # Suffix Links and Depth Invariants
 
+> **Status: stub — not verified** (Phase 4 canon stub; suffix link depth is modeled,
+> but link construction is a specification stub).
+
+
 This document details the Lean 4 formalization of suffix links in `Amort.String.SuffixTree.SuffixLink`.
 
 ## Suffix Link Definition and Invariants

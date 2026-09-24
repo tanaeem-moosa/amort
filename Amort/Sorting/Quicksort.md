@@ -120,6 +120,27 @@ theorem isTheta_quicksortWorstCase_sq :
       (fun n ↦ ((n ^ 2 : ℕ) : ℝ))
 ```
 
+### 3.1 Instrumented Execution & Worst-Case Attainment (Definition of Done R1 & R4)
+
+To satisfy the 7-point Definition of Done and eliminate closed-form work anti-patterns (A1),
+`Amort.Sorting.Quicksort` provides the fully instrumented execution counter:
+```lean
+def quicksortWithCount (xs : List α) : List α × ℕ :=
+  quicksortFuelWithCount xs.length xs
+```
+- **Functional Correctness**:
+  `quicksortWithCount_fst : (quicksortWithCount xs).1 = quicksort xs`
+- **Concrete Upper Bound**:
+  `quicksortWithCount_snd_le_mul : (quicksortWithCount xs).2 ≤ xs.length * (xs.length - 1) / 2`
+- **Exact Attainment on Replicate Elements**:
+  On identical/replicate inputs `List.replicate n x`, every partitioning step places all remaining
+  elements into the `x ≤ ·` branch:
+  `quicksortWithCount_replicate_eq_mul :`
+  `(quicksortWithCount (List.replicate n x)).2 = n * (n - 1) / 2`
+- **Mathlib Asymptotics Bridge**:
+  `isBigO_quicksortWithCount_snd_sq` proving $(quicksortWithCount\ xs).2 = O(|xs|^2)$ under
+  pullback along `List.length` to `Filter.atTop`.
+
 ---
 
 ## 4. Deterministic Median (BFPRT Selection) Worst-Case $O(n \log n)$ (R4)
@@ -142,13 +163,6 @@ def bfprtQuicksortRec (c : ℕ) : ℕ → ℕ
     bfprtQuicksortRec c (7 * (n + 2) / 10) +
     bfprtQuicksortRec c (3 * (n + 2) / 10) +
     c * (n + 2)
-
-def bfprtQuicksortBound (c : ℕ) (n : ℕ) : ℕ :=
-  4 * (c + 1) * n * Nat.size n
-
-theorem isBigO_bfprtQuicksort_n_log_n (c : ℕ) :
-    (fun n : ℕ ↦ ((bfprtQuicksortBound c n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ (n : ℝ) * Real.log (n : ℝ))
 ```
 
 ---
@@ -170,10 +184,6 @@ We connect this recurrence to the pairwise indicator backward analysis in
 theorem expected_quicksort_le_harmonic_bound (n : ℕ) :
     Amort.Randomized.expectedQuicksortComparisons n ≤
       2 * (n : ℝ) * Amort.Approximation.harmonic n
-
-theorem isBigO_quicksortAvg_n_log_n :
-    (fun n : ℕ ↦ ((quicksortAvgWorkBound n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ (n : ℝ) * Real.log (n : ℝ))
 ```
 
 ---

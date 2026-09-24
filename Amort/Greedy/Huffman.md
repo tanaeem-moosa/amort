@@ -1,5 +1,9 @@
 # Huffman Coding & Optimal Prefix Codes
 
+> **Status: stub — not verified** (Phase 3 canon stub; sibling exchange arithmetic is proven,
+> but prefix tree construction algorithm is a specification stub).
+
+
 ## Mathematical Specification
 Alphabet symbols $x \in \alpha$ possess positive frequencies $w(x) > 0$.
 Prefix codes correspond to binary trees `HuffmanTree α`:

@@ -100,12 +100,16 @@ import Amort.Distributed.Impossibility
 import Amort.Distributed.Consensus
 import Amort.Distributed.BFT
 import Amort.Distributed.Snapshot
+import Amort.Audit
 
 /-!
 # Amort: Formalized Algorithm Complexity in Lean 4
 
 This library formalizes the time complexity and mathematical correctness of classical
-algorithms, recurrence relations, and amortized data structures.
+algorithms, recurrence relations, and amortized data structures. Fully verified modules
+(Phases 1 & 2, and §7.3 targets) include genuine executable algorithms, two-sided correctness,
+and instrumented operational bounds, while Phase 3 & 4 modules serve as specification stubs
+marked `Status: stub — not verified`.
 
 ## Modules
 - `Amort.GCD.BinaryGCD`: Definition, invariant lemmas, and proof of equivalence

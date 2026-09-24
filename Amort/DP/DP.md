@@ -1,5 +1,9 @@
 # Textbook Dynamic Programming in Lean 4
 
+> **Status: partially verified / contains stubs** (Contains verified Knapsack and LIS algorithms
+> alongside Phase 3 Matrix Chain stubs).
+
+
 This document synthesizes the formalization of classical dynamic programming algorithms in
 `Amort.DP`, connecting the state-space complexity framework (`Amort.Recurrence.DP`) to
 three fundamental algorithmic paradigms:

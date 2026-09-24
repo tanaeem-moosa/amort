@@ -1,5 +1,9 @@
 # Tarjan's Bridge and Articulation Point Finding Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; bridge condition is defined,
+> but DFS tree traversal and low-link algorithms are specification stubs).
+
+
 ## Theoretical Foundations
 In an undirected connected graph $G = (V, E)$, an edge $e$ is a bridge if $G \setminus \{e\}$ is disconnected. A vertex $u$ is an articulation point if $G \setminus \{u\}$ is disconnected.
 

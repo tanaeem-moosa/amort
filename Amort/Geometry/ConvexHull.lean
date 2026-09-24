@@ -11,6 +11,9 @@ import Mathlib.Tactic.Ring
 /-!
 # 2D Convex Hull: Monotone Chain & Amortized Scanning
 
+> **Status: stub — not verified** (Phase 4 canon stub; cross-product orientation is proven,
+> but Graham scan monotone chain execution is a specification stub).
+
 This module formalizes Andrew's monotone chain algorithm for 2D convex hull:
 - 2D point representation `Point2D` with integer coordinates.
 - Orientation test via 2D determinant / cross product `cross(p, q, r)`.
@@ -28,7 +31,7 @@ This module formalizes Andrew's monotone chain algorithm for 2D convex hull:
 - `Amort.Geometry.hullStepOps`: Step counter tracking pushes and pops.
 - `Amort.Geometry.hullScanAmortized`: Amortized potential function analysis $\Phi = \text{length}$.
 - `Amort.Geometry.hullScan_operations_le`: Total scanning operations $\le 2n$.
-- `Amort.Geometry.convexHullWork`: Total operational model (sorting + scanning).
+- `Amort.Geometry.convexHullBound`: Total operational model (sorting + scanning).
 - `Amort.Geometry.convexHullWork_le`: Concrete $O(n \log n)$ upper bound.
 -/
 
@@ -160,13 +163,13 @@ theorem totalScanOps_empty_stack (points : List Point2D) :
 /-- Combined operational work model for 2D Convex Hull on $n$ points:
 $n \cdot \text{Nat.size } n$ comparisons for coordinate sorting, plus
 $2n$ operations for the lower hull scan and $2n$ operations for the upper hull scan. -/
-def convexHullWork (n : ℕ) : ℕ :=
+def convexHullBound (n : ℕ) : ℕ :=
   n * Nat.size n + 4 * n
 
 /-- Concrete upper bound: $W(n) \le 5n \cdot \text{Nat.size } n$ for all $n \ge 1$. -/
 theorem convexHullWork_le (n : ℕ) (hn : 1 ≤ n) :
-    convexHullWork n ≤ 5 * n * Nat.size n := by
-  unfold convexHullWork
+    convexHullBound n ≤ 5 * n * Nat.size n := by
+  unfold convexHullBound
   have h_size : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
   have h4n : 4 * n ≤ 4 * n * Nat.size n := by
     calc 4 * n = 4 * n * 1 := by ring

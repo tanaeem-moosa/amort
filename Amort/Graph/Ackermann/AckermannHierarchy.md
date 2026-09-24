@@ -1,5 +1,9 @@
 # The Ackermann Hierarchy and Functional Inverse Ackermann
 
+> **Status: stub — not verified** (Phase 4 canon stub; Ackermann values are proven,
+> but functional inverse is modeled as a lookup stub).
+
+
 This document details the Lean 4 formalization of the Ackermann hierarchy and its functional inverse in `Amort.Graph.Ackermann.AckermannHierarchy`.
 
 ## Mathematical Definitions

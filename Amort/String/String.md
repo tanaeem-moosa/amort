@@ -1,5 +1,9 @@
 # Textbook String Algorithms in Lean 4
 
+> **Status: partially verified / contains stubs** (Contains verified KMP, LCS, Edit Distance,
+> and Naive Match algorithms alongside Phase 3/4 string stubs).
+
+
 This document details the Lean 4 formalization of foundational and advanced textbook string
 algorithms in `Amort.String`:
 - **Single-Pattern Matching**: Naive $O(n \cdot m)$ sliding window vs. Knuth-Morris-Pratt (KMP)

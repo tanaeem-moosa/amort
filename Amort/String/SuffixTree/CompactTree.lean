@@ -9,6 +9,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Compact Suffix Tree Structure and Size Bounds
 
+> **Status: stub — not verified** (Phase 4 canon stub; tree combinatorics are modeled,
+> but construction algorithm is a specification stub).
+
 This module formalizes the compact (compressed) suffix tree structure for a string $S\$$ of
 length $n$:
 1. **Edge Labels as Slice Intervals**: Edges are labeled by intervals $[l, r]$ into the text

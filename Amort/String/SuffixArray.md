@@ -1,5 +1,9 @@
 # Suffix Array & Kasai's Linear LCP Construction
 
+> **Status: stub — not verified** (Phase 4 canon stub; Kasai height decrement is modeled,
+> but suffix sorting and LCP execution are specification stubs).
+
+
 ## 1. Overview
 
 Given a string $S$ of length $n$, the **suffix array** $\text{SA}$ is a permutation of $\{0, 1, \dots, n-1\}$ that lists the starting indices of the suffixes of $S$ in lexicographical order:

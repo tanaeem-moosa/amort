@@ -167,4 +167,16 @@ theorem isBigO_euclideanGcdSteps_comap_add_atTop :
   have h3 : euclideanGcdSteps a b ≤ 3 * Nat.size (a + b) := by omega
   exact_mod_cast h3
 
+/-- Instrumented Euclidean GCD step count is asymptotically `O(Nat.size (min a b))` under
+`Filter.atTop` on `ℕ × ℕ`. -/
+theorem isBigO_euclidGcdWithSteps_snd_atTop :
+    (fun p : ℕ × ℕ ↦ (((euclidGcdWithSteps p.1 p.2).2 : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun p : ℕ × ℕ ↦ ((Nat.size (min p.1 p.2) : ℕ) : ℝ)) := by
+  have heq : (fun p : ℕ × ℕ ↦ (((euclidGcdWithSteps p.1 p.2).2 : ℕ) : ℝ)) =
+      (fun p : ℕ × ℕ ↦ ((euclideanGcdSteps p.1 p.2 : ℕ) : ℝ)) := by
+    funext ⟨a, b⟩
+    rw [euclidGcdWithSteps_snd]
+  rw [heq]
+  exact isBigO_euclideanGcdSteps_atTop
+
 end Nat

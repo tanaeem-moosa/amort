@@ -3,6 +3,7 @@ Copyright (c) 2026 Amort Authors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
+import Amort.Graph.Traversal
 import Mathlib.Logic.Relation
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Fintype.Basic
@@ -10,6 +11,9 @@ import Mathlib.Tactic.Ring
 
 /-!
 # Strongly Connected Components (SCC) and the Condensation DAG
+
+> **Status: stub — not verified** (Phase 3 canon stub; condensation DAG properties are
+> proven, but Kosaraju/Tarjan DFS traversal is a specification stub).
 
 This module formalizes graph reachability, mutual reachability equivalence classes,
 strongly connected components (SCC), the acyclic condensation DAG, and linear-time
@@ -40,7 +44,7 @@ operational complexity for SCC decomposition (Kosaraju's algorithm).
    Kosaraju's two-pass algorithm executes:
    - Pass 1: DFS on $G$, bounded by $|V| + |E|$ steps.
    - Pass 2: DFS on reverse graph $G^T$, bounded by $|V| + |E|$ steps.
-   - Total operational complexity: $\text{kosarajuWork}(n, m) \le 2(n + m) = O(|V| + |E|)$.
+   - Total operational complexity: $\text{kosarajuBound}(n, m) \le 2(n + m) = O(|V| + |E|)$.
 
 ## Key Definitions and Theorems
 - `Amort.Graph.Reachable`: Reflexive-transitive reachability relation.
@@ -49,7 +53,7 @@ operational complexity for SCC decomposition (Kosaraju's algorithm).
 - `Amort.Graph.scc_disjoint_or_eq`: Pairwise disjointness of distinct components.
 - `Amort.Graph.CondensationEdge`: Directed edge between distinct SCCs.
 - `Amort.Graph.condensation_acyclic`: Non-existence of mutual reachability between distinct SCCs.
-- `Amort.Graph.kosarajuWork`: Operational step model $2(n + m)$.
+- `Amort.Graph.kosarajuBound`: Operational step model $2(n + m)$.
 - `Amort.Graph.kosaraju_work_le`: Linear operational bound $O(|V| + |E|)$.
 -/
 
@@ -59,9 +63,7 @@ variable {n : ℕ}
 
 /-! ### Reachability and Mutual Reachability -/
 
-/-- Reachability in directed graph `adj`: reflexive-transitive closure of edges. -/
-def Reachable (adj : Fin n → List (Fin n)) (u v : Fin n) : Prop :=
-  Relation.ReflTransGen (fun x y ↦ y ∈ adj x) u v
+
 
 theorem reachable_refl (adj : Fin n → List (Fin n)) (u : Fin n) :
     Reachable adj u u :=
@@ -160,15 +162,15 @@ theorem condensation_acyclic (adj : Fin n → List (Fin n)) {C1 C2 : Finset (Fin
 /-- Total operational work for Kosaraju's two-pass DFS algorithm on a graph with
 `n` vertices and `m` edges: two DFS passes, each bounded by `n + m` operations,
 yielding `2 * (n + m)` total steps ($O(|V| + |E|)$). -/
-def kosarajuWork (n : ℕ) (m : ℕ) : ℕ := 2 * (n + m)
+def kosarajuBound (n : ℕ) (m : ℕ) : ℕ := 2 * (n + m)
 
 /-- Kosaraju work bound: operations are bounded by `2 * (n + m)`. -/
-theorem kosaraju_work_le (n m : ℕ) : kosarajuWork n m ≤ 2 * (n + m) :=
+theorem kosaraju_work_le (n m : ℕ) : kosarajuBound n m ≤ 2 * (n + m) :=
   le_refl _
 
 /-- Two-pass DFS decomposition into forward and reverse traversals. -/
-theorem kosaraju_work_split (n m : ℕ) : kosarajuWork n m = (n + m) + (n + m) := by
-  dsimp [kosarajuWork]
+theorem kosaraju_work_split (n m : ℕ) : kosarajuBound n m = (n + m) + (n + m) := by
+  dsimp [kosarajuBound]
   ring
 
 end Amort.Graph

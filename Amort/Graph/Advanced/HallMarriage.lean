@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Hall's Marriage Theorem and Max-Flow Equivalence
 
+> **Status: stub — not verified** (Phase 4 canon stub; Hall condition necessity is proven,
+> but sufficiency reduction is a specification stub).
+
 This module formalizes Hall's Marriage Theorem for finite bipartite graphs $G = (L, R, E)$:
 1. **Neighborhoods**: $N(S) = \bigcup_{u \in S} N(u)$ for any vertex subset $S \subseteq L$.
 2. **Hall's Condition**: $|S| \le |N(S)|$ for all subsets $S \subseteq L$.

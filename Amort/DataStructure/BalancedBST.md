@@ -1,5 +1,9 @@
 # Balanced Binary Search Trees & Online Sorted Queries
 
+> **Status: stub — not verified** (Phase 3 canon stub; tree rotation properties are proven,
+> but rebalancing insert/delete operations are specification stubs).
+
+
 This document details the Lean 4 formalization of balanced binary search trees (BBST) with size
 annotations in `Amort.DataStructure.BalancedBST`. It establishes tree rotations preserving BST
 order and subtree size annotations, and bounds online order-statistic queries (`rank`, `select`,

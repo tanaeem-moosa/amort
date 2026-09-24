@@ -1,5 +1,9 @@
 # Asymptotic Complexity Bridges for Data Structures
 
+> **Status: stub — not verified** (Phase 3 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 This document details the Lean 4 formalization of asymptotic complexity bounds connecting
 concrete operational step counters for data structures to Mathlib's
 `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop` in `Amort.DataStructure.Asymptotics`.

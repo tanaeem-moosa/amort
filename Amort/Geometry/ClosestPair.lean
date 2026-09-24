@@ -13,6 +13,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Closest Pair of Points: Divide-and-Conquer & Strip Sparsity
 
+> **Status: stub — not verified** (Phase 4 canon stub; geometric strip sparsity is proven,
+> but divide-and-conquer execution algorithm is a specification stub).
+
 This module formalizes the classical $O(n \log n)$ divide-and-conquer algorithm for finding
 the closest pair of 2D points:
 - Squared Euclidean distance metric `distSq`.
@@ -35,7 +38,7 @@ the closest pair of 2D points:
 - `Amort.Geometry.square_packing_bound`: Sub-square packing property via Pigeonhole Principle.
 - `Amort.Geometry.strip_neighbor_bound`: At most 7 neighbors within the boundary strip.
 - `Amort.Geometry.ClosestPairRecurrence`: Divide-and-conquer recurrence relation.
-- `Amort.Geometry.closestPairWork`: Total operational step model.
+- `Amort.Geometry.closestPairBound`: Total operational step model.
 - `Amort.Geometry.closestPairWork_le`: Linear-logarithmic bound $O(n \log n)$.
 -/
 
@@ -146,13 +149,13 @@ def ClosestPairRecurrence (T : ℕ → ℕ) (c : ℕ) : Prop :=
 /-- Operational work model for Closest Pair on $n$ points:
 $2n \cdot \text{Nat.size } n$ comparisons for sorting points by $x$ and maintaining $y$-order,
 plus $7n$ comparisons for the linear strip scan across all divide-and-conquer levels. -/
-def closestPairWork (n : ℕ) : ℕ :=
+def closestPairBound (n : ℕ) : ℕ :=
   2 * n * Nat.size n + 7 * n
 
 /-- Concrete upper bound: $W(n) \le 9n \cdot \text{Nat.size } n$ for all $n \ge 1$. -/
 theorem closestPairWork_le (n : ℕ) (hn : 1 ≤ n) :
-    closestPairWork n ≤ 9 * n * Nat.size n := by
-  unfold closestPairWork
+    closestPairBound n ≤ 9 * n * Nat.size n := by
+  unfold closestPairBound
   have h_size : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
   have h7n : 7 * n ≤ 7 * n * Nat.size n := by
     calc 7 * n = 7 * n * 1 := by ring

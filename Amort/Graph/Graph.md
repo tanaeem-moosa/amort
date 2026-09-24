@@ -1,5 +1,9 @@
 # Textbook Graph Algorithms in Lean 4
 
+> **Status: partially verified / contains stubs** (Contains verified Traversal and Bellman-Ford
+> algorithms alongside Phase 3/4 graph algorithm stubs).
+
+
 This document synthesizes the formalization of classical and advanced graph algorithms in
 `Amort.Graph`, spanning shortest paths, linear traversals, amortized data structures, minimum
 spanning trees, network flows, strongly connected components, and Eulerian circuits:

@@ -1,5 +1,9 @@
 # Fast Fourier Transform (FFT) & Polynomial Multiplication
 
+> **Status: stub — not verified** (Phase 3 canon stub; Cooley-Tukey decomposition is proven,
+> but recursive list FFT execution and DFT equivalence are specification stubs).
+
+
 ## 1. Overview and Problem Statement
 
 Polynomial multiplication is a fundamental algebraic primitive in computer science, computer algebra,

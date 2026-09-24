@@ -1,5 +1,9 @@
 # Prim's Minimum Spanning Tree Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; specification formulas awaiting
+> executable priority queue frontier implementation).
+
+
 ## Overview
 This module formalizes Prim's algorithm for finding a Minimum Spanning Tree (MST) on finite
 undirected connected graphs with priority queue frontier selection. It provides:

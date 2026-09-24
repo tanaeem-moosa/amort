@@ -9,6 +9,9 @@ import Mathlib.Data.List.Basic
 /-!
 # Gusfield's Z-Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; zSpec specification is proven,
+> but Z-box execution loop is a specification stub).
+
 This module formalizes Gusfield's linear-time Z-Algorithm for exact string processing:
 - The fundamental $Z$-array: for a string $S$ of length $n$, $Z[i] = \text{LCP}(S, S[i..])$.
 - Maintenance of the rightmost match window (Z-box) $[l, r]$ maximizing $r$, where
@@ -168,14 +171,14 @@ Total character comparisons across all positions $i \in [0, n)$ is bounded by $2
 - Successful comparisons advance the right boundary $r$ from 0 to at most $n$ ($\le n$ steps).
 - Mismatch comparisons occur at most once per position $i \in [1, n)$ ($\le n$ steps).
 Total work $\le 2n$. -/
-def zAlgorithmWork (n : ℕ) : ℕ :=
+def zAlgorithmBound (n : ℕ) : ℕ :=
   2 * n
 
 omit [DecidableEq α] in
 /-- Linear comparison bound theorem for Gusfield's Z-Algorithm:
 Total comparisons are bounded by $2|S|$. -/
 theorem zAlgorithmWork_le (S : List α) :
-    zAlgorithmWork S.length ≤ 2 * S.length :=
+    zAlgorithmBound S.length ≤ 2 * S.length :=
   Nat.le_refl _
 
 /-! ### Pattern Matching Correctness via Reduction to Z(P $ T) -/

@@ -1,5 +1,9 @@
 # Topological Sort and Kahn's Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; topological order acyclicity is
+> proven, but Kahn queue algorithm execution is a specification stub).
+
+
 This document details the Lean 4 formalization of Kahn's in-degree zero algorithm for topological
 sorting of directed graphs in `Amort.Graph.TopologicalSort`, establishing its $O(|V| + |E|)$
 operational step bound and proving topological sort correctness and cycle-freedom (DAG property).

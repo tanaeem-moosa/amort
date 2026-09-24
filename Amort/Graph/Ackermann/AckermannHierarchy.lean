@@ -10,6 +10,9 @@ import Mathlib.Tactic.Ring
 /-!
 # The Ackermann Hierarchy and Functional Inverse Ackermann
 
+> **Status: stub — not verified** (Phase 4 canon stub; Ackermann values are proven,
+> but functional inverse is modeled as a lookup stub).
+
 This module formalizes the textbook Ackermann hierarchy function $A_k(n)$, proves strict
 monotonicity, establishes exact closed-form evaluations for levels $k \in \{0, 1, 2, 3, 4\}$,
 defines the functional inverse Ackermann function $\alpha(n)$, and proves that $\alpha(n)$ is

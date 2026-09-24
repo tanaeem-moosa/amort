@@ -1,5 +1,9 @@
 # Closest Pair of Points: Divide-and-Conquer & Strip Sparsity
 
+> **Status: stub — not verified** (Phase 4 canon stub; geometric strip sparsity is proven,
+> but divide-and-conquer execution algorithm is a specification stub).
+
+
 ## Geometric Packing Lemma
 In any $\delta \times \delta$ square:
 - Subdivide into 4 quadrants of size $(\delta / 2) \times (\delta / 2)$.

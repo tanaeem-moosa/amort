@@ -15,6 +15,9 @@ import Mathlib.Tactic.FieldSimp
 /-!
 # Karger's Randomized Min-Cut Contraction Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; contraction survival product is proven,
+> but randomized graph contraction on PMF is a specification stub).
+
 This module formalizes Karger's random contraction algorithm for the global minimum cut
 in multigraphs:
 1. **Degree & Edge Bounds**: In any graph where every vertex has degree at least the min-cut
@@ -33,8 +36,8 @@ in multigraphs:
 - `Amort.Randomized.minCut_edge_lower_bound`: $n \cdot k \le 2 \cdot |E|$.
 - `Amort.Randomized.stepSurvivalProb`: $(n - 2) / n$ survival probability at $n$ vertices.
 - `Amort.Randomized.kargerSuccessBound`: $\frac{2}{n(n-1)}$ lower bound.
-- `Amort.Randomized.kargerSingleRunWork`: Operational step count $n^2$.
-- `Amort.Randomized.kargerTotalWork`: Amplified operational step count $n^4$.
+- `Amort.Randomized.kargerSingleRunBound`: Operational step count $n^2$.
+- `Amort.Randomized.kargerTotalBound`: Amplified operational step count $n^4$.
 -/
 
 namespace Amort.Randomized
@@ -121,17 +124,17 @@ theorem karger_telescoping_step (n : ℕ) (hn : 3 ≤ n) :
 
 /-- Operational step complexity for a single contraction run:
 contracting $n - 2$ vertices in $O(n^2)$ steps. -/
-def kargerSingleRunWork (n : ℕ) : ℕ :=
+def kargerSingleRunBound (n : ℕ) : ℕ :=
   n ^ 2
 
 /-- Operational step complexity for amplified Karger Min-Cut:
 running $O(n^2)$ independent trials yields total work $O(n^4)$. -/
-def kargerTotalWork (n : ℕ) : ℕ :=
+def kargerTotalBound (n : ℕ) : ℕ :=
   n ^ 4
 
 /-- Amplified Karger min-cut complexity bound. -/
 theorem kargerTotalWork_bound (n : ℕ) :
-    kargerTotalWork n ≤ n ^ 4 := by
+    kargerTotalBound n ≤ n ^ 4 := by
   rfl
 
 end Amort.Randomized

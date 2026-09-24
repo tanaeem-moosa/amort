@@ -1,5 +1,9 @@
 # Tarjan's Inverse Ackermann Bound for Disjoint Set Union (`Amort.Graph.Ackermann`)
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Tarjan Ackermann potential bound is
+> a specification stub awaiting full verification).
+
+
 This directory formalizes Tarjan's classical $O(m \cdot \alpha(n))$ amortized time bound for Disjoint
 Set Union (DSU) with path compression and union-by-rank in Lean 4:
 

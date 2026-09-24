@@ -1,5 +1,9 @@
 # Prefix Trie (Prefix Tree Dictionary)
 
+> **Status: stub — not verified** (Phase 3 canon stub; prefix trie structure is modeled,
+> but end-to-end dictionary lookup correctness is a specification stub).
+
+
 ## 1. Overview
 
 The prefix trie is an ordered search tree data structure used to store an associative collection of strings (dictionary). Nodes correspond to prefixes of strings in the dictionary, where:

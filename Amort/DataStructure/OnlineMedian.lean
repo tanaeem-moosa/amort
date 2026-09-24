@@ -12,6 +12,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Online Running Median with Dual Heaps
 
+> **Status: stub — not verified** (Phase 3 canon stub; partition median soundness is proven,
+> but heap insertion/rebalancing operations are specification stubs).
+
 This module formalizes the dual-heap streaming model for computing the running median
 over an online data stream:
 - Lower half maintained in a max-heap `low`.
@@ -38,7 +41,7 @@ over an online data stream:
 
 3. **Step Bounds**:
    - `medianQuerySteps = 1`: peeking the root takes $O(1)$ time.
-   - `onlineMedianInsertWork n = 5 * Nat.size n + 1`: inserting an element and rebalancing
+   - `onlineMedianInsertBound n = 5 * Nat.size n + 1`: inserting an element and rebalancing
      by moving at most one element between heaps takes $O(\log n)$ steps.
 
 ## Key Definitions and Theorems
@@ -49,7 +52,7 @@ over an online data stream:
 - `Amort.DataStructure.dualHeap_max_low_is_median`: Theorem proving dual-heap root is
   the mathematically valid median of all inserted elements.
 - `Amort.DataStructure.medianQuerySteps`: Constant query work.
-- `Amort.DataStructure.onlineMedianInsertWork`: Logarithmic insertion work model.
+- `Amort.DataStructure.onlineMedianInsertBound`: Logarithmic insertion work model.
 -/
 
 namespace Amort.DataStructure
@@ -182,13 +185,13 @@ theorem medianQuerySteps_eq : medianQuerySteps = 1 := rfl
 and restoring the balance and partition invariants:
 1 comparison to route to heap, sift-up into heap ($\le \text{Nat.size } n$),
 plus at most 1 extraction and insertion to rebalance ($\le 4 \cdot \text{Nat.size } n$). -/
-def onlineMedianInsertWork (n : ℕ) : ℕ :=
+def onlineMedianInsertBound (n : ℕ) : ℕ :=
   5 * Nat.size n + 1
 
 /-- Insertion work is bounded by `6 * Nat.size n + 1`. -/
 theorem onlineMedianInsertWork_le (n : ℕ) :
-    onlineMedianInsertWork n ≤ 6 * Nat.size n + 1 := by
-  dsimp [onlineMedianInsertWork]
+    onlineMedianInsertBound n ≤ 6 * Nat.size n + 1 := by
+  dsimp [onlineMedianInsertBound]
   omega
 
 end Amort.DataStructure

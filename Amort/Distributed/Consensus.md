@@ -1,5 +1,9 @@
 # Crash-Tolerant Consensus: Paxos & Raft (`Amort.Distributed.Consensus`)
 
+> **Status: stub — not verified** (Phase 4 canon stub; quorum intersection is proven,
+> but Paxos P2 invariant and Raft log matching are specification stubs).
+
+
 ## 1. Majority Quorum Intersection Foundation
 
 Consensus protocols rely on overlapping majorities to preserve knowledge across leader elections

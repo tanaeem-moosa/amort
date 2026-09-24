@@ -160,4 +160,78 @@ theorem modExpMulSteps_le (b : ℕ) :
         split <;> omega
       omega
 
+/-! ### Instrumented Execution with Multiplication Counter -/
+
+/-- Instrumented modular exponentiation loop returning computed value and multiplication count. -/
+def modExpAuxWithCount (m : ℕ) (acc base exp : ℕ) : ℕ × ℕ :=
+  if exp = 0 then
+    (acc % m, 0)
+  else
+    let acc' := if exp % 2 = 1 then (acc * base) % m else acc
+    let base' := (base * base) % m
+    let cost := if exp % 2 = 1 then 2 else 1
+    let res := modExpAuxWithCount m acc' base' (exp / 2)
+    (res.1, cost + res.2)
+termination_by exp
+decreasing_by omega
+
+/-- Complete instrumented modular exponentiation: computes $a^b \bmod m$ and counts
+multiplications. -/
+def modExpWithCount (a b m : ℕ) : ℕ × ℕ :=
+  if m = 0 then (0, 0)
+  else modExpAuxWithCount m (1 % m) (a % m) b
+
+/-- First projection of instrumented helper matches pure `modExpAux`. -/
+theorem modExpAuxWithCount_fst (m acc base exp : ℕ) :
+    (modExpAuxWithCount m acc base exp).1 = modExpAux m acc base exp := by
+  induction exp using Nat.strong_induction_on generalizing acc base with
+  | _ exp ih =>
+    rw [modExpAuxWithCount.eq_def, modExpAux.eq_def]
+    by_cases h0 : exp = 0
+    · rw [if_pos h0, if_pos h0]
+    · rw [if_neg h0, if_neg h0]
+      dsimp only
+      have hlt : exp / 2 < exp := by omega
+      have ih_rec := ih (exp / 2) hlt (if exp % 2 = 1 then (acc * base) % m else acc)
+        ((base * base) % m)
+      exact ih_rec
+
+/-- Second projection of instrumented helper matches `modExpMulSteps`. -/
+theorem modExpAuxWithCount_snd (m acc base exp : ℕ) :
+    (modExpAuxWithCount m acc base exp).2 = modExpMulSteps exp := by
+  induction exp using Nat.strong_induction_on generalizing acc base with
+  | _ exp ih =>
+    rw [modExpAuxWithCount.eq_def]
+    cases exp with
+    | zero =>
+      rw [modExpMulSteps]
+      rfl
+    | succ n =>
+      have h0 : n + 1 ≠ 0 := by omega
+      rw [if_neg h0]
+      dsimp only
+      have hlt : (n + 1) / 2 < n + 1 := by omega
+      have ih_rec := ih ((n + 1) / 2) hlt (if (n + 1) % 2 = 1 then (acc * base) % m else acc)
+        ((base * base) % m)
+      rw [modExpMulSteps]
+      rw [ih_rec]
+
+/-- First projection of instrumented modular exponentiation equals `modExp`. -/
+theorem modExpWithCount_fst (a b m : ℕ) :
+    (modExpWithCount a b m).1 = modExp a b m := by
+  dsimp [modExpWithCount, modExp]
+  split_ifs with hm
+  · rfl
+  · exact modExpAuxWithCount_fst m (1 % m) (a % m) b
+
+/-- Second projection of instrumented modular exponentiation is bounded by
+$2 \cdot \text{size } b$. -/
+theorem modExpWithCount_snd_le (a b m : ℕ) :
+    (modExpWithCount a b m).2 ≤ 2 * Nat.size b := by
+  dsimp [modExpWithCount]
+  split_ifs with hm
+  · omega
+  · rw [modExpAuxWithCount_snd]
+    exact modExpMulSteps_le b
+
 end Amort.NumberTheory

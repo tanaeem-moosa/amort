@@ -1,5 +1,9 @@
 # Expected Complexity of Randomized Quicksort
 
+> **Status: stub — not verified** (Phase 4 canon stub; harmonic indicator sum is proven,
+> but randomized execution on Mathlib PMF is a specification stub).
+
+
 ## Theoretical Foundations
 Let $A = [a_1, \dots, a_n]$ be an array of $n$ distinct elements, with sorted order $z_1 < z_2 < \dots < z_n$. In randomized quicksort, pivots are chosen uniformly at random from the active subproblem.
 

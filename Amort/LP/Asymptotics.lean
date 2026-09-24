@@ -11,6 +11,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Linear Programming
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects the operational arithmetic step bounds for Linear Programming operations
 (simplex pivot step and feasibility verification) to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO`
 framework under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$:
@@ -26,23 +29,23 @@ open Asymptotics
 
 namespace Amort.LP
 
-/-- Simplex pivot operational step complexity is asymptotically $O(m \cdot n + m + n)$
-under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: Simplex pivot step complexity is modeled as a closed-form formula
+`simplexPivotBound` awaiting instrumented execution implementation. -/
 theorem isBigO_simplexPivotWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((simplexPivotWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((simplexPivotBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.1 * p.2 + p.1 + p.2 : ℕ) : ℝ))) :=
   isBigO_refl _ _
 
-/-- LP feasibility verification operational complexity is asymptotically $O(m \cdot n + m + n)$
-under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: LP feasibility verification complexity is modeled as a closed-form
+formula `lpFeasibilityBound` awaiting instrumented execution implementation. -/
 theorem isBigO_lpFeasibilityWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((lpFeasibilityWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((lpFeasibilityBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.1 * p.2 + p.1 + p.2 : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 2 ?_
   apply Filter.Eventually.of_forall
   rintro ⟨m, n⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [lpFeasibilityWork]
+  dsimp [lpFeasibilityBound]
   have h : ((2 * (m * n + m + n) : ℕ) : ℝ) = 2 * ((m * n + m + n : ℕ) : ℝ) := by
     push_cast
     ring

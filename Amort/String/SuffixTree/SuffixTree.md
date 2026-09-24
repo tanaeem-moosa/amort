@@ -1,5 +1,9 @@
 # Suffix Trees & Ukkonen's Online Linear-Time Construction (`Amort.String.SuffixTree`)
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Ukkonen, Compact Tree, and Suffix Link
+> algorithms are specification stubs awaiting full verification).
+
+
 This directory formalizes Compact Suffix Trees and Ukkonen's online linear-time construction
 algorithm in Lean 4:
 

@@ -12,6 +12,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Fast Fourier Transform (FFT) & Fast Polynomial Multiplication
 
+> **Status: stub — not verified** (Phase 3 canon stub; Cooley-Tukey decomposition is proven,
+> but recursive list FFT execution and DFT equivalence are specification stubs).
+
 This module formalizes the Cooley-Tukey Radix-2 Fast Fourier Transform (FFT) and its
 application to fast polynomial multiplication over an arbitrary commutative ring $R$:
 
@@ -305,34 +308,34 @@ theorem fft_dyadic_bound (T : ℕ → ℕ) (c : ℕ) (hrec : FFTOpRecurrence T c
 /-- Concrete operational work model for FFT on $n$ elements:
 Each of the $\text{Nat.size } n$ stages performs $n/2$ butterflies, each taking
 1 multiplication + 1 addition + 1 subtraction = 3 operations, totaling $3n \cdot \text{size } n$. -/
-def fftWork (n : ℕ) : ℕ :=
+def fftBound (n : ℕ) : ℕ :=
   3 * n * Nat.size n
 
 /-- Operational bound on FFT work: $W(n) \le 3n \cdot \text{Nat.size } n$. -/
 theorem fftWork_le (n : ℕ) (_hn : 1 ≤ n) :
-    fftWork n ≤ 3 * n * Nat.size n := by
-  unfold fftWork
+    fftBound n ≤ 3 * n * Nat.size n := by
+  unfold fftBound
   rfl
 
 /-! ### Fast Polynomial Multiplication Complexity -/
 
 /-- Naive polynomial multiplication operational complexity:
 Multiplying two polynomials of degree $< n$ performs $n^2$ scalar multiplications. -/
-def naivePolyMulWork (n : ℕ) : ℕ :=
+def naivePolyMulBound (n : ℕ) : ℕ :=
   n ^ 2
 
 /-- Naive polynomial multiplication has quadratic complexity $n^2$. -/
 theorem naivePolyMulWork_quadratic (n : ℕ) :
-    naivePolyMulWork n = n ^ 2 :=
+    naivePolyMulBound n = n ^ 2 :=
   rfl
 
 /-- FFT-based polynomial multiplication operational work:
-1. Two forward FFTs on padded inputs of size $2n$: $2 \cdot \text{fftWork}(2n)$.
+1. Two forward FFTs on padded inputs of size $2n$: $2 \cdot \text{fftBound}(2n)$.
 2. Pointwise multiplication of point-value representations: $2n$ scalar multiplications.
-3. One inverse FFT on the product: $\text{fftWork}(2n)$.
-Total work: $3 \cdot \text{fftWork}(2n) + 2n$. -/
-def fftPolyMulWork (n : ℕ) : ℕ :=
-  3 * fftWork (2 * n) + 2 * n
+3. One inverse FFT on the product: $\text{fftBound}(2n)$.
+Total work: $3 \cdot \text{fftBound}(2n) + 2n$. -/
+def fftPolyMulBound (n : ℕ) : ℕ :=
+  3 * fftBound (2 * n) + 2 * n
 
 /-- Size identity: $\text{Nat.size}(2n) \le \text{Nat.size } n + 1$ for all $n \in \mathbb{N}$. -/
 theorem size_two_mul_le (n : ℕ) :
@@ -345,8 +348,8 @@ theorem size_two_mul_le (n : ℕ) :
 $W_{poly}(n) \le 38 n \cdot \text{Nat.size } n$ for all $n \ge 1$.
 This contrasts sharply with naive multiplication $O(n^2)$. -/
 theorem fftPolyMulWork_le (n : ℕ) (hn : 1 ≤ n) :
-    fftPolyMulWork n ≤ 38 * n * Nat.size n := by
-  unfold fftPolyMulWork fftWork
+    fftPolyMulBound n ≤ 38 * n * Nat.size n := by
+  unfold fftPolyMulBound fftBound
   have hsize_pos : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
   have h2n_size : Nat.size (2 * n) ≤ Nat.size n + 1 := size_two_mul_le n
   nlinarith

@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Potential Function Analysis and Amortized $O(m \cdot \alpha(n))$ DSU Bound
 
+> **Status: stub — not verified** (Phase 4 canon stub; telescoping potential sum is proven,
+> but operation work bounds are specification formulas).
+
 This module formalizes the potential function analysis for Disjoint Set Union (DSU) with
 path compression and union-by-rank, establishing Tarjan's $O(m \cdot \alpha(n))$ amortized
 complexity bound:
@@ -30,7 +33,7 @@ complexity bound:
 
 ## Mathematical Architecture
 
-1. `dsuAckermannWork (m n : ℕ)`: Total operational steps bounded by
+1. `dsuAckermannBound (m n : ℕ)`: Total operational steps bounded by
    $4m(\alpha(n) + 1) + 2n(\alpha(n) + 1)$.
 2. `amortized_telescoping_sum`: Formal telescoping summation theorem establishing that
    the sum of actual operational costs is bounded by the sum of amortized costs plus initial
@@ -48,36 +51,36 @@ namespace Amort.Graph
 /-- Operational step counter for $m$ DSU operations on $n$ elements with path compression
 and union-by-rank: Each operation charges at most $4(\alpha(n) + 1)$ amortized steps, with
 initial universe potential bounded by $2n(\alpha(n) + 1)$. -/
-def dsuAckermannWork (m n : ℕ) : ℕ :=
+def dsuAckermannBound (m n : ℕ) : ℕ :=
   4 * m * (invAck n + 1) + 2 * n * (invAck n + 1)
 
 /-- Upper bound on total work in terms of combined operations and elements:
-$\text{dsuAckermannWork}(m, n) \le 6(m + n)(\alpha(n) + 1)$. -/
+$\text{dsuAckermannBound}(m, n) \le 6(m + n)(\alpha(n) + 1)$. -/
 theorem dsuAckermannWork_le_combined (m n : ℕ) :
-    dsuAckermannWork m n ≤ 6 * (m + n) * (invAck n + 1) := by
-  dsimp [dsuAckermannWork]
+    dsuAckermannBound m n ≤ 6 * (m + n) * (invAck n + 1) := by
+  dsimp [dsuAckermannBound]
   nlinarith
 
 /-- When the number of operations $m$ is at least the number of elements $n$, total work is
 bounded directly by $6m(\alpha(n) + 1)$ ($O(m \cdot \alpha(n))$). -/
 theorem dsuAckermannWork_le_mul_m (m n : ℕ) (h : n ≤ m) :
-    dsuAckermannWork m n ≤ 6 * m * (invAck n + 1) := by
-  dsimp [dsuAckermannWork]
+    dsuAckermannBound m n ≤ 6 * m * (invAck n + 1) := by
+  dsimp [dsuAckermannBound]
   have : 2 * n * (invAck n + 1) ≤ 2 * m * (invAck n + 1) := by
     nlinarith
   linarith
 
 /-- Lower bound on total work:
-$(m + n)(\alpha(n) + 1) \le \text{dsuAckermannWork}(m, n)$. -/
+$(m + n)(\alpha(n) + 1) \le \text{dsuAckermannBound}(m, n)$. -/
 theorem dsuAckermannWork_ge_combined (m n : ℕ) :
-    (m + n) * (invAck n + 1) ≤ dsuAckermannWork m n := by
-  dsimp [dsuAckermannWork]
+    (m + n) * (invAck n + 1) ≤ dsuAckermannBound m n := by
+  dsimp [dsuAckermannBound]
   nlinarith
 
 /-- Operational cost is also lower-bounded by $m(\alpha(n) + 1)$. -/
 theorem dsuAckermannWork_ge_mul_m (m n : ℕ) :
-    m * (invAck n + 1) ≤ dsuAckermannWork m n := by
-  dsimp [dsuAckermannWork]
+    m * (invAck n + 1) ≤ dsuAckermannBound m n := by
+  dsimp [dsuAckermannBound]
   nlinarith
 
 /-! ### Telescoping Amortized Summation Theorem -/
@@ -116,14 +119,14 @@ theorem amortized_telescoping_sum (m : ℕ) (c : ℕ → ℤ) (phi : ℕ → ℤ
 
 /-- Concrete amortized bound instantiation:
 If each operation has amortized cost $A = 4(\alpha(n) + 1)$ and total initial potential
-$\Phi_0 \le 2n(\alpha(n) + 1)$, then total work is bounded by $\text{dsuAckermannWork}(m, n)$. -/
+$\Phi_0 \le 2n(\alpha(n) + 1)$, then total work is bounded by $\text{dsuAckermannBound}(m, n)$. -/
 theorem total_dsu_work_bound (m n : ℕ) (c : ℕ → ℤ) (phi : ℕ → ℤ)
     (h_step : ∀ i, c i ≤ (4 * (invAck n + 1) : ℕ) + phi i - phi (i + 1))
     (h_phi0 : phi 0 ≤ (2 * n * (invAck n + 1) : ℕ))
     (h_nonneg : 0 ≤ phi m) :
-    (∑ i ∈ Finset.range m, c i) ≤ ((dsuAckermannWork m n : ℕ) : ℤ) := by
+    (∑ i ∈ Finset.range m, c i) ≤ ((dsuAckermannBound m n : ℕ) : ℤ) := by
   have h_sum := amortized_telescoping_sum m c phi (4 * (invAck n + 1) : ℕ) h_step h_nonneg
-  dsimp [dsuAckermannWork]
+  dsimp [dsuAckermannBound]
   push_cast at *
   linarith
 

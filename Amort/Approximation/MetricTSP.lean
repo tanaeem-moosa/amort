@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # 2-Approximation Algorithm for Metric Traveling Salesperson Problem (TSP)
 
+> **Status: stub — not verified** (Phase 4 canon stub; approximation ratio theorems are
+> proven, but operational shortcutting / MST algorithms are specification stubs).
+
 This module formalizes the classical 2-approximation algorithm for Metric TSP:
 1. **Metric Graph**: Complete graph endowed with a symmetric, non-negative distance function
    satisfying the triangle inequality $d(u, w) \le d(u, v) + d(v, w)$.
@@ -34,7 +37,7 @@ This module formalizes the classical 2-approximation algorithm for Metric TSP:
 - `Amort.Approximation.dist_le_walkCost`: Direct distance bounded by walk cost.
 - `Amort.Approximation.shortcutting_preserves_bound`: Tour cost bounded by walk cost.
 - `Amort.Approximation.metric_tsp_approx_bound`: 2-approximation ratio.
-- `Amort.Approximation.metricTSPWork`: Operational step count $n^2 \cdot \text{size } n + 4n$.
+- `Amort.Approximation.metricTSPBound`: Operational step count $n^2 \cdot \text{size } n + 4n$.
 -/
 
 namespace Amort.Approximation
@@ -147,12 +150,12 @@ theorem metric_tsp_approx_bound
 - Double-tree traversal and Eulerian cycle: $2n$.
 - Shortcutting duplicate elimination: $2n$.
 Total work: $n^2 \cdot \text{size } n + 4n$. -/
-def metricTSPWork (n : ℕ) : ℕ :=
+def metricTSPBound (n : ℕ) : ℕ :=
   n ^ 2 * Nat.size n + 4 * n
 
 /-- Metric TSP 2-approximation operational step bound. -/
 theorem metricTSPWork_bound (n : ℕ) :
-    metricTSPWork n ≤ n ^ 2 * Nat.size n + 4 * n := by
+    metricTSPBound n ≤ n ^ 2 * Nat.size n + 4 * n := by
   rfl
 
 end Amort.Approximation

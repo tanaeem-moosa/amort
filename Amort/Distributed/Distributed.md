@@ -1,5 +1,9 @@
 # Distributed Systems Canon (`Amort.Distributed`)
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Paxos, Raft, PBFT, Vector Clocks, and
+> Chandy-Lamport protocols are specification stubs awaiting full verification).
+
+
 This directory formalizes the foundational theorems of distributed computing in Lean 4.
 The canon spans logical time, impossibility bounds, crash-tolerant consensus, Byzantine fault
 tolerance, and consistent global snapshots.

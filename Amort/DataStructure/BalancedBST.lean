@@ -12,6 +12,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Balanced Binary Search Trees & Online Sorted Queries
 
+> **Status: stub — not verified** (Phase 3 canon stub; tree rotation properties are proven,
+> but rebalancing insert/delete operations are specification stubs).
+
 This module formalizes balanced binary search trees (BBST) maintaining subtree size
 annotations and logarithmic height balance `height ≤ c * log n`. It provides:
 - Size and height invariants for nodes.
@@ -292,12 +295,12 @@ theorem findSteps_le_log {α : Type*} (c : ℕ) (t : BBST α)
 /-- Operational work model for insertion into a balanced BST of size `n`:
 traversal to leaf plus $O(1)$ rotations to restore balance, bounded by
 `c * Nat.size n + 2`. -/
-def insertWork (n c : ℕ) : ℕ :=
+def insertBound (n c : ℕ) : ℕ :=
   c * Nat.size n + 2
 
 /-- Insertion work is bounded by `c * Nat.size n + 2`. -/
 theorem insertWork_le (n c : ℕ) :
-    insertWork n c ≤ c * Nat.size n + 2 :=
+    insertBound n c ≤ c * Nat.size n + 2 :=
   le_rfl
 
 end Amort.DataStructure

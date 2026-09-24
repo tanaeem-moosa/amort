@@ -1,5 +1,9 @@
 # Interval Dynamic Programming: Matrix Chain Multiplication
 
+> **Status: stub — not verified** (Phase 3 canon stub; interval state space is modeled,
+> but optimal parenthesization dynamic programming is a specification stub).
+
+
 This document details the Lean 4 formalization of the textbook Matrix Chain Multiplication
 algorithm in `Amort.DP.MatrixChain`, establishing its interval state space, Bellman optimality
 recurrence, and $O(n^3)$ operational bound in the `Amort.Recurrence.DP` framework.

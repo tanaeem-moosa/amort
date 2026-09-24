@@ -30,9 +30,8 @@ This module formalizes the classical greedy interval scheduling algorithm:
 - `Amort.Greedy.chainCompatible_pairwise`: Chain compatibility implies pairwise compatibility.
 - `Amort.Greedy.greedySelect_chainCompatible`: Greedy schedule is chain-compatible.
 - `Amort.Greedy.SortedByFinish`: Predicate that intervals are ordered by finish time.
-- `Amort.Greedy.greedy_exchange_optimality`: Optimality of greedy schedule via exchange argument.
-- `Amort.Greedy.intervalSchedulingWork`: Combined sorting and scanning operational bound.
-- `Amort.Greedy.intervalSchedulingWork_le`: Concrete $O(n \log n)$ upper bound.
+- `Amort.Greedy.intervalSchedule_valid`: Validity of schedule from unsorted input.
+- `Amort.Greedy.intervalSchedule_optimal`: Global optimality of end-to-end pipeline.
 -/
 
 namespace Amort.Greedy
@@ -266,21 +265,134 @@ lemma greedyScanSteps_eq_length (L : List Interval) :
   | nil => rfl
   | cons _ xs ih => simp [greedyScanSteps, ih, Nat.add_comm]
 
-/-- Combined operational work model for Interval Scheduling on $n$ intervals:
-$n \cdot \text{Nat.size } n$ comparisons for sorting by finish time plus $n$ steps
-for the linear greedy scan. -/
-def intervalSchedulingWork (n : ℕ) : ℕ :=
-  n * Nat.size n + n
+lemma greedySelect_subset (lastFinish : ℕ) : ∀ {L : List Interval} {x : Interval},
+    x ∈ greedySelect lastFinish L → x ∈ L
+  | [], _, h => by contradiction
+  | y :: ys, x, h => by
+    unfold greedySelect at h
+    split at h
+    · rcases List.mem_cons.mp h with rfl | hmem
+      · exact List.mem_cons_self ..
+      · exact List.mem_cons_of_mem y (greedySelect_subset _ hmem)
+    · exact List.mem_cons_of_mem y (greedySelect_subset _ h)
 
-/-- Concrete upper bound for interval scheduling operational work:
-$W(n) \le 2n \cdot \text{Nat.size } n$ for all $n \ge 1$. -/
-theorem intervalSchedulingWork_le (n : ℕ) (hn : 1 ≤ n) :
-    intervalSchedulingWork n ≤ 2 * n * Nat.size n := by
-  unfold intervalSchedulingWork
-  have h_size : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
-  have h_n_le : n ≤ n * Nat.size n := by
-    calc n = n * 1 := by ring
-    _ ≤ n * Nat.size n := Nat.mul_le_mul_left n h_size
+/-! ### Executable Full Pipeline with Instrumented Operation Counting -/
+
+/-- Boolean comparison by finish time. -/
+def intervalLe (i1 i2 : Interval) : Bool :=
+  i1.finish <= i2.finish
+
+lemma intervalLe_trans (a b c : Interval) (h1 : intervalLe a b = true)
+    (h2 : intervalLe b c = true) : intervalLe a c = true := by
+  dsimp [intervalLe] at *
+  rw [decide_eq_true_iff] at *
+  omega
+
+lemma intervalLe_total (a b : Interval) : (intervalLe a b || intervalLe b a) = true := by
+  dsimp [intervalLe]
+  rw [Bool.or_eq_true, decide_eq_true_iff, decide_eq_true_iff]
+  omega
+
+theorem sortedByFinish_mergeSort (L : List Interval) :
+    SortedByFinish (L.mergeSort intervalLe) := by
+  have h := List.pairwise_mergeSort intervalLe_trans intervalLe_total L
+  unfold SortedByFinish
+  refine List.Pairwise.imp ?_ h
+  intro a b hab
+  dsimp [intervalLe] at hab
+  exact of_decide_eq_true hab
+
+lemma chainCompatible_of_pairwise_of_sorted : ∀ {S : List Interval},
+    PairwiseCompatible S → SortedByFinish S → ChainCompatible S
+  | [], _, _ => trivial
+  | [_], _, _ => trivial
+  | x :: y :: rest, hcompat, hsort => by
+    rw [PairwiseCompatible, List.pairwise_cons] at hcompat
+    rw [SortedByFinish, List.pairwise_cons] at hsort
+    have h_rec := chainCompatible_of_pairwise_of_sorted hcompat.2 hsort.2
+    have hxy_compat : Compatible x y := hcompat.1 y (List.mem_cons_self ..)
+    have hxy_le : x.finish ≤ y.finish := hsort.1 y (List.mem_cons_self ..)
+    have hx_lt := x.start_lt_finish
+    have hxy_start : x.finish ≤ y.start := by
+      rcases hxy_compat with h1 | h2
+      · exact h1
+      · omega
+    exact ⟨hxy_start, h_rec⟩
+
+/-- Complete interval scheduling algorithm:
+first sorts intervals by finish time, then runs the greedy linear scan. -/
+def intervalSchedule (L : List Interval) : List Interval :=
+  greedyIntervalSchedule (L.mergeSort intervalLe)
+
+/-- The schedule produced by `intervalSchedule` is pairwise compatible and consists of
+intervals from the input list `L`. -/
+theorem intervalSchedule_valid (L : List Interval) :
+    PairwiseCompatible (intervalSchedule L) ∧ ∀ x ∈ intervalSchedule L, x ∈ L := by
+  refine ⟨greedyIntervalSchedule_pairwiseCompatible (L.mergeSort intervalLe), ?_⟩
+  intro x hx
+  have h_sub := greedySelect_subset 0 hx
+  exact (List.mergeSort_perm L intervalLe).mem_iff.mp h_sub
+
+/-- Global optimality of `intervalSchedule`: produces a schedule of maximum cardinality
+from arbitrary (unsorted) input `L`. -/
+theorem intervalSchedule_optimal (L S : List Interval)
+    (hS : PairwiseCompatible S) (hsub : ∀ x ∈ S, x ∈ L) (_hnd : S.Nodup) :
+    S.length ≤ (intervalSchedule L).length := by
+  let S' := S.mergeSort intervalLe
+  have hperm : S'.Perm S := List.mergeSort_perm S intervalLe
+  have hS'_compat : PairwiseCompatible S' :=
+    List.Pairwise.perm hS hperm.symm (fun h => (compatible_comm _ _).mp h)
+  have hS'_sort : SortedByFinish S' := sortedByFinish_mergeSort S
+  have hS'_chain : ChainCompatible S' :=
+    chainCompatible_of_pairwise_of_sorted hS'_compat hS'_sort
+  have h_valid : ValidSchedule 0 (L.mergeSort intervalLe) S' := by
+    refine ⟨hS'_chain, ?_⟩
+    intro z hz
+    have hz_in_S : z ∈ S := hperm.mem_iff.mp hz
+    have hz_in_L : z ∈ L := hsub z hz_in_S
+    have hz_in_sortedL : z ∈ L.mergeSort intervalLe :=
+      (List.mergeSort_perm L intervalLe).mem_iff.mpr hz_in_L
+    exact ⟨hz_in_sortedL, Nat.zero_le _⟩
+  have h_opt := greedy_exchange_optimality (L.mergeSort intervalLe)
+    (sortedByFinish_mergeSort L) 0 S' h_valid
+  have hlen : S'.length = S.length := hperm.length_eq
+  rw [hlen] at h_opt
+  exact h_opt
+
+/-- Instrumented interval scheduling: sorts intervals with comparison counter,
+then scans with step counter, returning the schedule and total operations. -/
+def intervalScheduleWithCount (L : List Interval) : List Interval × ℕ :=
+  let res := List.mergeSortWithCount intervalLe L
+  let schedule := greedyIntervalSchedule res.1
+  (schedule, res.2 + res.1.length)
+
+/-- First projection of instrumented pipeline matches pure `intervalSchedule`. -/
+theorem intervalScheduleWithCount_fst (L : List Interval) :
+    (intervalScheduleWithCount L).1 = intervalSchedule L := by
+  dsimp [intervalScheduleWithCount, intervalSchedule]
+  rw [List.mergeSortWithCount_fst]
+
+/-- Operational cost of interval scheduling is bounded by sorting comparisons
+plus scan steps. -/
+theorem intervalScheduleWithCount_snd_le (L : List Interval) :
+    (intervalScheduleWithCount L).2 ≤ L.length * Nat.size L.length + L.length := by
+  dsimp [intervalScheduleWithCount]
+  have _hsort := List.mergeSortWithCount_snd_le_mul_size intervalLe L
+  have hlen : (List.mergeSortWithCount intervalLe L).1.length = L.length := by
+    have hperm := List.mergeSortWithCount_perm intervalLe L
+    exact hperm.length_eq
+  rw [hlen]
+  omega
+
+/-- Concrete upper bound for instrumented interval scheduling:
+at most $2n \cdot \text{Nat.size } n$ total operations for $n \ge 1$. -/
+theorem intervalScheduleWithCount_snd_le_mul (L : List Interval) (hn : 1 ≤ L.length) :
+    (intervalScheduleWithCount L).2 ≤ 2 * L.length * Nat.size L.length := by
+  have _h1 := intervalScheduleWithCount_snd_le L
+  have h_size : 1 ≤ Nat.size L.length := Nat.size_pos.mpr hn
+  have _h_n_le : L.length ≤ L.length * Nat.size L.length := by
+    calc L.length = L.length * 1 := by ring
+    _ ≤ L.length * Nat.size L.length := Nat.mul_le_mul_left L.length h_size
   linarith
 
 end Amort.Greedy

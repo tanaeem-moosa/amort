@@ -1,5 +1,9 @@
 # Floyd-Warshall All-Pairs Shortest Paths
 
+> **Status: stub — not verified** (Phase 3 canon stub; state-space model is formulated,
+> but bottom-up shortest path dynamic programming is a specification stub).
+
+
 This document details the Lean 4 formalization of the textbook Floyd-Warshall dynamic programming
 algorithm in `Amort.Graph.FloydWarshall`, establishing its 3D state space, Bellman intermediate
 optimality recurrence, and $O(n^3)$ operational bound in the `Amort.Recurrence.DP` framework.

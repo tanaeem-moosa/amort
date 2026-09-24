@@ -9,6 +9,9 @@ import Mathlib.Data.List.Basic
 /-!
 # Aho-Corasick Multi-Pattern Matching Automaton
 
+> **Status: stub — not verified** (Phase 3 canon stub; potential function bound is proven,
+> but failure link construction and match emission are specification stubs).
+
 This module formalizes the Aho-Corasick multi-pattern matching automaton:
 - Prefix trie augmented with failure links (suffix links) and dictionary output links.
 - Text scanning state transitions with failure-link fallback.
@@ -29,7 +32,7 @@ This module formalizes the Aho-Corasick multi-pattern matching automaton:
 5. `acScan_bound`: Telescoping potential bound
    $\text{steps} + \text{depth}(u_{\text{end}}) \le \text{depth}(u_{\text{start}}) + 2|T|$.
 6. `acScan_le_two_mul`: Text scanning bound starting from root $\le 2|T|$.
-7. `acTotalSearchWork`: Combined multi-pattern search operational work
+7. `acTotalSearchBound`: Combined multi-pattern search operational work
    $\sum |P_i| + 2|T| + z$, establishing $O(\sum |P_i| + |T| + z)$ complexity.
 -/
 
@@ -142,13 +145,13 @@ theorem scan_steps_le (ac : AhoCorasick α) (T : List α) :
 /-- Total operational work for Aho-Corasick multi-pattern search:
 dictionary construction steps $\sum |P_i|$, text scanning steps $\le 2|T|$,
 and reported match emission steps $z$. -/
-def acTotalSearchWork (patternWork textLength reportedMatches : ℕ) : ℕ :=
+def acTotalSearchBound (patternWork textLength reportedMatches : ℕ) : ℕ :=
   patternWork + 2 * textLength + reportedMatches
 
 /-- Concrete search bound for patterns $P$ and text $T$:
 $\text{totalWork} \le \sum |P_i| + 2|T| + z$. -/
 theorem acTotalSearchWork_bound (patterns : List (List α)) (T : List α) (z : ℕ) :
-    acTotalSearchWork (Trie.buildWork patterns) T.length z =
+    acTotalSearchBound (Trie.buildBound patterns) T.length z =
       (patterns.map List.length).sum + 2 * T.length + z :=
   rfl
 

@@ -13,6 +13,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Randomized Algorithms
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects concrete operational step bounds for randomized algorithms
 to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framework under `Filter.atTop`:
 1. Expected Randomized Quicksort comparison bound: $O(n \log n)$.
@@ -31,33 +34,34 @@ namespace Amort.Randomized
 
 /-! ### Randomized Quicksort Asymptotics -/
 
-/-- Expected randomized quicksort comparison bound is asymptotically $O(n \cdot \text{size } n)$
-under `Filter.atTop`. -/
+/-- **Stub Model**: Expected randomized quicksort comparison bound is modeled as a
+closed-form formula `quicksortStepBound` awaiting PMF execution implementation. -/
 theorem isBigO_quicksortWorkBound_atTop :
-    (fun (n : ℕ) ↦ (((quicksortWorkBound n : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (n : ℕ) ↦ (((quicksortStepBound n : ℕ) : ℝ))) =O[Filter.atTop]
       (fun n ↦ (((2 * n * Nat.size n : ℕ) : ℝ))) :=
   isBigO_refl _ _
 
 /-! ### Karger's Min-Cut Asymptotics -/
 
-/-- Amplified Karger min-cut operational complexity is asymptotically $O(n^4)$
-under `Filter.atTop`. -/
+/-- **Stub Model**: Amplified Karger min-cut complexity is modeled as a closed-form
+formula `kargerTotalBound` awaiting PMF execution implementation. -/
 theorem isBigO_kargerTotalWork_atTop :
-    (fun (n : ℕ) ↦ (((kargerTotalWork n : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (n : ℕ) ↦ (((kargerTotalBound n : ℕ) : ℝ))) =O[Filter.atTop]
       (fun n ↦ (((n ^ 4 : ℕ) : ℝ))) :=
   isBigO_refl _ _
 
 /-! ### Universal Hash Table Lookup Asymptotics -/
 
-/-- Expected hash table lookup step count is asymptotically $O(1)$ under `Filter.atTop`. -/
+/-- **Stub Model**: Expected hash table lookup step count is modeled as a closed-form
+formula `hashLookupExpectedBound` awaiting PMF execution implementation. -/
 theorem isBigO_hashLookupExpectedWork_atTop :
-    (fun (_ : ℕ) ↦ (((hashLookupExpectedWork : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (_ : ℕ) ↦ (((hashLookupExpectedBound : ℕ) : ℝ))) =O[Filter.atTop]
       (fun _ ↦ (1 : ℝ)) := by
   refine IsBigO.of_bound 1 ?_
   apply Filter.Eventually.of_forall
   intro n
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [hashLookupExpectedWork]
+  dsimp [hashLookupExpectedBound]
   norm_num
 
 end Amort.Randomized

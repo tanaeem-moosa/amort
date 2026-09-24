@@ -12,6 +12,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Kruskal's Minimum Spanning Tree Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; edge sort bound is proven,
+> but full spanning forest cut property and DSU execution are specification stubs).
+
 This module formalizes Kruskal's greedy Minimum Spanning Tree (MST) algorithm on finite undirected
 weighted graphs on vertex set `Fin n`. It connects edge sorting to `Amort.Sorting.MergeSort`,
 formalizes DSU cycle-check operations, establishes the total time complexity bound
@@ -56,7 +59,7 @@ $O(|E| \log |V|)$, and proves the fundamental Cut-Property optimality for greedy
 - `Amort.Graph.CrossesCut`: Predicate for an edge crossing cut $S$.
 - `Amort.Graph.IsMinCutEdge`: Predicate asserting $e$ is minimal among edges crossing cut $S$.
 - `Amort.Graph.head_min_cut_edge_of_sorted`: First crossing edge in sorted list is minimal.
-- `Amort.Graph.kruskalTotalWork`: Operational step counter combining sorting and DSU phases.
+- `Amort.Graph.kruskalTotalBound`: Operational step counter combining sorting and DSU phases.
 - `Amort.Graph.kruskal_total_work_le`: $O(|E| \log |V|)$ operational bound.
 -/
 
@@ -107,14 +110,14 @@ and $|E| = numE$ edges:
 - Sorting: $numE \cdot \text{Nat.size } numE$ comparisons.
 - DSU: $numE$ iterations of finds and unions costing $\le 4 \cdot \text{size } numV + 2$
   plus $numV$ initialization steps. -/
-def kruskalTotalWork (numV numE : ℕ) : ℕ :=
+def kruskalTotalBound (numV numE : ℕ) : ℕ :=
   numE * Nat.size numE + numE * (4 * Nat.size numV + 2) + numV
 
 /-- Total Kruskal work is bounded by $(6 \cdot \text{Nat.size } numV + 3) \cdot numE + numV$
 whenever $\text{Nat.size } numE \le 2 \cdot \text{Nat.size } numV + 1$. -/
 theorem kruskal_total_work_le (numV numE : ℕ) (hE : Nat.size numE ≤ 2 * Nat.size numV + 1) :
-    kruskalTotalWork numV numE ≤ (6 * Nat.size numV + 3) * numE + numV := by
-  dsimp [kruskalTotalWork]
+    kruskalTotalBound numV numE ≤ (6 * Nat.size numV + 3) * numE + numV := by
+  dsimp [kruskalTotalBound]
   have h1 : numE * Nat.size numE ≤ numE * (2 * Nat.size numV + 1) :=
     Nat.mul_le_mul_left numE hE
   linarith

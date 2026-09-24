@@ -1,5 +1,9 @@
 # Path Compression with Union-by-Rank
 
+> **Status: stub — not verified** (Phase 4 canon stub; rank invariants are modeled,
+> but operational sequence execution is a specification stub).
+
+
 This document details the Lean 4 formalization of Disjoint Set Union with path compression in `Amort.Graph.Ackermann.PathCompression`.
 
 ## Mathematical Invariants

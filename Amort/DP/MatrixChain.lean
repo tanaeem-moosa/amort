@@ -11,6 +11,9 @@ import Mathlib.Data.Fintype.Prod
 /-!
 # Interval Dynamic Programming: Matrix Chain Multiplication
 
+> **Status: stub — not verified** (Phase 3 canon stub; interval state space is modeled,
+> but optimal parenthesization dynamic programming is a specification stub).
+
 This module formalizes the textbook Matrix Chain Multiplication dynamic programming
 algorithm and its $O(n^3)$ complexity bound in the `Amort.Recurrence.DP` state-space
 complexity framework.

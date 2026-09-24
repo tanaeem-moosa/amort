@@ -1,5 +1,9 @@
 # Asymptotic Complexity Bridges for Advanced Graph Algorithms
 
+> **Status: stub — not verified** (Phase 3/4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 ## Overview
 This module connects the concrete operational step bounds for advanced graph algorithms
 to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framework:

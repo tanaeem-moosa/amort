@@ -12,6 +12,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Advanced Graph Algorithms
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects concrete operational step bounds for advanced graph algorithms
 to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framework under `Filter.atTop`:
 1. Hopcroft-Karp maximum bipartite matching: $O(|E|\sqrt{|V|})$.
@@ -28,25 +31,25 @@ namespace Amort.Graph.Advanced
 
 /-! ### Hopcroft-Karp Maximum Bipartite Matching Asymptotics -/
 
-/-- Hopcroft-Karp bipartite matching operational complexity is asymptotically
-$O(|E|\sqrt{|V|})$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: Hopcroft-Karp bipartite matching complexity is modeled as a
+closed-form formula `hopcroftKarpBound` awaiting instrumented execution implementation. -/
 theorem isBigO_hopcroftKarpWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((hopcroftKarpWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((hopcroftKarpBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((2 * Nat.sqrt p.1 * (p.1 + p.2) : ℕ) : ℝ))) :=
   isBigO_refl _ _
 
 /-! ### Tarjan's DFS Bridge-Finding Asymptotics -/
 
-/-- Tarjan's DFS bridge-finding operational complexity is asymptotically
-$O(|V| + |E|)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: Tarjan's DFS bridge-finding complexity is modeled as a closed-form
+formula `tarjanBridgeBound` awaiting instrumented execution implementation. -/
 theorem isBigO_tarjanBridgeWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((tarjanBridgeWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((tarjanBridgeBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.1 + p.2 : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 3 ?_
   apply Filter.Eventually.of_forall
   rintro ⟨n, m⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [tarjanBridgeWork]
+  dsimp [tarjanBridgeBound]
   have h : ((3 * (n + m) : ℕ) : ℝ) = 3 * ((n + m : ℕ) : ℝ) := by push_cast; ring
   rw [h]
 

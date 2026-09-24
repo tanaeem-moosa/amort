@@ -8,6 +8,9 @@ import Mathlib.Data.List.Basic
 /-!
 # Prefix Trie (Prefix Tree Dictionary)
 
+> **Status: stub — not verified** (Phase 3 canon stub; prefix trie structure is modeled,
+> but end-to-end dictionary lookup correctness is a specification stub).
+
 This module formalizes prefix tries over an arbitrary alphabet `α`:
 - Explicit root, child transitions, and word termination markers.
 - Prefix-tree walk and word membership retrieval.
@@ -26,7 +29,7 @@ This module formalizes prefix tries over an arbitrary alphabet `α`:
 3. `contains`: Word membership predicate testing whether `walk` from root reaches a terminal node.
 4. `contains_soundness`: Bi-implication proving retrieval soundness.
 5. `lookupSteps` & `lookupSteps_le`: Operational step counter bounded by `w.length`.
-6. `insertWork` & `buildWork`: Operational complexity models bounded by $|w|$ and $\sum |P_i|$.
+6. `insertBound` & `buildBound`: Operational complexity models bounded by $|w|$ and $\sum |P_i|$.
 7. `PrefixTrie`: Concrete inductive tree data structure implementing functional
    dictionary operations.
 -/
@@ -156,23 +159,23 @@ theorem lookupSteps_from_root_le (t : Trie α) (w : List α) :
   lookupSteps_le t t.root w
 
 /-- Operational work model for inserting a single word `w`: at most `|w|` edge operations. -/
-def insertWork (w : List α) : ℕ :=
+def insertBound (w : List α) : ℕ :=
   w.length
 
 /-- Insertion of a single word `w` is bounded by its length `|w|`. -/
 theorem insertWork_le (w : List α) :
-    insertWork w ≤ w.length := by
-  dsimp [insertWork]
+    insertBound w ≤ w.length := by
+  dsimp [insertBound]
   exact Nat.le_refl _
 
 /-- Dictionary construction operational step count across a collection of patterns.
 Total operations equal the sum of pattern lengths $\sum_{P \in \text{patterns}} |P|$. -/
-def buildWork (patterns : List (List α)) : ℕ :=
+def buildBound (patterns : List (List α)) : ℕ :=
   (patterns.map List.length).sum
 
 /-- Dictionary construction operational step identity. -/
 theorem buildWork_eq_sum (patterns : List (List α)) :
-    buildWork patterns = (patterns.map List.length).sum :=
+    buildBound patterns = (patterns.map List.length).sum :=
   rfl
 
 end Trie

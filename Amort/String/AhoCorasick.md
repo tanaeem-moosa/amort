@@ -1,5 +1,9 @@
 # Aho-Corasick Multi-Pattern Matching Automaton
 
+> **Status: stub — not verified** (Phase 3 canon stub; potential function bound is proven,
+> but failure link construction and match emission are specification stubs).
+
+
 ## 1. Overview
 
 The Aho-Corasick automaton (Aho & Corasick, 1975) is the classical algorithm for searching a text $T$ of length $n$ simultaneously for occurrences of any pattern from a dictionary of keywords $\mathcal{P} = \{P_1, P_2, \dots, P_k\}$.

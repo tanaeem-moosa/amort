@@ -1,5 +1,9 @@
 # Karger's Randomized Min-Cut Contraction Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; contraction survival product is proven,
+> but randomized graph contraction on PMF is a specification stub).
+
+
 ## Theoretical Foundations
 In an undirected multigraph $G = (V, E)$ with $|V| = n$, a global minimum cut (min-cut) $(S, S^c)$ is a non-trivial partition minimizing the number of crossing edges $k = e(S, S^c)$.
 

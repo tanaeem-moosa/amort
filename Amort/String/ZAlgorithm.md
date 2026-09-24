@@ -1,5 +1,9 @@
 # Gusfield's Z-Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; zSpec specification is proven,
+> but Z-box execution loop is a specification stub).
+
+
 ## 1. Overview
 
 Gusfield's Z-Algorithm (Gusfield, 1997) is a fundamental linear-time string matching and preprocessing technique. Given a string $S$ of length $n$, it computes the $Z$-array:

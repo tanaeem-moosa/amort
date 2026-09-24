@@ -9,6 +9,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Rabin-Karp Rolling Hash String Matching
 
+> **Status: stub — not verified** (Phase 3 canon stub; rolling hash algebra is proven,
+> but Las Vegas verification matcher is a specification stub).
+
 This module formalizes the Rabin-Karp randomized/algebraic string matching algorithm:
 - Polynomial rolling hash function with base $B$ modulo prime $p$:
   $$H(w) = \sum_{j=0}^{m-1} w[j] \cdot B^{m - 1 - j}$$
@@ -25,7 +28,7 @@ This module formalizes the Rabin-Karp randomized/algebraic string matching algor
 5. `polyHash_congruence_soundness`: Soundness theorem proving that identical strings
    yield identical hash values.
 6. `polyHash_mod_congruence`: Modular soundness theorem.
-7. `rabinKarpWork` & `rabinKarpAverageWork`: Operational complexity bounds.
+7. `rabinKarpBound` & `rabinKarpAverageBound`: Operational complexity bounds.
 -/
 
 namespace Amort.String
@@ -93,18 +96,18 @@ theorem polyHash_mod_congruence (p : ℤ) (B : ℤ) (w₁ w₂ : List ℤ) (h : 
 - Sliding window hash updates: $O(1)$ operations per shift, totaling $|T| - |P|$ operations.
 - Full substring comparisons performed only on hash match (count $k$ of candidate matches):
   $k \cdot |P|$ character comparisons. -/
-def rabinKarpWork (textLen patternLen collisions : ℕ) : ℕ :=
+def rabinKarpBound (textLen patternLen collisions : ℕ) : ℕ :=
   2 * patternLen + textLen + collisions * patternLen
 
 /-- In the average case (or when the prime modulus $p$ ensures zero false-positive collisions),
 total operations are bounded by $2(|T| + |P|)$ ($O(|T| + |P|)$). -/
-def rabinKarpAverageWork (textLen patternLen : ℕ) : ℕ :=
+def rabinKarpAverageBound (textLen patternLen : ℕ) : ℕ :=
   2 * (textLen + patternLen)
 
 /-- In the absence of spurious hash collisions, operational work is linear in $|T| + |P|$. -/
 theorem rabinKarpWork_no_collisions (textLen patternLen : ℕ) :
-    rabinKarpWork textLen patternLen 0 ≤ rabinKarpAverageWork textLen patternLen := by
-  dsimp [rabinKarpWork, rabinKarpAverageWork]
+    rabinKarpBound textLen patternLen 0 ≤ rabinKarpAverageBound textLen patternLen := by
+  dsimp [rabinKarpBound, rabinKarpAverageBound]
   omega
 
 end Amort.String

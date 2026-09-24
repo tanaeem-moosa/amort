@@ -9,6 +9,9 @@ import Mathlib.Data.Fintype.Card
 /-!
 # Byzantine Fault Tolerance (3f + 1)
 
+> **Status: stub — not verified** (Phase 4 canon stub; PBFT quorum intersection is proven,
+> but OM(m) inductive protocol execution is a specification stub).
+
 This module formalizes the foundational theory of Byzantine Fault Tolerance following
 Lamport, Shostak, and Pease (1982) and Castro & Liskov (PBFT 1999):
 1. **PBFT Quorum Math**:

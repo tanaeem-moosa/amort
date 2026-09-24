@@ -15,6 +15,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Disjoint Set Union with Path Compression Only (Iterative & Arbitrary Linking)
 
+> **Status: stub — not verified** (Phase 4 canon stub; two-pass compression post-condition
+> is proven, but adversarial lower bounds are specification formulas).
+
 This module formalizes Disjoint Set Union (DSU) with **path compression only** without rank or
 size balancing.
 
@@ -53,8 +56,8 @@ size balancing.
 - `Amort.Graph.path_depth_one_after_find`: Post-condition that path nodes have depth 1.
 - `Amort.Graph.linearChainDSU`: Construction of depth $n - 1$ linear chain.
 - `Amort.Graph.linearChain_depth_zero`: Proves single-operation depth equals $n - 1$.
-- `Amort.Graph.adversarialPCOWork`: Lower bound function $\frac{1}{4} n \log_2 n$.
-- `Amort.Graph.dsuPCOWork`: Upper bound function $4(n + m) \text{size } n$.
+- `Amort.Graph.adversarialPCOBound`: Lower bound function $\frac{1}{4} n \log_2 n$.
+- `Amort.Graph.dsuPCOBound`: Upper bound function $4(n + m) \text{size } n$.
 - `Amort.Graph.isBigO_dsuPCOWork_atTop`: Mathlib `IsBigO` upper bound.
 - `Amort.Graph.isBigO_adversarialPCOWork_omega`: Mathlib `IsBigO` lower bound.
 -/
@@ -273,13 +276,13 @@ theorem linearChain_depth_zero {n : ℕ} (hn : 0 < n) :
 
 /-- Adversarial work lower bound function: an adversary on path compression only without
 ranks can force at least $\frac{1}{4} n \log_2 n$ total steps across $n$ operations. -/
-def adversarialPCOWork (n : ℕ) : ℕ :=
+def adversarialPCOBound (n : ℕ) : ℕ :=
   n * Nat.log 2 n / 4
 
 /-- The adversarial lower bound is positive for all $n \ge 16$. -/
 theorem adversarialPCOWork_pos {n : ℕ} (hn : 16 ≤ n) :
-    0 < adversarialPCOWork n := by
-  dsimp [adversarialPCOWork]
+    0 < adversarialPCOBound n := by
+  dsimp [adversarialPCOBound]
   have hlog : 4 ≤ Nat.log 2 n := by
     have h16 : 2 ^ 4 ≤ n := by omega
     exact Nat.le_log_of_pow_le (by decide) h16
@@ -288,24 +291,24 @@ theorem adversarialPCOWork_pos {n : ℕ} (hn : 16 ≤ n) :
     omega
   omega
 
-/-- The function $n \log_2 n$ is bounded by $4 \cdot \text{adversarialPCOWork } n + 4$. -/
+/-- The function $n \log_2 n$ is bounded by $4 \cdot \text{adversarialPCOBound } n + 4$. -/
 theorem n_mul_log_le_adversarial (n : ℕ) :
-    n * Nat.log 2 n ≤ 4 * adversarialPCOWork n + 3 := by
-  dsimp [adversarialPCOWork]
+    n * Nat.log 2 n ≤ 4 * adversarialPCOBound n + 3 := by
+  dsimp [adversarialPCOBound]
   omega
 
 /-- **Adversarial Sequence Asymptotic Bound**:
 The adversarial total work of $n$ operations is asymptotically $\Omega(n \log n)$,
-formalized as $(n \log_2 n) = O(\text{adversarialPCOWork } n)$ under `Filter.atTop`. -/
+formalized as $(n \log_2 n) = O(\text{adversarialPCOBound } n)$ under `Filter.atTop`. -/
 theorem isBigO_adversarialPCOWork_omega :
     (fun n : ℕ ↦ ((n * Nat.log 2 n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n : ℕ ↦ ((adversarialPCOWork n : ℕ) : ℝ)) := by
+      (fun n : ℕ ↦ ((adversarialPCOBound n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (5 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨16, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  have h_bound : n * Nat.log 2 n ≤ 5 * adversarialPCOWork n := by
-    dsimp [adversarialPCOWork]
+  have h_bound : n * Nat.log 2 n ≤ 5 * adversarialPCOBound n := by
+    dsimp [adversarialPCOBound]
     have hlog : 4 ≤ Nat.log 2 n := by
       have h16 : 2 ^ 4 ≤ n := by omega
       exact Nat.le_log_of_pow_le (by decide) h16
@@ -319,25 +322,25 @@ theorem isBigO_adversarialPCOWork_omega :
 
 /-- Upper bound on total work for $m$ operations on $n$ elements in DSU with path
 compression only: bounded by $4(n + m) \cdot \text{Nat.size } n$. -/
-def dsuPCOWork (m n : ℕ) : ℕ :=
+def dsuPCOBound (m n : ℕ) : ℕ :=
   4 * (n + m) * Nat.size n
 
 /-- Operational bound on DSU with path compression only: $m$ operations cost at most
 $4(n + m) \text{size } n$. -/
 theorem dsuPCOWork_le_mul (m n : ℕ) :
-    dsuPCOWork m n ≤ 4 * (n + m) * Nat.size n :=
+    dsuPCOBound m n ≤ 4 * (n + m) * Nat.size n :=
   le_refl _
 
 /-- Total work of DSU with path compression only is asymptotically $O((n + m) \log n)$
 under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
 theorem isBigO_dsuPCOWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((dsuPCOWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((dsuPCOBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.2 + p.1) * Nat.size p.2 : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 4 ?_
   apply Filter.Eventually.of_forall
   intro ⟨m, n⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [dsuPCOWork]
+  dsimp [dsuPCOBound]
   have : (((4 * (n + m) * Nat.size n : ℕ) : ℝ)) ≤ 4 * (((n + m) * Nat.size n : ℕ) : ℝ) := by
     push_cast
     linarith

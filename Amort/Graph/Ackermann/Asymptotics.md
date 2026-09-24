@@ -1,5 +1,9 @@
 # Asymptotic Complexity of DSU with Path Compression
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic bounds bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 This document details the asymptotic complexity bridges in `Amort.Graph.Ackermann.Asymptotics` connecting the operational step bounds for DSU with path compression to Mathlib's `Asymptotics.IsBigO` under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 
 ## Theorems

@@ -1,5 +1,9 @@
 # Median-of-Medians Deterministic Selection (BFPRT)
 
+> **Status: stub — not verified** (Phase 3 canon stub; BFPRT recurrence is proven,
+> but linear selection algorithm execution is a specification stub).
+
+
 ## Algorithm Structure
 1. Group $n$ elements into $\lceil n/5 \rceil$ blocks of size 5.
 2. Find the median of each group in $O(1)$ comparisons per group.

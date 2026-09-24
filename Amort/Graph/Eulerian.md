@@ -1,5 +1,9 @@
 # Eulerian Circuits and Hierholzer's Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; degree balance conditions are
+> proven, but Hierholzer cycle splicing is a specification stub).
+
+
 ## Overview
 This module formalizes Eulerian circuits in directed and undirected graphs, degree balance
 conditions ($\text{indeg}(v) = \text{outdeg}(v)$ and undirected even degrees),

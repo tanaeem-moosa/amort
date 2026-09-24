@@ -13,6 +13,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Asymptotic Complexity Bridges for Tarjan's Strict Inverse Ackermann Bound
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic bounds bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects the operational step bounds for Disjoint Set Union (DSU) with path
 compression and union-by-rank to Mathlib's `Mathlib.Analysis.Asymptotics` framework
 (`IsBigO` and `IsTheta`) under `Filter.atTop`:
@@ -37,57 +40,56 @@ namespace Amort.Graph
 
 /-! ### Two-Variable Asymptotic Bounds ($m$ Operations on $n$ Elements) -/
 
-/-- Total DSU operational step complexity with path compression and union-by-rank is
-asymptotically $O((m + n)(\alpha(n) + 1))$ under `Filter.atTop` on
-$\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: DSU operational step complexity with Ackermann bound is modeled
+as a closed-form formula `dsuAckermannBound` awaiting instrumented execution implementation. -/
 theorem isBigO_dsuAckermannWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((dsuAckermannWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((dsuAckermannBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ ((((p.1 + p.2) * (invAck p.2 + 1) : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 6 ?_
   apply Filter.Eventually.of_forall
   rintro ⟨m, n⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [dsuAckermannWork]
+  dsimp [dsuAckermannBound]
   push_cast
   nlinarith
 
-/-- **Matching Operational Lower Bound**:
+/-- **Stub Model**: **Matching Operational Lower Bound**:
 $((m + n)(\alpha(n) + 1))$ is asymptotically bounded by total DSU work under
 `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$ ($\Omega((m + n)\alpha(n))$). -/
 theorem isBigO_combined_dsuAckermannWork_atTop :
     (fun (p : ℕ × ℕ) ↦ ((((p.1 + p.2) * (invAck p.2 + 1) : ℕ) : ℝ))) =O[Filter.atTop]
-      (fun p ↦ (((dsuAckermannWork p.1 p.2 : ℕ) : ℝ))) := by
+      (fun p ↦ (((dsuAckermannBound p.1 p.2 : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 1 ?_
   apply Filter.Eventually.of_forall
   rintro ⟨m, n⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := dsuAckermannWork_ge_combined m n
-  have h_cast : (((m + n) * (invAck n + 1) : ℕ) : ℝ) ≤ ((dsuAckermannWork m n : ℕ) : ℝ) :=
+  have h_cast : (((m + n) * (invAck n + 1) : ℕ) : ℝ) ≤ ((dsuAckermannBound m n : ℕ) : ℝ) :=
     Nat.cast_le.mpr h
   calc (((m + n) * (invAck n + 1) : ℕ) : ℝ)
-      ≤ ((dsuAckermannWork m n : ℕ) : ℝ) := h_cast
-    _ = 1 * ((dsuAckermannWork m n : ℕ) : ℝ) := by ring
+      ≤ ((dsuAckermannBound m n : ℕ) : ℝ) := h_cast
+    _ = 1 * ((dsuAckermannBound m n : ℕ) : ℝ) := by ring
 
-/-- **Strict Asymptotic Tight Bound ($\Theta((m + n)\alpha(n))$)**:
+/-- **Stub Model**: **Strict Asymptotic Tight Bound ($\Theta((m + n)\alpha(n))$)**:
 The operational step complexity of Disjoint Set Union with path compression and union-by-rank
 is strictly $\Theta((m + n)(\alpha(n) + 1))$ under `Filter.atTop` on
 $\mathbb{N} \times \mathbb{N}$. -/
 theorem isTheta_dsuAckermannWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((dsuAckermannWork p.1 p.2 : ℕ) : ℝ))) =Θ[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((dsuAckermannBound p.1 p.2 : ℕ) : ℝ))) =Θ[Filter.atTop]
       (fun p ↦ ((((p.1 + p.2) * (invAck p.2 + 1) : ℕ) : ℝ))) :=
   ⟨isBigO_dsuAckermannWork_atTop, isBigO_combined_dsuAckermannWork_atTop⟩
 
 /-! ### Diagonal Complexity: $n$ Operations on $n$ Elements -/
 
-/-- Diagonal operational step complexity for $n$ operations on $n$ elements:
-$\text{dsuAckermannDiag}(n) = \text{dsuAckermannWork}(n, n) = 6n(\alpha(n) + 1)$. -/
+/-- **Stub Model**: Diagonal operational step complexity for $n$ operations on $n$ elements:
+$\text{dsuAckermannDiag}(n) = \text{dsuAckermannBound}(n, n) = 6n(\alpha(n) + 1)$. -/
 def dsuAckermannDiag (n : ℕ) : ℕ :=
-  dsuAckermannWork n n
+  dsuAckermannBound n n
 
 /-- Closed-form identity for diagonal work: $6n(\alpha(n) + 1)$. -/
 theorem dsuAckermannDiag_eq (n : ℕ) :
     dsuAckermannDiag n = 6 * n * (invAck n + 1) := by
-  dsimp [dsuAckermannDiag, dsuAckermannWork]
+  dsimp [dsuAckermannDiag, dsuAckermannBound]
   ring
 
 /-- Upper bound on diagonal operational step complexity ($O(n(\alpha(n) + 1))$). -/
@@ -102,7 +104,8 @@ theorem isBigO_dsuAckermannDiag_upper :
   push_cast
   linarith
 
-/-- Lower bound on diagonal operational step complexity ($\Omega(n(\alpha(n) + 1))$). -/
+/-- **Stub Model**:
+Lower bound on diagonal operational step complexity ($\Omega(n(\alpha(n) + 1))$). -/
 theorem isBigO_dsuAckermannDiag_lower :
     (fun n : ℕ ↦ (((n * (invAck n + 1) : ℕ) : ℝ))) =O[Filter.atTop]
       (fun n ↦ (((dsuAckermannDiag n : ℕ) : ℝ))) := by
@@ -117,7 +120,7 @@ theorem isBigO_dsuAckermannDiag_lower :
     linarith
   linarith
 
-/-- **Strict Diagonal Tight Bound ($\Theta(n \cdot \alpha(n))$)**:
+/-- **Stub Model**: **Strict Diagonal Tight Bound ($\Theta(n \cdot \alpha(n))$)**:
 For $n$ operations on $n$ elements, DSU complexity with path compression and union-by-rank
 is strictly $\Theta(n(\alpha(n) + 1))$ under `Filter.atTop`. -/
 theorem isTheta_dsuAckermannDiag :

@@ -1,5 +1,9 @@
 # Strongly Connected Components and the Condensation DAG
 
+> **Status: stub — not verified** (Phase 3 canon stub; condensation DAG properties are
+> proven, but Kosaraju/Tarjan DFS traversal is a specification stub).
+
+
 ## Overview
 This module formalizes graph reachability, mutual reachability equivalence classes,
 strongly connected components (SCC), the acyclic condensation DAG, and linear-time

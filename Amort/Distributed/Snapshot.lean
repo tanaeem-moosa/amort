@@ -8,6 +8,9 @@ import Mathlib.Data.Finset.Basic
 /-!
 # Consistent Global Snapshots: Chandy-Lamport Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; consistent cut properties are modeled,
+> but Chandy-Lamport protocol execution is a specification stub).
+
 This module formalizes distributed snapshots and the Chandy-Lamport (1985) algorithm:
 1. **System Model & Cuts**:
    Distributed processes connected by directed FIFO channels, message transmission,

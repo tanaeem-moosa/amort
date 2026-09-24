@@ -1,5 +1,9 @@
 # Linear Programming & Duality (`Amort.LP`)
 
+> **Status: partially verified / contains stubs** (Contains verified Duality theorems alongside
+> Phase 4 Simplex dictionary pivot stubs).
+
+
 This directory formalizes the foundational theory of Linear Programming (LP) and Duality in Lean 4:
 1. **Primal and Dual Formulations**:
    - Primal linear program in standard inequality form: maximize $c^T x$ subject to $A x \le b$, $x \ge 0$.

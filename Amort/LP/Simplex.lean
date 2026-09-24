@@ -12,6 +12,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Simplex Slack Form and Dictionary Feasibility Invariants
 
+> **Status: stub — not verified** (Phase 4 canon stub; ratio test feasibility is proven,
+> but dictionary pivot loop and Bland termination are specification stubs).
+
 This module formalizes the simplex slack form, dictionary representations, basic solutions,
 and the fundamental pivot invariant preservation theorem:
 - A linear program in slack form partitions variables into basic indices $B$ and non-basic
@@ -36,7 +39,7 @@ and the fundamental pivot invariant preservation theorem:
 5. `Dictionary.pivot_preserves_feasibility`: Proves $0 \le \bar{b}_i - \bar{a}_{ie} \theta$.
 6. `Dictionary.new_b_bar_nonneg`: Invariant preservation for new dictionary constant terms.
 7. `Dictionary.obj_increases_of_pivot`: Objective progression theorem under positive pivot step.
-8. `simplexPivotWork`: Operational arithmetic step counter per pivot step ($O(m \cdot n)$).
+8. `simplexPivotBound`: Operational arithmetic step counter per pivot step ($O(m \cdot n)$).
 -/
 
 open BigOperators
@@ -140,18 +143,18 @@ end Dictionary
 /-- Operational arithmetic step counter for a single simplex pivot step on an $m \times n$
 dictionary: updating $m \times n$ matrix entries, $m$ right-hand side constants, and $n$
 objective coefficients. -/
-def simplexPivotWork (m n : ℕ) : ℕ :=
+def simplexPivotBound (m n : ℕ) : ℕ :=
   m * n + m + n
 
 /-- Operational arithmetic step counter for verifying primal and dual feasibility
 on an $m \times n$ system ($m \cdot n$ multiplications and checks). -/
-def lpFeasibilityWork (m n : ℕ) : ℕ :=
+def lpFeasibilityBound (m n : ℕ) : ℕ :=
   2 * (m * n + m + n)
 
 /-- Upper bound on simplex pivot step work: $m \cdot n + m + n \le (m + 1)(n + 1)$. -/
 theorem simplexPivotWork_le (m n : ℕ) :
-    simplexPivotWork m n ≤ (m + 1) * (n + 1) := by
-  dsimp [simplexPivotWork]
+    simplexPivotBound m n ≤ (m + 1) * (n + 1) := by
+  dsimp [simplexPivotBound]
   nlinarith
 
 end Amort.LP

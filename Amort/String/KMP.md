@@ -1,17 +1,24 @@
 # Formalization of Knuth-Morris-Pratt (KMP) String Matching in Lean 4
 
-This document details the Lean 4 formalization of the Knuth-Morris-Pratt (KMP) linear-time string matching algorithm in [`Amort/String/KMP.lean`](KMP.lean): its prefix/failure function, potential function amortized analysis, text scanning bound $\le 2n$, preprocessing bound $\le 2m$, and combined $O(n + m)$ linear time complexity.
+This document details the Lean 4 formalization of the Knuth-Morris-Pratt (KMP) linear-time
+string matching algorithm in [`Amort/String/KMP.lean`](KMP.lean): its prefix/failure function,
+potential function amortized analysis, text scanning bound $\le 2n$, preprocessing bound $\le 2m$,
+and combined $O(n + m)$ linear time complexity.
 
 ---
 
 ## 1. Problem Formulation and Setup
 
 Given a text $T$ of length $n$ and a pattern $P$ of length $m$:
-- The naive algorithm can backtrack in the text after a partial match, leading to worst-case $\Theta(n \cdot m)$ comparisons (e.g. searching for $a^m b$ in $a^n$).
-- Donald Knuth, James H. Morris, and Vaughan Pratt (1977) observed that when a mismatch occurs after matching $j$ characters, the text already matched is $P[0..j-1]$. Information about $P$ can be precomputed so that the text pointer $i$ never retreats.
+- The naive algorithm can backtrack in the text after a partial match, leading to worst-case
+  $\Theta(n \cdot m)$ comparisons (e.g. searching for $a^m b$ in $a^n$).
+- Donald Knuth, James H. Morris, and Vaughan Pratt (1977) observed that when a mismatch occurs
+  after matching $j$ characters, the text already matched is $P[0..j-1]$. Information about $P$
+  can be precomputed so that the text pointer $i$ never retreats.
 
 ### The Prefix/Failure Function $\pi$
-For each prefix length $q \in \{1, \dots, m\}$, $\pi(q)$ is the length of the longest proper prefix of $P[0..q-1]$ that is also a suffix of $P[0..q-1]$:
+For each prefix length $q \in \{1, \dots, m\}$, $\pi(q)$ is the length of the longest proper prefix
+of $P[0..q-1]$ that is also a suffix of $P[0..q-1]$:
 $$\pi(q) = \max \{ k < q \mid P[0..k-1] \text{ is a suffix of } P[0..q-1] \}$$
 Crucially, $\pi(q)$ is strictly contracting:
 $$\forall q > 0,\quad \pi(q) < q$$
@@ -38,7 +45,8 @@ theorem piSpec_lt (P : List α) (q : ℕ) (hq : 0 < q) : piSpec P q < q
 ```
 
 ### 2.2 KMP Single-Character Transition
-A single character $c$ is processed against pattern state $j$ by checking if $P[j] = c$. If it mismatches and $j > 0$, the automaton falls back to $\pi(j)$ and retries recursively:
+A single character $c$ is processed against pattern state $j$ by checking if $P[j] = c$.
+If it mismatches and $j > 0$, the automaton falls back to $\pi(j)$ and retries recursively:
 ```lean
 def kmpStep (P : List α) (pi : ℕ → ℕ) (hpi : ∀ j, 0 < j → pi j < j) (j : ℕ) (c : α) : ℕ × ℕ :=
   if P[j]? = some c then
@@ -69,7 +77,8 @@ def kmpScanCount (P : List α) (pi : ℕ → ℕ) (hpi : ∀ j, 0 < j → pi j <
 
 ## 3. Proof Strategy: Potential Function Amortized Analysis
 
-The central challenge in verifying KMP is that a single character step can trigger multiple backtracks ($k$ comparisons), so worst-case step cost per character is not bounded by $O(1)$.
+The central challenge in verifying KMP is that a single character step can trigger multiple
+backtracks ($k$ comparisons), so worst-case step cost per character is not bounded by $O(1)$.
 Instead, we formalize the classic **potential function method**:
 
 ### 3.1 Potential Definition
@@ -124,35 +133,66 @@ Structural induction on list $T$:
   - By `kmpStep_bound`: $s_1 + j_1 \le j + 2$.
   - By the induction hypothesis on $cs$: $s_2 + j_{\text{end}} \le j_1 + 2 \cdot |cs|$.
   - Summing the two inequalities:
-    $$(s_1 + s_2) + j_{\text{end}} \le j + 2 + 2 \cdot |cs| = j + 2 \cdot (1 + |cs|) = j + 2 \cdot |c :: cs|$$
+    $$(s_1 + s_2) + j_{\text{end}} \le j + 2 + 2 \cdot |cs| = j + 2 \cdot |c :: cs|$$
   Discharged cleanly by `omega`.
 
 ### 3.4 Text Scanning Bound
 **Theorem** (`kmpScanCount_le_two_mul`):
 Starting from the initial state $j = 0$:
 $$\text{steps} \le 2 \cdot T.\text{length}$$
-*Proof*: Instantiating `kmpScanCount_bound` at $j = 0$ gives $\text{steps} + j_{\text{end}} \le 2n$. Since $j_{\text{end}} \ge 0$, `steps ≤ 2 * T.length`.
+*Proof*: Instantiating `kmpScanCount_bound` at $j = 0$ gives $\text{steps} + j_{\text{end}} \le 2n$.
+Since $j_{\text{end}} \ge 0$, `steps ≤ 2 * T.length`.
 
 ### 3.5 Preprocessing and Combined Bound
-- **Preprocessing** (`kmpPreprocessCount_le`): The failure table is computed by scanning $P$ against itself, requiring $\le 2 \cdot P.\text{length}$ steps.
-- **Combined Execution** (`kmpTotalSteps_le`):
-  $$\text{kmpTotalSteps } P\ T = \text{preprocessSteps} + \text{scanSteps} \le 2m + 2n = 2(n + m)$$
+- **Preprocessing** (`computePiWithCount_snd_le`): The failure table is computed by scanning $P$
+  against prefixes, requiring $\le 2 \cdot P.\text{length}$ steps.
+- **Combined Execution** (`kmpWithCount_snd_le`):
+  $$(\text{kmpWithCount } P\ T).2 \le 2(T.\text{length} + P.\text{length})$$
 
 ---
 
-## 4. Correctness & Equivalence
+## 4. Match-Emitting KMP Scanner & String Matching
 
-- **Equivalence** (`kmpMatch_eq_naiveMatch`):
-  `kmpMatch P T = naiveMatch P T`
-  KMP produces the exact same list of match indices as the naive sliding-window algorithm.
-- **Correctness** (`mem_kmpMatch_iff`):
+- **Direct Match Extraction** (`kmpMatch`):
+  `kmpMatch P T` emits match starting indices directly using the precomputed `computePi P` table.
+- **Two-Sided Correctness Theorem** (`mem_kmpMatch_iff`):
+  For any non-empty pattern $P$ and text $T$:
   $$s \in \text{kmpMatch } P\ T \iff \text{IsSubstringAt } P\ T\ s$$
+  This establishes complete soundness and completeness, matching `mem_naiveMatch_iff`.
+
+### 4.1 Failure Table Computation & Instrumented Execution
+
+- **Executable Preprocessing**:
+  `computePi (P : List α) : List ℕ := (computePiWithCount P).1`
+  - Length: `computePi_length (P : List α) : (computePi P).length = if P = [] then 1 else P.length + 1`
+  - Equivalence to Spec: `computePi_getD (P : List α) (q : ℕ) (hq : q ≤ P.length) : (computePi P).getD q 0 = piSpec P q`
+  - Step Bound: `computePiWithCount_snd_le : (computePiWithCount P).2 ≤ 2 * P.length`
+- **Match-Emitting Scanner**:
+  `kmpScan (P : List α) (pi : ℕ → ℕ) (hpi : ∀ j, 0 < j → pi j < j) : List α → ℕ → ℕ → List ℕ × ℕ`
+  - `kmpScan_bound : (kmpScan P pi hpi T pos j).2 + kmpScanEndJ P pi hpi T j ≤ j + 2 * T.length`
+  - `kmpScan_le_two_mul : (kmpScan P pi hpi T 0 0).2 ≤ 2 * T.length`
+- **Match Function**:
+  `kmpMatch (P T : List α) : List ℕ := if P = [] then [] else (kmpScan P (fun j ↦ (computePi P).getD j 0) (computePi_lt P) T 0 0).1`
+  - Two-sided correctness: `mem_kmpMatch_iff (P T : List α) (hP : P ≠ []) (s : ℕ) : s ∈ kmpMatch P T ↔ IsSubstringAt P T s`
+- **Instrumented Execution**:
+  ```lean
+  def kmpWithCount (P T : List α) : List ℕ × ℕ :=
+    let pRes := computePiWithCount P
+    let sRes := kmpScan P (piSpec P) (piSpec_lt P) T 0 0
+    (kmpMatch P T, pRes.2 + sRes.2)
+  ```
+- **Fst/Snd Projection Equivalence**:
+  - `kmpWithCount_fst : (kmpWithCount P T).1 = kmpMatch P T`
+  - `kmpWithCount_snd : (kmpWithCount P T).2 = kmpTotalSteps P T`
+- **Linear Step Bound**:
+  - `kmpWithCount_snd_le : (kmpWithCount P T).2 ≤ 2 * (T.length + P.length)`
 
 ---
 
 ## 5. Asymptotic Complexity Bridge
 
-In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the linear bound is connected to Mathlib's `IsBigO` via `Amort.Recurrence.Composition.isBigO_sequential_add_nat`:
+In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the linear bound is connected to Mathlib's
+`IsBigO` via `Amort.Recurrence.Composition.isBigO_sequential_add_nat`:
 
 ```lean
 theorem isBigO_kmpTotalSteps_atTop :
@@ -173,7 +213,8 @@ theorem isBigO_kmpTotalSteps_atTop :
 
 ## 6. Axiomatic Verification
 
-Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4 axioms:
+Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4
+axioms:
 - `propext`
 - `Classical.choice`
 - `Quot.sound`

@@ -180,23 +180,37 @@ termination_by xs.length + ys.length
 
 /-! ### Comparison Counting for Merge Sort -/
 
+/-- Custom split function dividing a list of length `n` into two sublists
+with certified lengths `(n + 1) / 2` and `n / 2`. -/
+def split {α : Type*} (xs : List α) :
+    { l : List α // l.length = (xs.length + 1) / 2 } ×
+    { l : List α // l.length = xs.length / 2 } :=
+  ⟨⟨xs.take ((xs.length + 1) / 2), by rw [List.length_take]; omega⟩,
+   ⟨xs.drop ((xs.length + 1) / 2), by rw [List.length_drop]; omega⟩⟩
+
+theorem split_eq_splitInTwo {α : Type*} (xs : List α) :
+    (split xs).1.1 = (List.MergeSort.Internal.splitInTwo ⟨xs, rfl⟩).1.1 ∧
+    (split xs).2.1 = (List.MergeSort.Internal.splitInTwo ⟨xs, rfl⟩).2.1 := by
+  dsimp [List.MergeSort.Internal.splitInTwo, split]
+  rw [splitAt_eq]
+  exact ⟨rfl, rfl⟩
+
 /-- Counts the total number of comparisons performed by `List.mergeSort`. -/
 def mergeSortCount {α : Type*} (le : α → α → Bool) : List α → ℕ
   | [] => 0
   | [_] => 0
   | a :: b :: xs =>
-    let lr := List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩
-    have : lr.1.1.length < (a :: b :: xs).length := by
-      have := lr.1.2
-      simp only [List.length_cons] at this ⊢
-      omega
-    have : lr.2.1.length < (a :: b :: xs).length := by
-      have := lr.2.2
-      simp only [List.length_cons] at this ⊢
-      omega
+    let lr := split (a :: b :: xs)
     mergeSortCount le lr.1.1 + mergeSortCount le lr.2.1 +
       mergeCount le (List.mergeSort lr.1.1 le) (List.mergeSort lr.2.1 le)
 termination_by xs => xs.length
+decreasing_by
+  all_goals
+    have : (a :: b :: xs).length = xs.length + 2 := rfl
+    have := (split (a :: b :: xs)).1.2
+    have := (split (a :: b :: xs)).2.2
+    simp only [List.length_cons] at *
+    omega
 
 /-- Instrumented version of `List.mergeSort` returning both the sorted list and
 total comparisons performed. -/
@@ -204,20 +218,19 @@ def mergeSortWithCount {α : Type*} (le : α → α → Bool) : List α → List
   | [] => ([], 0)
   | [a] => ([a], 0)
   | a :: b :: xs =>
-    let lr := List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩
-    have : lr.1.1.length < (a :: b :: xs).length := by
-      have := lr.1.2
-      simp only [List.length_cons] at this ⊢
-      omega
-    have : lr.2.1.length < (a :: b :: xs).length := by
-      have := lr.2.2
-      simp only [List.length_cons] at this ⊢
-      omega
+    let lr := split (a :: b :: xs)
     let res1 := mergeSortWithCount le lr.1.1
     let res2 := mergeSortWithCount le lr.2.1
     let res_m := mergeWithCount le res1.1 res2.1
     (res_m.1, res1.2 + res2.2 + res_m.2)
 termination_by xs => xs.length
+decreasing_by
+  all_goals
+    have : (a :: b :: xs).length = xs.length + 2 := rfl
+    have := (split (a :: b :: xs)).1.2
+    have := (split (a :: b :: xs)).2.2
+    simp only [List.length_cons] at *
+    omega
 
 @[simp]
 theorem mergeSortWithCount_fst {α : Type*} (le : α → α → Bool) :
@@ -227,17 +240,20 @@ theorem mergeSortWithCount_fst {α : Type*} (le : α → α → Bool) :
   | a :: b :: xs => by
     rw [mergeSortWithCount, mergeSort]
     dsimp
-    have ih1 := mergeSortWithCount_fst le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).1.1
-    have ih2 := mergeSortWithCount_fst le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).2.1
+    have hsplit := split_eq_splitInTwo (a :: b :: xs)
+    have ih1 := mergeSortWithCount_fst le (split (a :: b :: xs)).1.1
+    have ih2 := mergeSortWithCount_fst le (split (a :: b :: xs)).2.1
+    rw [hsplit.1]
+    rw [hsplit.2]
+    rw [hsplit.1] at ih1
+    rw [hsplit.2] at ih2
     rw [ih1, ih2, mergeWithCount_fst]
 termination_by xs => xs.length
 decreasing_by
   all_goals
     have : (a :: b :: xs).length = xs.length + 2 := rfl
-    have := (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).1.2
-    have := (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).2.2
+    have := (split (a :: b :: xs)).1.2
+    have := (split (a :: b :: xs)).2.2
     simp only [List.length_cons] at *
     omega
 
@@ -249,21 +265,17 @@ theorem mergeSortWithCount_snd {α : Type*} (le : α → α → Bool) :
   | a :: b :: xs => by
     rw [mergeSortWithCount, mergeSortCount]
     dsimp
-    have ih1 := mergeSortWithCount_snd le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).1.1
-    have ih2 := mergeSortWithCount_snd le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).2.1
-    have ih1_fst := mergeSortWithCount_fst le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).1.1
-    have ih2_fst := mergeSortWithCount_fst le
-      (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).2.1
+    have ih1 := mergeSortWithCount_snd le (split (a :: b :: xs)).1.1
+    have ih2 := mergeSortWithCount_snd le (split (a :: b :: xs)).2.1
+    have ih1_fst := mergeSortWithCount_fst le (split (a :: b :: xs)).1.1
+    have ih2_fst := mergeSortWithCount_fst le (split (a :: b :: xs)).2.1
     rw [ih1, ih2, ih1_fst, ih2_fst, mergeWithCount_snd]
 termination_by xs => xs.length
 decreasing_by
   all_goals
     have : (a :: b :: xs).length = xs.length + 2 := rfl
-    have := (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).1.2
-    have := (List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩).2.2
+    have := (split (a :: b :: xs)).1.2
+    have := (split (a :: b :: xs)).2.2
     simp only [List.length_cons] at *
     omega
 
@@ -274,7 +286,7 @@ lemma mergeSortCount_le_recBound {α : Type*} (le : α → α → Bool) :
   | [_] => by simp [mergeSortCount, mergeSortRecBound]
   | a :: b :: xs => by
     rw [mergeSortCount]
-    rcases List.MergeSort.Internal.splitInTwo ⟨a :: b :: xs, rfl⟩ with ⟨⟨l1, hl1⟩, ⟨l2, hl2⟩⟩
+    rcases split (a :: b :: xs) with ⟨⟨l1, hl1⟩, ⟨l2, hl2⟩⟩
     have ih1 := mergeSortCount_le_recBound le l1
     have ih2 := mergeSortCount_le_recBound le l2
     have hm := mergeCount_le le (List.mergeSort l1 le) (List.mergeSort l2 le)
@@ -299,6 +311,9 @@ termination_by xs => xs.length
 decreasing_by
   all_goals
     have : (a :: b :: xs).length = xs.length + 2 := rfl
+    have := (split (a :: b :: xs)).1.2
+    have := (split (a :: b :: xs)).2.2
+    simp only [List.length_cons] at *
     omega
 
 /-- Total comparisons in merge sort are bounded by `n * Nat.size n` where `n = xs.length`. -/
@@ -319,5 +334,18 @@ theorem mergeSortWithCount_fst_eq_insertionSort {α : Type*} (r : α → α → 
     (mergeSortWithCount (r · ·) xs).1 = insertionSort r xs := by
   rw [mergeSortWithCount_fst]
   exact mergeSort_eq_insertionSort (r := r) xs
+
+/-- Instrumented merge sort produces a permutation of the input list. -/
+theorem mergeSortWithCount_perm {α : Type*} (le : α → α → Bool) (xs : List α) :
+    (mergeSortWithCount le xs).1 ~ xs := by
+  rw [mergeSortWithCount_fst]
+  exact mergeSort_perm xs le
+
+/-- Instrumented merge sort produces a sorted list under a total, transitive relation. -/
+theorem mergeSortWithCount_fst_sorted {α : Type*} (r : α → α → Prop)
+    [DecidableRel r] [Std.Total r] [IsTrans α r] (xs : List α) :
+    (mergeSortWithCount (fun a b ↦ decide (r a b)) xs).1.Pairwise r := by
+  rw [mergeSortWithCount_fst]
+  exact pairwise_mergeSort' r xs
 
 end List

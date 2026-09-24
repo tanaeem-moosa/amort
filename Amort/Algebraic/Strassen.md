@@ -1,5 +1,9 @@
 # Strassen's Sub-Cubic Matrix Multiplication
 
+> **Status: stub — not verified** (Phase 4 canon stub; algebraic ring identities for 7
+> products are proven, but operational block matrix recurrence is a specification stub).
+
+
 ## 1. Overview and Problem Statement
 
 Matrix multiplication is central to linear algebra, scientific computing, and algorithmic graph theory.

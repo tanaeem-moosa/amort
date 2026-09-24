@@ -1,5 +1,9 @@
 # Complexity Classes P and NP, Verifiers, and Reductions
 
+> **Status: stub — not verified** (Phase 0 canon stub; polynomial closure arithmetic is proven,
+> but machine model for P vs NP is an abstract specification stub).
+
+
 ## Overview
 
 The `Amort.Complexity.Classes` module formalizes the foundational definitions of computational
@@ -20,6 +24,16 @@ complexity theory in Lean 4:
    $$A \le_P A \quad \text{and} \quad A \le_P B \wedge B \le_P C \implies A \le_P C$$
 8. **Class P Preservation**: If $A \le_P B$ and $B \in P$, then $A \in P$.
 9. **NP-Hardness and NP-Completeness**: Formal predicates for NP-hardness and NP-completeness.
+
+## Scope and Modeling Note (Anti-Pattern A9 Prevention)
+`Amort.Complexity.Classes` establishes an algebraic and structural framework for complexity
+classes ($P \subseteq NP$, Karp reduction preorder $\le_P$, transitivity, and preservation under
+reduction). As detailed in `proof_review.md`, the `Decider` and `Verifier` structures provide an
+axiomatic operational interface rather than a concrete Turing machine model (such as
+`Mathlib.Computability.Turing.TM2ComputableInPolyTime`). Consequently, this module functions as an
+axiomatic framework/stub. Full, concrete combinatorial reductions and algorithms are formalized in:
+- `Amort.Complexity.KarpReductions`: Formal 3SAT to Independent Set reduction correctness.
+- `Amort.Complexity.TwoSAT`: 2-SAT implication graph characterization (soundness and completeness).
 
 ---
 
@@ -90,8 +104,9 @@ scoped infix:50 " ≤P " => PolyReducible
 | :--- | :--- | :--- |
 | **$P \subseteq NP$** | `inNP_of_inP` | $\forall L \in P \implies L \in NP$ |
 | **Reduction Reflexivity** | `polyReducible_refl` | $\forall A, A \le_P A$ |
-| **Reduction Transitivity** | `polyReducible_trans` | $A \le_P B \wedge B \le_P C \implies A \le_P C$ |
+| **Transitivity** | `polyReducible_trans` | $A \le_P B \wedge B \le_P C \implies A \le_P C$ |
 | **P-Preservation** | `inP_of_polyReducible` | $A \le_P B \wedge B \in P \implies A \in P$ |
 
 ### Axiom Verification
-All theorems are verified with zero axioms beyond foundational Lean 4 axioms (`propext`, `Quot.sound`, `Classical.choice`), with 0 `sorry` or `sorryAx`.
+All theorems are verified with zero axioms beyond foundational Lean 4 axioms
+(`propext`, `Quot.sound`, `Classical.choice`), with 0 `sorry` or `sorryAx`.

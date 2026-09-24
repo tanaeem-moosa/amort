@@ -1,5 +1,9 @@
 # Disjoint Set Union (Union-Find) with Union-by-Rank
 
+> **Status: stub — not verified** (Phase 3 canon stub; rank bounds are modeled,
+> but executable union-by-rank and find are specification stubs).
+
+
 This document details the Lean 4 formalization of Disjoint Set Union (Union-Find) with
 union-by-rank in `Amort.Graph.DSU`, establishing the fundamental exponential subtree size invariant
 ($2^{\text{rank}} \le n$), proving that tree depth and `find` steps are bounded by $\log_2 n$

@@ -1,5 +1,9 @@
 # Compact Suffix Tree Structure and Size Bounds
 
+> **Status: stub — not verified** (Phase 4 canon stub; tree combinatorics are modeled,
+> but construction algorithm is a specification stub).
+
+
 This document details the Lean 4 formalization of the compact suffix tree representation and its structural bounds in `Amort.String.SuffixTree.CompactTree`.
 
 ## Mathematical Formulations

@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Greedy $H(n)$-Approximation for Set Cover
 
+> **Status: stub — not verified** (Phase 4 canon stub; harmonic charging scheme is proven,
+> but operational greedy subset extraction is a specification stub).
+
 This module formalizes the classical Greedy Set Cover algorithm and its harmonic potential
 approximation bound:
 1. **Harmonic Numbers**: $H(n) = \sum_{i=1}^n \frac{1}{i}$ with non-negativity and monotonicity.
@@ -32,7 +35,7 @@ approximation bound:
 - `Amort.Approximation.harmonic_monotone`: $a \le b \implies H(a) \le H(b)$.
 - `Amort.Approximation.HarmonicCharging`: Structure capturing the marginal pricing properties.
 - `Amort.Approximation.set_cover_approx_bound`: Greedy $H(n) \cdot \text{OPT}$ bound.
-- `Amort.Approximation.setCoverWork`: Operational step count $m \cdot n + n$.
+- `Amort.Approximation.setCoverBound`: Operational step count $m \cdot n + n$.
 -/
 
 namespace Amort.Approximation
@@ -115,12 +118,12 @@ theorem set_cover_approx_bound
 
 /-- Operational step complexity model for greedy set cover:
 $m$ candidate sets evaluated across $n$ universe elements over at most $n$ rounds. -/
-def setCoverWork (n m : ℕ) : ℕ :=
+def setCoverBound (n m : ℕ) : ℕ :=
   m * n + n
 
 /-- Operational step bound for greedy set cover. -/
 theorem setCoverWork_le (n m : ℕ) :
-    setCoverWork n m ≤ m * n + n := by
+    setCoverBound n m ≤ m * n + n := by
   rfl
 
 end Amort.Approximation

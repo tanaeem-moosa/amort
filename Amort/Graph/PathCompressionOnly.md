@@ -1,5 +1,9 @@
 # Disjoint Set Union with Path Compression Only (Iterative & Arbitrary Linking)
 
+> **Status: stub — not verified** (Phase 4 canon stub; two-pass compression post-condition
+> is proven, but adversarial lower bounds are specification formulas).
+
+
 This document details the Lean 4 formalization of Disjoint Set Union (DSU) augmented with
 **path compression only** without rank, height, or size balancing arrays, implemented in
 `Amort.Graph.PathCompressionOnly`.

@@ -1,5 +1,9 @@
 # Byzantine Fault Tolerance (3f + 1) (`Amort.Distributed.BFT`)
 
+> **Status: stub — not verified** (Phase 4 canon stub; PBFT quorum intersection is proven,
+> but OM(m) inductive protocol execution is a specification stub).
+
+
 ## 1. Byzantine Generals Model
 
 In an unauthenticated distributed system subject to Byzantine faults, up to $f$ out of $N$

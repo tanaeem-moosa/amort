@@ -11,6 +11,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Huffman Coding & Greedy Optimal Prefix Codes
 
+> **Status: stub — not verified** (Phase 3 canon stub; sibling exchange arithmetic is proven,
+> but prefix tree construction algorithm is a specification stub).
+
 This module formalizes Huffman coding, the greedy choice property, and priority queue
 construction complexity:
 - Alphabet symbols with positive weights.
@@ -30,7 +33,7 @@ construction complexity:
 - `Amort.Greedy.costAtDepth_eq`: Equivalence of external path length and internal weights.
 - `Amort.Greedy.leaf_swap_cost_le`: Inversion lemma: moving smaller weights deeper reduces cost.
 - `Amort.Greedy.huffman_greedy_choice_property`: Two minimal frequency symbols at deepest positions.
-- `Amort.Greedy.huffmanConstructionWork`: Operational step model via binary min-heap.
+- `Amort.Greedy.huffmanConstructionBound`: Operational step model via binary min-heap.
 - `Amort.Greedy.huffmanConstructionWork_le`: Linear-logarithmic bound $O(n \log n)$.
 -/
 
@@ -133,13 +136,13 @@ theorem huffman_greedy_choice_property (wa wb wx wy da db dx dy : ℕ)
   - 1 `insert` operation (bounded by $\text{Nat.size } n$).
   - Total per iteration: $5 \cdot \text{Nat.size } n$.
 - Total merge work: $(n - 1) \cdot 5 \cdot \text{Nat.size } n \le 5n \cdot \text{Nat.size } n$. -/
-def huffmanConstructionWork (n : ℕ) : ℕ :=
+def huffmanConstructionBound (n : ℕ) : ℕ :=
   2 * n + 5 * n * Nat.size n
 
 /-- Concrete upper bound: $W(n) \le 7n \cdot \text{Nat.size } n$ for all $n \ge 1$. -/
 theorem huffmanConstructionWork_le (n : ℕ) (hn : 1 ≤ n) :
-    huffmanConstructionWork n ≤ 7 * n * Nat.size n := by
-  unfold huffmanConstructionWork
+    huffmanConstructionBound n ≤ 7 * n * Nat.size n := by
+  unfold huffmanConstructionBound
   have h_size : 1 ≤ Nat.size n := Nat.size_pos.mpr hn
   have h2n : 2 * n ≤ 2 * n * Nat.size n := by
     calc 2 * n = 2 * n * 1 := by ring

@@ -1,5 +1,9 @@
 # Kruskal's Minimum Spanning Tree Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; edge sort bound is proven,
+> but full spanning forest cut property and DSU execution are specification stubs).
+
+
 This document details the Lean 4 formalization of Kruskal's Minimum Spanning Tree (MST)
 algorithm in `Amort.Graph.Kruskal`, connecting edge sorting to `Amort.Sorting.MergeSort`,
 establishing the $O(|E| \log |V|)$ overall time complexity, and proving greedy Cut-Property

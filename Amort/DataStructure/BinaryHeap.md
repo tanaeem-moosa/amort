@@ -1,5 +1,9 @@
 # Priority Queues & Binary Heaps
 
+> **Status: stub — not verified** (Phase 3 canon stub; build-heap summation is proven,
+> but array heap siftUp/siftDown operations are specification stubs).
+
+
 This document details the Lean 4 formalization of priority queues and binary heaps in
 `Amort.DataStructure.BinaryHeap`, covering the min-heap order invariant, logarithmic height,
 sift-down and sift-up step bounds, the linear build-heap theorem, and heapsort complexity.

@@ -1,5 +1,9 @@
 # Impossibility Theorems: CAP & Two Generals (`Amort.Distributed.Impossibility`)
 
+> **Status: stub — not verified** (Phase 4 canon stub; two-node CAP toy model is proven,
+> but full asynchronous consensus impossibility is a specification stub).
+
+
 ## 1. Gilbert-Lynch CAP Theorem
 
 Brewer's CAP Conjecture (2000) asserts that a distributed data store can simultaneously achieve

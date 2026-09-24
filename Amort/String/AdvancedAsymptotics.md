@@ -1,5 +1,9 @@
 # Asymptotic Complexity Bridges for Advanced String Algorithms
 
+> **Status: stub — not verified** (Phase 3/4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 ## 1. Overview
 
 This module formalizes the mathematical connection between concrete operational step models of advanced string algorithms and Mathlib's asymptotic complexity framework `Mathlib.Analysis.Asymptotics.IsBigO` under `Filter.atTop`.

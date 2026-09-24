@@ -1,5 +1,9 @@
 # Hopcroft-Karp Maximum Bipartite Matching Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; alternating path structures are
+> defined, but phased BFS/DFS execution is a specification stub).
+
+
 ## Theoretical Foundations
 Given a bipartite graph $G = (L, R, E)$, a matching $M$ is a subset of edges with no shared endpoints. An alternating path alternates between edges in $E \setminus M$ and $M$. An augmenting path begins and ends at distinct free (unmatched) vertices.
 

@@ -1,5 +1,8 @@
 # Metric TSP 2-Approximation via Double-Tree Shortcutting
 
+> **Status: stub — not verified** (Phase 4 canon stub; approximation ratio theorems are
+> proven, but operational shortcutting / MST algorithms are specification stubs).
+
 ## Theoretical Foundations
 In the Metric Traveling Salesperson Problem (TSP), we are given a complete graph $G = (V, E)$ with non-negative edge costs satisfying the triangle inequality:
 $$d(u, w) \le d(u, v) + d(v, w)$$

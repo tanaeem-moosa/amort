@@ -33,6 +33,26 @@ steps in terms of the bit lengths of the inputs.
 
 namespace Nat
 
+/-- The standard Euclidean greatest common divisor algorithm.
+Recursively replaces `(a, b)` with `(b % a, a)` until `a = 0`. -/
+def euclidGcd (a b : ℕ) : ℕ :=
+  if a = 0 then b
+  else euclidGcd (b % a) a
+termination_by a
+decreasing_by
+  exact Nat.mod_lt b (by omega)
+
+/-- Equivalence of the Euclidean algorithm `euclidGcd` with Mathlib's `Nat.gcd`. -/
+theorem euclidGcd_eq_gcd (a b : ℕ) : euclidGcd a b = Nat.gcd a b := by
+  induction a using Nat.strong_induction_on generalizing b with
+  | h a ih =>
+    rw [euclidGcd.eq_def]
+    split_ifs with ha
+    · rw [ha, Nat.gcd_zero_left]
+    · have hlt : b % a < a := Nat.mod_lt b (by omega)
+      rw [ih (b % a) hlt a]
+      conv_rhs => rw [Nat.gcd.eq_def, if_neg ha]
+
 /-- Companion step-counting function for `Nat.gcd`.
 Counts the exact number of modulo transitions executed on inputs `a` and `b`.
 Mirrors the reduction structure of `Nat.gcd.eq_def`: if `a = 0` then 0 steps,
@@ -43,6 +63,46 @@ def euclideanGcdSteps (a b : ℕ) : ℕ :=
 termination_by a
 decreasing_by
   exact Nat.mod_lt b (Nat.pos_of_ne_zero ha)
+
+/-- Instrumented Euclidean GCD returning both the greatest common divisor
+and the exact number of modulo transitions executed. -/
+def euclidGcdWithSteps (a b : ℕ) : ℕ × ℕ :=
+  if a = 0 then (b, 0)
+  else
+    let (g, s) := euclidGcdWithSteps (b % a) a
+    (g, 1 + s)
+termination_by a
+decreasing_by
+  exact Nat.mod_lt b (by omega)
+
+@[simp]
+theorem euclidGcdWithSteps_fst (a b : ℕ) : (euclidGcdWithSteps a b).1 = euclidGcd a b := by
+  induction a using Nat.strong_induction_on generalizing b with
+  | h a ih =>
+    rw [euclidGcdWithSteps.eq_def, euclidGcd.eq_def]
+    split_ifs with ha
+    · rfl
+    · have hlt : b % a < a := Nat.mod_lt b (by omega)
+      dsimp
+      rw [ih (b % a) hlt a]
+
+@[simp]
+theorem euclidGcdWithSteps_snd (a b : ℕ) : (euclidGcdWithSteps a b).2 = euclideanGcdSteps a b := by
+  induction a using Nat.strong_induction_on generalizing b with
+  | h a ih =>
+    rw [euclidGcdWithSteps.eq_def, euclideanGcdSteps.eq_def]
+    split_ifs with ha
+    · rfl
+    · have hlt : b % a < a := Nat.mod_lt b (by omega)
+      dsimp
+      rw [ih (b % a) hlt a]
+
+theorem euclidGcdWithSteps_eq (a b : ℕ) :
+    euclidGcdWithSteps a b = (euclidGcd a b, euclideanGcdSteps a b) := by
+  ext <;> simp
+
+theorem euclidGcdWithSteps_fst_eq_gcd (a b : ℕ) : (euclidGcdWithSteps a b).1 = Nat.gcd a b := by
+  rw [euclidGcdWithSteps_fst, euclidGcd_eq_gcd]
 
 /-- The fundamental halving property of modulo: for positive `b ≤ a`,
 the remainder satisfies `2 * (a % b) < a`. -/
@@ -130,5 +190,19 @@ theorem euclideanGcdSteps_le_two_mul_size_add (a b : ℕ) :
   have hmin : min a b ≤ a + b := by omega
   have hsz : Nat.size (min a b) ≤ Nat.size (a + b) := Nat.size_le_size hmin
   omega
+
+/-- Main upper bound for instrumented Euclidean GCD steps:
+`(euclidGcdWithSteps a b).2 ≤ 2 * Nat.size (min a b) + 1`. -/
+theorem euclidGcdWithSteps_snd_le_two_mul_size_min (a b : ℕ) :
+    (euclidGcdWithSteps a b).2 ≤ 2 * Nat.size (min a b) + 1 := by
+  rw [euclidGcdWithSteps_snd]
+  exact euclideanGcdSteps_le_two_mul_size_min a b
+
+/-- Upper bound for instrumented Euclidean GCD steps in terms of sum of inputs:
+`(euclidGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b) + 1`. -/
+theorem euclidGcdWithSteps_snd_le_two_mul_size_add (a b : ℕ) :
+    (euclidGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b) + 1 := by
+  rw [euclidGcdWithSteps_snd]
+  exact euclideanGcdSteps_le_two_mul_size_add a b
 
 end Nat

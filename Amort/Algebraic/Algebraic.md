@@ -1,5 +1,9 @@
 # Fast Algebraic & Divide-and-Conquer Algorithms (`Amort.Algebraic`)
 
+> **Status: stub — not verified** (Phase 3/4 canon stubs; FFT and Strassen matrix multiplication
+> algorithms are specification stubs awaiting full verification).
+
+
 ## 1. Domain Mission and Scope
 
 The `Amort.Algebraic` module formalizes landmark divide-and-conquer algorithms in fast algebra and numerical

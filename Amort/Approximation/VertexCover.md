@@ -1,5 +1,8 @@
 # Vertex Cover 2-Approximation via Maximal Matching
 
+> **Status: stub — not verified** (Phase 4 canon stub; matching lower bound and 2-approximation
+> ratio are proven, but operational greedy edge selection is a specification stub).
+
 ## Theoretical Foundations
 For an undirected simple graph $G = (V, E)$, the Minimum Vertex Cover problem seeks a subset $C \subseteq V$ of minimal cardinality such that every edge $e \in E$ has at least one endpoint in $C$.
 

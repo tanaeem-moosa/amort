@@ -229,4 +229,122 @@ theorem knapsackGridDP_totalCost_le (n W : ℕ) :
     (knapsackGridDP n W).toDPModel.totalCost ≤ (n + 1) * (W + 1) := by
   rw [knapsackGridDP_totalCost]
 
+/-! ### Bottom-Up Dynamic Programming Table -/
+
+/-- Computes row $n$ of the knapsack DP table for all capacities $0 \le c \le W$. -/
+def knapsackRow (w v : ℕ → ℕ) : ℕ → ℕ → List ℕ
+  | 0, W => List.replicate (W + 1) 0
+  | i + 1, W =>
+    let prev := knapsackRow w v i W
+    (List.range (W + 1)).map fun c =>
+      if c < w i then
+        prev.getD c 0
+      else
+        max (prev.getD c 0) (v i + prev.getD (c - w i) 0)
+
+/-- Length of row $n$ in the knapsack DP table is $W + 1$. -/
+theorem knapsackRow_length (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackRow w v n W).length = W + 1 := by
+  induction n with
+  | zero => simp [knapsackRow]
+  | succ i ih => simp [knapsackRow]
+
+/-- Correctness: each entry of the bottom-up DP row equals `knapsackRec`. -/
+theorem knapsackRow_getD (w v : ℕ → ℕ) (n W : ℕ) (c : ℕ) (hc : c ≤ W) :
+    (knapsackRow w v n W).getD c 0 = knapsackRec w v n c := by
+  induction n generalizing c with
+  | zero =>
+    dsimp [knapsackRow]
+    have h : c < (List.replicate (W + 1) 0).length := by
+      rw [List.length_replicate]; omega
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]
+    simp
+  | succ i ih =>
+    dsimp [knapsackRow]
+    have hc_lt : c < ((List.range (W + 1)).map (fun c =>
+      if c < w i then (knapsackRow w v i W).getD c 0
+      else max ((knapsackRow w v i W).getD c 0)
+        (v i + (knapsackRow w v i W).getD (c - w i) 0))).length := by
+      simp; omega
+    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem hc_lt]
+    rw [List.getElem_map, List.getElem_range]
+    rw [ih c hc]
+    have h_sub : c - w i ≤ W := by omega
+    rw [ih (c - w i) h_sub]
+    rfl
+
+/-- Evaluated optimal knapsack value from the bottom-up DP row. -/
+theorem knapsackRow_eval (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackRow w v n W).getD W 0 = knapsackRec w v n W :=
+  knapsackRow_getD w v n W W (le_refl W)
+
+/-- Full $(n + 1) \times (W + 1)$ dynamic programming table for 0/1 knapsack. -/
+def knapsackTable (w v : ℕ → ℕ) (n W : ℕ) : List (List ℕ) :=
+  (List.range (n + 1)).map fun i => knapsackRow w v i W
+
+/-- The knapsack DP table has $n + 1$ rows. -/
+theorem knapsackTable_length (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackTable w v n W).length = n + 1 := by
+  simp [knapsackTable]
+
+/-- Instrumented row computation returning the row and cell operations executed. -/
+def knapsackRowWithCount (w v : ℕ → ℕ) : ℕ → ℕ → List ℕ × ℕ
+  | 0, W => (List.replicate (W + 1) 0, W + 1)
+  | i + 1, W =>
+    let res := knapsackRowWithCount w v i W
+    let row := (List.range (W + 1)).map fun c =>
+      if c < w i then
+        res.1.getD c 0
+      else
+        max (res.1.getD c 0) (v i + res.1.getD (c - w i) 0)
+    (row, res.2 + (W + 1))
+
+/-- First projection of instrumented row matches pure `knapsackRow`. -/
+theorem knapsackRowWithCount_fst (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackRowWithCount w v n W).1 = knapsackRow w v n W := by
+  induction n with
+  | zero => rfl
+  | succ i ih =>
+    dsimp [knapsackRowWithCount, knapsackRow]
+    rw [ih]
+
+/-- Second projection of instrumented row matches $(n + 1) \cdot (W + 1)$. -/
+theorem knapsackRowWithCount_snd (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackRowWithCount w v n W).2 = (n + 1) * (W + 1) := by
+  induction n with
+  | zero =>
+    dsimp [knapsackRowWithCount]
+    omega
+  | succ i ih =>
+    dsimp [knapsackRowWithCount]
+    rw [ih]
+    ring
+
+/-- Operation count for computing the knapsack DP table: $(n + 1) \cdot (W + 1)$ cell operations. -/
+def knapsackTableCount (n W : ℕ) : ℕ :=
+  (n + 1) * (W + 1)
+
+/-- Instrumented 0/1 knapsack algorithm: returns optimal value and executed cell operations. -/
+def knapsackWithCount (w v : ℕ → ℕ) (n W : ℕ) : ℕ × ℕ :=
+  let res := knapsackRowWithCount w v n W
+  (res.1.getD W 0, res.2)
+
+/-- Correctness projection: first component matches recursive specification `knapsackRec`. -/
+theorem knapsackWithCount_fst (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackWithCount w v n W).1 = knapsackRec w v n W := by
+  dsimp [knapsackWithCount]
+  rw [knapsackRowWithCount_fst]
+  exact knapsackRow_eval w v n W
+
+/-- Cost bound: cell operations match $(n + 1) \cdot (W + 1)$. -/
+theorem knapsackWithCount_snd (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackWithCount w v n W).2 = (n + 1) * (W + 1) := by
+  dsimp [knapsackWithCount]
+  exact knapsackRowWithCount_snd w v n W
+
+/-- Upper bound on cell operations: at most $(n + 1) \cdot (W + 1)$. -/
+theorem knapsackWithCount_snd_le (w v : ℕ → ℕ) (n W : ℕ) :
+    (knapsackWithCount w v n W).2 ≤ (n + 1) * (W + 1) := by
+  rw [knapsackWithCount_snd]
+
 end Amort.DP

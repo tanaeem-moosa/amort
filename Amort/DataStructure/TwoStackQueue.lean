@@ -117,6 +117,36 @@ def pop {α : Type*} (q : TwoStackQueue α) : Option α × TwoStackQueue α :=
     | [] => (none, ⟨[], []⟩)
     | x :: xs => (some x, ⟨[], xs⟩)
 
+/-- Popping extracts the head element of the logical FIFO queue. -/
+theorem pop_fst {α : Type*} (q : TwoStackQueue α) :
+    (q.pop).1 = q.toList.head? := by
+  dsimp [pop, toList]
+  cases q.outStack with
+  | cons x xs => rfl
+  | nil =>
+    cases h : q.inStack.reverse with
+    | nil => rfl
+    | cons x xs => rfl
+
+/-- Popping produces a queue whose logical contents are the tail of the original queue. -/
+theorem pop_snd_toList {α : Type*} (q : TwoStackQueue α) :
+    (q.pop).2.toList = q.toList.tail := by
+  dsimp [pop, toList]
+  cases q.outStack with
+  | cons x xs => rfl
+  | nil =>
+    dsimp
+    cases h : q.inStack.reverse with
+    | nil => rfl
+    | cons x xs =>
+      dsimp [toList]
+      rw [List.append_nil]
+
+/-- Full FIFO specification of pop: extracting the head element and transitioning to the tail. -/
+theorem pop_spec {α : Type*} (q : TwoStackQueue α) :
+    (q.pop).1 = q.toList.head? ∧ (q.pop).2.toList = q.toList.tail :=
+  ⟨pop_fst q, pop_snd_toList q⟩
+
 /-- Actual operational cost of push is 1 unit. -/
 def pushActualCost {α : Type*} (_q : TwoStackQueue α) : ℕ := 1
 

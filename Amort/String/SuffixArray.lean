@@ -11,6 +11,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Suffix Array and Kasai's Linear LCP Construction
 
+> **Status: stub — not verified** (Phase 4 canon stub; Kasai height decrement is modeled,
+> but suffix sorting and LCP execution are specification stubs).
+
 This module formalizes suffix arrays and Kasai's linear-time Longest Common Prefix (LCP)
 array construction algorithm:
 - Suffix orderings, inverse permutation ranks, and the suffix array structure of length $n$.
@@ -28,7 +31,7 @@ array construction algorithm:
    $h_i - 1 \le h_{i+1}$.
 4. `kasai_telescoping_increments`: Formal proof that
    $\sum_{i=0}^{n-1} (h_{i+1} - (h_i - 1)) \le 2n$.
-5. `kasaiWork`: Operational comparison step bound model bounded by $2n$ ($O(n)$).
+5. `kasaiBound`: Operational comparison step bound model bounded by $2n$ ($O(n)$).
 -/
 
 open BigOperators
@@ -113,14 +116,14 @@ theorem kasai_telescoping_increments (n : ℕ) (h : ℕ → ℤ)
 omit [DecidableEq α] in
 /-- Operational comparison step count for Kasai's linear LCP algorithm:
 Bounded by $2n$ character comparison increments across all suffixes. -/
-def kasaiWork (n : ℕ) : ℕ :=
+def kasaiBound (n : ℕ) : ℕ :=
   2 * n
 
 omit [DecidableEq α] in
 /-- Linear operational step bound theorem for Kasai's algorithm:
 Total operations are bounded by $2n$ ($O(n)$). -/
 theorem kasaiWork_le (n : ℕ) :
-    kasaiWork n ≤ 2 * n :=
+    kasaiBound n ≤ 2 * n :=
   Nat.le_refl _
 
 end Amort.String

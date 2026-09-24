@@ -1,5 +1,9 @@
 # Computational Complexity, NP-Completeness, and Reductions in Lean 4
 
+> **Status: partially verified / contains stubs** (Contains verified 3-SAT reductions alongside
+> Phase 0/4 specification stubs).
+
+
 ## Executive Summary
 
 The `Amort.Complexity` module formalizes computational complexity classes, 2-SAT linear-time SCC solving,

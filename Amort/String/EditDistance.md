@@ -1,13 +1,19 @@
 # Formalization of Edit Distance (Levenshtein Distance) in Lean 4
 
-This document details the Lean 4 formalization of the Edit Distance (Levenshtein Distance) dynamic programming algorithm in [`Amort/String/EditDistance.lean`](EditDistance.lean): the formal alignment model `IsAlignment`, constructive witness extraction, the minimal-cost optimality theorem, the bottom-up $(n + 1) \times (m + 1)$ dynamic programming matrix, and asymptotic complexity $O(n \cdot m)$.
+This document details the Lean 4 formalization of the Edit Distance (Levenshtein Distance)
+dynamic programming algorithm in [`Amort/String/EditDistance.lean`](EditDistance.lean):
+the formal alignment model `IsAlignment`, constructive witness extraction, the minimal-cost
+optimality theorem, the bottom-up $(n + 1) \times (m + 1)$ dynamic programming matrix,
+and asymptotic complexity $O(n \cdot m)$.
 
 ---
 
 ## 1. Problem Formulation and Setup
 
-Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alpha$ with decidable equality (`[DecidableEq α]`):
-- The **Levenshtein distance** measures the minimum cost sequence of edit operations (substitutions, insertions, and deletions) required to transform $xs$ into $ys$.
+Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alpha$ with
+decidable equality (`[DecidableEq α]`):
+- The **Levenshtein distance** measures the minimum cost sequence of edit operations
+  (substitutions, insertions, and deletions) required to transform $xs$ into $ys$.
 - Standard unit costs:
   - Match: cost 0.
   - Substitution (mismatch): cost 1.
@@ -31,7 +37,8 @@ $$
 
 ## 2. Formal Alignment Model
 
-To prove that `editDistRec` actually computes the minimum over all possible alignments, we formalize edit operations and valid alignments inductively:
+To prove that `editDistRec` actually computes the minimum over all possible alignments,
+we formalize edit operations and valid alignments inductively:
 
 ### 2.1 Edit Operations and Costs
 ```lean
@@ -66,31 +73,35 @@ inductive IsAlignment : List (EditOp α) → List α → List α → Prop
 ## 3. Proof Strategy: Minimal Cost Optimality
 
 The optimality proof establishes a two-sided bound:
-$$\forall \text{ops},\; \text{IsAlignment ops } xs\ ys \implies editDistRec\ xs\ ys \le alignmentCost\ \text{ops}$$
-$$\exists \text{witness},\; \text{IsAlignment witness } xs\ ys \land alignmentCost\ \text{witness} = editDistRec\ xs\ ys$$
+$$\forall \text{ops},\; \text{IsAlignment ops } xs\ ys \implies$$
+$$editDistRec\ xs\ ys \le alignmentCost\ \text{ops}$$
+$$\exists \text{witness},\; \text{IsAlignment witness } xs\ ys \land$$
+$$alignmentCost\ \text{witness} = editDistRec\ xs\ ys$$
 
 ```mermaid
 graph TD
-    IsAlignmentDef["IsAlignment ops xs ys"] --> Soundness["editDistRec_le_alignmentCost: editDistRec xs ys ≤ alignmentCost ops"]
+    IsAlignmentDef["IsAlignment ops xs ys"] --> Soundness["editDistRec ≤ alignmentCost"]
     
-    editDistWitnessDef["editDistWitness xs ys"] --> WitnessValid["editDistWitness_isAlignment: IsAlignment witness xs ys"]
-    editDistWitnessDef --> WitnessCost["editDistWitness_cost: alignmentCost witness = editDistRec xs ys"]
+    editDistWitnessDef["editDistWitness xs ys"] --> WitnessValid["IsAlignment witness"]
+    editDistWitnessDef --> WitnessCost["alignmentCost = editDistRec"]
     
-    Soundness --> MinimalOptimality["editDist_is_minimal_alignment: editDistRec is the minimum cost over all alignments"]
+    Soundness --> MinimalOptimality["editDist_is_minimal_alignment"]
     WitnessValid --> MinimalOptimality
     WitnessCost --> MinimalOptimality
 ```
 
 ### 3.1 Soundness: Every Alignment Costs at Least `editDistRec`
 **Theorem** (`editDistRec_le_alignmentCost`):
-$$\forall ops\ xs\ ys,\; \text{IsAlignment } ops\ xs\ ys \implies editDistRec\ xs\ ys \le alignmentCost\ ops$$
+$$\forall ops\ xs\ ys,\; \text{IsAlignment } ops\ xs\ ys \implies$$
+$$editDistRec\ xs\ ys \le alignmentCost\ ops$$
 
 *Proof Strategy*:
 Induction on the derivation of `IsAlignment ops xs ys`:
 1. **Base case** `nil`: $E([], []) = 0 \le 0$.
 2. **Match/Sub case** (`match_sub x y ops xs ys`):
    $alignmentCost = (\text{if } x = y \text{ then } 0 \text{ else } 1) + alignmentCost(ops)$.
-   By recurrence definition, $E(x :: xs, y :: ys) \le (\text{if } x = y \text{ then } 0 \text{ else } 1) + E(xs, ys)$.
+   By recurrence definition:
+   $E(x :: xs, y :: ys) \le (\text{if } x = y \text{ then } 0 \text{ else } 1) + E(xs, ys)$.
    Applying the induction hypothesis completes the step.
 3. **Delete case** (`delete x ops xs ys`):
    $alignmentCost = 1 + alignmentCost(ops)$.
@@ -118,62 +129,100 @@ def editDistWitness : List α → List α → List (EditOp α)
 termination_by xs ys => xs.length + ys.length
 ```
 
-- **Validity** (`editDistWitness_isAlignment`): Proves by well-founded induction that `editDistWitness xs ys` satisfies `IsAlignment (witness) xs ys`.
-- **Exact Cost** (`editDistWitness_cost`): Proves by well-founded induction that $alignmentCost(witness) = editDistRec(xs, ys)$, resolving the three-way minimum.
+- **Validity** (`editDistWitness_isAlignment`): Proves by well-founded induction that
+  `editDistWitness xs ys` satisfies `IsAlignment (witness) xs ys`.
+- **Exact Cost** (`editDistWitness_cost`): Proves by well-founded induction that
+  $alignmentCost(witness) = editDistRec(xs, ys)$, resolving the three-way minimum.
 
 ### 3.3 Main Optimality Theorem
-**Theorem** (`editDist_is_minimal_alignment`):
-$$\left(\exists ops,\; \text{IsAlignment } ops\ xs\ ys \land alignmentCost\ ops = editDistRec\ xs\ ys\right) \;\land$$
-$$\left(\forall ops,\; \text{IsAlignment } ops\ xs\ ys \implies editDistRec\ xs\ ys \le alignmentCost\ ops\right)$$
+$$\left(\exists ops,\; \text{IsAlignment } ops\ xs\ ys \land\right.$$
+$$\left.alignmentCost\ ops = editDistRec\ xs\ ys\right)$$
+$$\land \left(\forall ops,\; \text{IsAlignment } ops\ xs\ ys \implies\right.$$
+$$\left.editDistRec\ xs\ ys \le alignmentCost\ ops\right)$$
 
 ---
 
 ## 4. Bottom-Up Dynamic Programming Matrix
 
-### 4.1 Row-by-Row DP Matrix Generation
+### 4.1 Wagner-Fischer Bottom-Up DP Matrix Generation
 ```lean
-def editDistNextRowAux : α → List α → List ℕ → ℕ → List ℕ
-  | _, [], _, _ => []
-  | x, y :: ys, p_diag :: p_up :: ps, left_val =>
-    let cost_sub := p_diag + (if x = y then 0 else 1)
-    let cost_del := p_up + 1
-    let cost_ins := left_val + 1
-    let curr := min cost_sub (min cost_del cost_ins)
-    curr :: editDistNextRowAux x ys (p_up :: ps) curr
-  | _, _ :: _, _, _ => []
+def editDistBaseRow : List α → List ℕ
+  | [] => [0]
+  | _ :: ys => (ys.length + 1) :: editDistBaseRow ys
 
-def editDistNextRow (i : ℕ) (x : α) (ys : List α) (prevRow : List ℕ) : List ℕ :=
-  i :: editDistNextRowAux x ys prevRow i
+def editDistRow (x : α) : List ℕ → ℕ → List α → List ℕ
+  | _, remX, [] => [remX]
+  | prevRow, remX, y :: ys =>
+    let rest := editDistRow x prevRow.tail remX ys
+    let rightVal := rest.headD remX
+    let down := prevRow.headD 0
+    let diag := prevRow.tail.headD 0
+    let cost := if x = y then 0 else 1
+    let cell := min (diag + cost) (min (down + 1) (rightVal + 1))
+    cell :: rest
+
+def editDistTableAux (ys : List α) : List α → List (List ℕ)
+  | [] => [editDistBaseRow ys]
+  | x :: xs =>
+    let prevTable := editDistTableAux ys xs
+    let prevRow := prevTable.headD (editDistBaseRow ys)
+    (editDistRow x prevRow (xs.length + 1) ys) :: prevTable
+
+def editDistTable (xs ys : List α) : List (List ℕ) :=
+  editDistTableAux ys xs
+
+theorem editDistTable_eval (xs ys : List α) :
+    editDistTableEntry xs ys 0 0 = editDistRec xs ys
 ```
-- The $(n + 1) \times (m + 1)$ matrix is initialized with row 0: $[0, 1, \dots, m]$.
-- Each subsequent row starts with index $i$ and iteratively computes each cell from diagonal ($p_{\text{diag}}$), upper ($p_{\text{up}}$), and left ($left_{\text{val}}$) cells.
 
-### 4.2 Matrix Dimensions & Operation Count
+### 4.2 Matrix Dimensions, Instrumented Execution & Operation Count
 - Dimension theorem (`editDistTable_length`):
   $$\text{length}(\text{editDistTable } xs\ ys) = xs.\text{length} + 1$$
-- Exact step count (`editDistTableCount_eq`):
-  $$\text{editDistTableCount } xs\ ys = (xs.\text{length} + 1) \cdot (ys.\text{length} + 1)$$
+- Correctness theorem (`editDistTable_eval`):
+  $$\text{editDistTableEntry } xs\ ys\ 0\ 0 = editDistRec\ xs\ ys$$
+- Instrumented table builder (`editDistTableWithCount`):
+  $$\text{editDistTableWithCount } xs\ ys = (\text{editDistTable } xs\ ys, (n + 1)(m + 1))$$
+- Instrumented execution (`editDistWithCount`):
+  ```lean
+  def editDistWithCount (xs ys : List α) : ℕ × ℕ :=
+    (editDistTableEntry xs ys 0 0, (editDistTableWithCount xs ys).2)
+
+  theorem editDistWithCount_fst (xs ys : List α) :
+      (editDistWithCount xs ys).1 = editDistRec xs ys
+
+  theorem editDistWithCount_snd (xs ys : List α) :
+      (editDistWithCount xs ys).2 = (xs.length + 1) * (ys.length + 1)
+
+  theorem editDistWithCount_snd_le (xs ys : List α) :
+      (editDistWithCount xs ys).2 ≤ (xs.length + 1) * (ys.length + 1)
+  ```
 
 ---
 
 ## 5. Asymptotic Complexity Bridge
 
-In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the operational count is connected to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` via `Amort.Recurrence.Composition`:
+In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the operational count is connected to
+Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` via `Amort.Recurrence.Composition`:
 
 ```lean
 theorem isBigO_editDistTableCount_atTop :
-    (fun (p : List α × List α) ↦ ((editDistTableCount p.1 p.2 : ℕ) : ℝ)) =O[
-      Filter.comap (fun p ↦ (p.1.length, p.2.length)) Filter.atTop]
-    (fun p ↦ ((p.1.length + 1) * (p.2.length + 1) : ℕ) : ℝ) :=
-  isBigO_refl _ _
+    (fun (p : ℕ × ℕ) ↦ (((p.1 + 1) * (p.2 + 1) : ℕ) : ℝ)) =O[Filter.atTop]
+      (fun p ↦ ((p.1 * p.2 : ℕ) : ℝ))
+
+theorem isBigO_editDistWithCount_snd_list {α : Type*} [DecidableEq α]
+    (F : Filter (List α × List α)) :
+    (fun (p : List α × List α) ↦ (((editDistWithCount p.1 p.2).2 : ℕ) : ℝ)) =O[F]
+      (fun p ↦ (((p.1.length + 1) * (p.2.length + 1) : ℕ) : ℝ))
 ```
-Combined with the product composition rule `isBigO_nested_loops_nat`, this yields asymptotic complexity $O(n \cdot m)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+Combined with the product composition rule `isBigO_nested_loops_nat`, this yields asymptotic
+complexity $O(n \cdot m)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 
 ---
 
 ## 6. Axiomatic Verification
 
-Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4 axioms:
+Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4
+axioms:
 - `propext`
 - `Classical.choice`
 - `Quot.sound`

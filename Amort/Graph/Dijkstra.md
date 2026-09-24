@@ -1,5 +1,9 @@
 # Dijkstra's Shortest Paths Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; specification formulas and invariants
+> awaiting executable priority queue implementation).
+
+
 ## Overview
 This module formalizes Dijkstra's algorithm for single-source shortest paths on directed
 graphs with non-negative edge weights using a priority queue. It provides:

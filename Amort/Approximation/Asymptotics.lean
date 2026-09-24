@@ -13,6 +13,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Approximation Algorithms
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects concrete operational step bounds for approximation algorithms
 to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` framework under `Filter.atTop`:
 1. Vertex Cover 2-approximation maximal matching: $O(|V| + |E|)$.
@@ -31,34 +34,34 @@ namespace Amort.Approximation
 
 /-! ### Vertex Cover 2-Approximation Asymptotics -/
 
-/-- Greedy maximal matching vertex cover operational complexity is asymptotically
-$O(|V| + |E|)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: Vertex cover approximation complexity is modeled as a closed-form
+formula `vertexCoverBound` awaiting instrumented execution implementation. -/
 theorem isBigO_vertexCoverWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((vertexCoverWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((vertexCoverBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.1 + p.2 : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 2 ?_
   apply Filter.Eventually.of_forall
   rintro ⟨n, m⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [vertexCoverWork]
+  dsimp [vertexCoverBound]
   have h : ((2 * (n + m) : ℕ) : ℝ) = 2 * ((n + m : ℕ) : ℝ) := by push_cast; ring
   rw [h]
 
 /-! ### Metric TSP 2-Approximation Asymptotics -/
 
-/-- Metric TSP double-tree operational complexity is asymptotically bounded by
+/-- **Stub Model**: Metric TSP double-tree operational complexity is asymptotically bounded by
 $n^2 \cdot \text{size } n + 4n$ in `IsBigO` under `Filter.atTop`. -/
 theorem isBigO_metricTSPWork_atTop :
-    (fun (n : ℕ) ↦ (((metricTSPWork n : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (n : ℕ) ↦ (((metricTSPBound n : ℕ) : ℝ))) =O[Filter.atTop]
       (fun n ↦ (((n ^ 2 * Nat.size n + 4 * n : ℕ) : ℝ))) :=
   isBigO_refl _ _
 
 /-! ### Set Cover Greedy Asymptotics -/
 
-/-- Greedy set cover operational complexity is asymptotically $O(m \cdot n + n)$
-under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: Greedy set cover operational complexity is modeled as a closed-form
+formula `setCoverBound` awaiting instrumented execution implementation. -/
 theorem isBigO_setCoverWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((setCoverWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((setCoverBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.2 * p.1 + p.1 : ℕ) : ℝ))) :=
   isBigO_refl _ _
 

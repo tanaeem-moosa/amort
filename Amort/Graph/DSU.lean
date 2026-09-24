@@ -11,6 +11,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Disjoint Set Union (Union-Find) with Union-by-Rank
 
+> **Status: stub — not verified** (Phase 3 canon stub; rank bounds are modeled,
+> but executable union-by-rank and find are specification stubs).
+
 This module formalizes Disjoint Set Union (Union-Find) with union-by-rank on $n$ elements
 (`Fin n`). It establishes the exponential subtree size invariant ($2^{\text{rank}} \le n$),
 proves that tree depth and `find` steps are bounded by $\log_2 n$ and $\text{Nat.size } n$, and
@@ -43,7 +46,7 @@ proves that any sequence of $m$ operations on $n$ elements executes in $O((n + m
    Each union operation invokes at most 2 `find` calls and $O(1)$ pointer updates, costing
    $\le 2 \cdot \text{Nat.size } n + 1$ steps.
    Across $m$ operations on $n$ initial elements, the total operational cost is bounded by:
-   $$\text{dsuWork}(m, n) = m \cdot (2 \cdot \text{Nat.size } n + 1) + n
+   $$\text{dsuBound}(m, n) = m \cdot (2 \cdot \text{Nat.size } n + 1) + n
      \le 3(n + m) \cdot \text{Nat.size } n$$
    yielding $O((n + m) \log n)$ total work.
 
@@ -57,7 +60,7 @@ proves that any sequence of $m$ operations on $n$ elements executes in $O((n + m
 - `Amort.Graph.ValidDSU`: Invariant structure bundling subtree size and rank properties.
 - `Amort.Graph.valid_findSteps_le_size`: Find step bound by `Nat.size n`.
 - `Amort.Graph.valid_findSteps_le_log`: Find step bound by `Nat.log 2 n`.
-- `Amort.Graph.dsuWork`: Step counter for $m$ operations on $n$ elements.
+- `Amort.Graph.dsuBound`: Step counter for $m$ operations on $n$ elements.
 - `Amort.Graph.dsuWork_le_mul`: Upper bound $(2(n + m) \cdot \text{Nat.size } n + (n + m))$.
 - `Amort.Graph.dsuWork_le_three_mul`: Logarithmic bound $\le 3(n + m) \cdot \text{Nat.size } n$.
 -/
@@ -182,12 +185,12 @@ theorem valid_findSteps_le_log {n : ℕ} {d : DSU n} (vld : ValidDSU n d) (v : F
 /-- Total operational work performed by $m$ operations on $n$ elements in DSU:
 each operation incurs at most $2 \cdot \text{Nat.size } n + 1$ steps,
 plus $n$ initialization steps. -/
-def dsuWork (m n : ℕ) : ℕ := m * (2 * Nat.size n + 1) + n
+def dsuBound (m n : ℕ) : ℕ := m * (2 * Nat.size n + 1) + n
 
 /-- Total DSU work is bounded by $2(n + m) \cdot \text{Nat.size } n + (n + m)$. -/
 theorem dsuWork_le_mul (m n : ℕ) :
-    dsuWork m n ≤ 2 * (n + m) * Nat.size n + (n + m) := by
-  dsimp [dsuWork]
+    dsuBound m n ≤ 2 * (n + m) * Nat.size n + (n + m) := by
+  dsimp [dsuBound]
   have h1 : m * (2 * Nat.size n + 1) + n = 2 * m * Nat.size n + (n + m) := by ring
   have h2 : 2 * m * Nat.size n ≤ 2 * (n + m) * Nat.size n := by
     have : 2 * m ≤ 2 * (n + m) := by omega
@@ -197,7 +200,7 @@ theorem dsuWork_le_mul (m n : ℕ) :
 /-- Linear-logarithmic upper bound: total work is bounded by $3(n + m) \cdot \text{Nat.size } n$
 whenever `Nat.size n ≥ 1`. -/
 theorem dsuWork_le_three_mul (m n : ℕ) (hn : 1 ≤ Nat.size n) :
-    dsuWork m n ≤ 3 * (n + m) * Nat.size n := by
+    dsuBound m n ≤ 3 * (n + m) * Nat.size n := by
   have h := dsuWork_le_mul m n
   have h_tail : n + m ≤ (n + m) * Nat.size n := by
     calc n + m = (n + m) * 1 := by ring

@@ -1,5 +1,9 @@
 # Causality & Logical Clocks (`Amort.Distributed.Causality`)
 
+> **Status: stub — not verified** (Phase 4 canon stub; Lamport clocks are proven,
+> but vector clock execution rules are specification stubs).
+
+
 ## 1. Mathematical Foundations
 
 In distributed systems, physical time cannot provide a reliable total ordering across distinct

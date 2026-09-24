@@ -11,6 +11,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Path Compression with Union-by-Rank
 
+> **Status: stub — not verified** (Phase 4 canon stub; rank invariants are modeled,
+> but operational sequence execution is a specification stub).
+
 This module formalizes Disjoint Set Union (DSU) augmented with path compression during `find`.
 It establishes the strict rank hierarchy invariant along parent pointers and proves the
 logarithmic rank bound:

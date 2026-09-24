@@ -1,5 +1,9 @@
 # Network Flow and the Max-Flow Min-Cut Theorem
 
+> **Status: stub — not verified** (Phase 3 canon stub; flow-cut duality is proven,
+> but augmenting-path execution and Edmonds-Karp bounds are specification stubs).
+
+
 ## Overview
 This module formalizes network flow on directed capacity networks, capacity constraints,
 flow conservation at intermediate vertices, $s$-$t$ cuts, residual networks, and proves the

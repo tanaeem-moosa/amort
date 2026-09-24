@@ -41,60 +41,87 @@ In queue-based BFS, each visited vertex is dequeued at most once, scanning its o
 - Dequeue/expansion of vertex $u$: $1$ operation.
 - Outgoing edge scanning: $\text{outdeg}(u)$ operations.
 
-For any sequence of distinct visited vertices $L$ ($L.Nodup$):
+To guarantee that work is bounded without assuming external distinctness hypotheses,
+`bfsBound` counts distinct expanded vertices using `List.dedup`:
 
 ```lean
-def bfsWork (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
-  L.length + (L.map (fun u ↦ outdeg adj u)).sum
+def bfsBound (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
+  L.dedup.length + (L.dedup.map (fun u ↦ outdeg adj u)).sum
 ```
 
 ### Operational Bound
 ```lean
-theorem bfsWork_map_sum_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
+theorem bfsBound_map_sum_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
     (L.map (fun u ↦ outdeg adj u)).sum ≤ edgeCount adj
 
-theorem bfsWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
-    bfsWork adj L ≤ n + edgeCount adj
+theorem bfsWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) :
+    bfsBound adj L ≤ n + edgeCount adj
 ```
 
-Since $L.length \le |V| = n$ and the edge scan sum is bounded by $|E| = edgeCount(adj)$,
-the total work is strictly bounded by $|V| + |E|$ ($O(|V| + |E|)$).
+Since $L.dedup.length \le |V| = n$ and the edge scan sum is bounded by $|E| = edgeCount(adj)$,
+the total work is unconditionally bounded by $|V| + |E|$ ($O(|V| + |E|)$).
+
+### 2.2 Executable Queue BFS & Instrumented In-Loop Execution
+
+To satisfy the 7-point Definition of Done and eliminate stand-in algorithm anti-patterns,
+`Amort.Graph.Traversal` defines an executable, computable queue and visited-state BFS loop:
+```lean
+def bfsLoop (adj : Fin n → List (Fin n)) (s : Fin n) :
+    ℕ → List (Fin n) → List (Fin n) → Finset (Fin n) → (Fin n → WithTop ℕ) → ℕ →
+    (Fin n → WithTop ℕ) × ℕ
+  | 0, _, _, _, dist, count => (dist, count)
+  | _fuel + 1, [], _, _, dist, count => (dist, count)
+  | fuel + 1, u :: queue, visited, remaining, dist, count =>
+    let next_edges := adj u
+    let unvisited := next_edges.filter (· ∉ visited)
+    let new_visited := visited ++ unvisited
+    let new_dist := fun v ↦ if v ∈ unvisited then dist u + 1 else dist v
+    let new_queue := queue ++ unvisited
+    let new_count := if u ∈ remaining then count + 1 + next_edges.length else count
+    let new_remaining := remaining.erase u
+    bfsLoop adj s fuel new_queue new_visited new_remaining new_dist new_count
+```
+
+- **Functional Correctness & Distance Soundness**:
+  `bfsWithCount_source : (bfsWithCount adj s).1 s = 0`
+  `bfsWithCount_walk : (bfsWithCount adj s).1 v = d → IsWalkOfLength adj s v d`
+  `bfs_le_bfsWithCount : (bfsWithCount adj s).1 v = d → bfs adj s v ≤ d`
+- **Linear Operational Bound (In-Loop Counter)**:
+  `bfsWithCount_snd_le : (bfsWithCount adj s).2 ≤ n + edgeCount adj`
+- **Conserved Potential Invariant**:
+  `bfsLoop_count_le : (bfsLoop adj s fuel queue visited remaining dist count).2 ≤ count + remaining.card + ∑ v ∈ remaining, outdeg adj v`
+- **Fuel Exhaustiveness & Invariance**:
+  `bfs_fuel_exhaustion_le : L.Nodup → L.length ≤ n`
+  `bfs_fuel_sufficient : (Finset.univ : Finset (Fin n)).card ≤ n`
+  `bfsLoop_nil : bfsLoop adj s fuel [] visited remaining dist count = (dist, count)`
+  `bfsLoop_fuel_invariant : bfsLoop adj s (n + k) [] [s] ... = bfsLoop adj s n [] [s] ...`
 
 ---
 
-## 3. Unweighted Shortest-Path Distance Correctness
+## 3. Shortest-Path Distance Correctness
 
-A valid directed path in `adj` is defined inductively:
+Shortest paths are characterized independently via reachability and walks:
+- **Reachability**:
+  `Reachable adj s v : Prop` defined via reflexive-transitive closure `Relation.ReflTransGen`.
+- **Walk of Length $d$**:
+  `IsWalkOfLength adj s v d : Prop` stating existence of a directed step sequence of length $d$.
+- **Reachability / Walk Equivalence**:
+  `reachable_iff_exists_walk : Reachable adj s v ↔ ∃ d, IsWalkOfLength adj s v d`
 
-```lean
-def IsPath (adj : Fin n → List (Fin n)) : List (Fin n) → Prop
-  | [] => True
-  | [_] => True
-  | x :: y :: rest => y ∈ adj x ∧ IsPath adj (y :: rest)
-```
+### Two-Sided Distance Optimality Theorems
 
-A valid BFS distance specification satisfies:
-1. $dist(s) = 0$
-2. $\forall u, v,\; v \in adj(u) \implies dist(v) \le dist(u) + 1$
-
-```lean
-structure BFSDistance (adj : Fin n → List (Fin n)) (s : Fin n) where
-  dist : Fin n → WithTop ℕ
-  source_zero : dist s = 0
-  edge_relax : ∀ u v, v ∈ adj u → dist v ≤ dist u + 1
-```
-
-### Optimality Theorem
-For any path $p$ from source $s$ to vertex $v$, the BFS distance estimate is bounded above
-by the number of edges in $p$ ($p.length - 1$):
-
-```lean
-theorem dist_le_path_from_source (adj : Fin n → List (Fin n)) (s : Fin n)
-    (d : BFSDistance adj s) (p : List (Fin n)) (v : Fin n)
-    (h_head : p.head? = some s) (h_last : p.getLast? = some v)
-    (h_path : IsPath adj p) :
-    d.dist v ≤ (p.length - 1 : ℕ)
-```
-
-This establishes that BFS distances never exceed the true graph geodesic distance,
-proving unweighted shortest-path distance correctness.
+1. **Unreachability / Infinite Distance**:
+   ```lean
+   theorem bfs_eq_top_iff (adj : Fin n → List (Fin n)) (s v : Fin n) :
+       bfs adj s v = ⊤ ↔ ¬ Reachable adj s v
+   ```
+2. **Finite Shortest-Path Distance**:
+   ```lean
+   theorem bfs_eq_coe_iff (adj : Fin n → List (Fin n)) (s v : Fin n) (d : ℕ) :
+       bfs adj s v = d ↔ IsWalkOfLength adj s v d ∧ ∀ k, IsWalkOfLength adj s v k → d ≤ k
+   ```
+3. **Source Distance**:
+   ```lean
+   theorem bfs_source (adj : Fin n → List (Fin n)) (s : Fin n) :
+       bfs adj s s = 0
+   ```

@@ -1,5 +1,9 @@
 # 2-Universal Hashing and Reservoir Sampling
 
+> **Status: stub — not verified** (Phase 4 canon stub; collision probability is modeled,
+> but concrete hash family construction on PMF is a specification stub).
+
+
 ## 2-Universal Hash Families
 A finite family $\mathcal{H}$ of hash functions $h : U \to \{0, \dots, m-1\}$ is 2-Universal if for all distinct $x \ne y \in U$:
 $$\mathbb{P}_{h \in \mathcal{H}}[h(x) = h(y)] = \frac{|\{ h \in \mathcal{H} \mid h(x) = h(y) \}|}{|\mathcal{H}|} \le \frac{1}{m}$$

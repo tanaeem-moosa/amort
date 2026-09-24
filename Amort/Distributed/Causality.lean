@@ -9,6 +9,9 @@ import Mathlib.Order.Basic
 /-!
 # Causality & Logical Clocks
 
+> **Status: stub — not verified** (Phase 4 canon stub; Lamport clocks are proven,
+> but vector clock execution rules are specification stubs).
+
 This module formalizes the foundational theory of causality and logical clocks in
 distributed systems following Lamport (1978), Mattern (1989), and Fidge (1988):
 1. Distributed events and Lamport's happens-before relation (`→`) as an irreflexive,

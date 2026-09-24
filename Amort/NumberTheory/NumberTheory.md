@@ -1,5 +1,9 @@
 # Number Theoretic Algorithms Architecture (`Amort.NumberTheory`)
 
+> **Status: partially verified / contains stubs** (Contains verified ModExp and Extended GCD
+> algorithms alongside Phase 3 Sieve stubs).
+
+
 This suite formalizes classical number theoretic algorithms in Lean 4:
 
 1. **Fast Modular Exponentiation (Binary Exponentiation)** (`Amort/NumberTheory/ModExp.lean`):

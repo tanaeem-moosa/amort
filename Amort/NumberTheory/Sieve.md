@@ -1,5 +1,9 @@
 # Sieve of Eratosthenes & Harmonic Complexity
 
+> **Status: stub — not verified** (Phase 3 canon stub; prime characterization is proven,
+> but operational array composite marking sieve is a specification stub).
+
+
 ## Correctness Theorem
 An integer $k \ge 2$ remains unmarked by the composite marking sieve iff $k$ is prime.
 - Composite numbers $k \ge 2$ have a prime factor $p$ with $k = m \cdot p$ and $m \ge 2$, hence marked.

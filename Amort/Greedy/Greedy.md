@@ -1,5 +1,9 @@
 # Greedy Algorithms & Linear Selection Architecture (`Amort.Greedy`)
 
+> **Status: partially verified / contains stubs** (Contains verified Interval Scheduling
+> algorithm alongside Phase 3 Huffman and BFPRT stubs).
+
+
 This suite formalizes classical greedy choice principles and deterministic linear selection in Lean 4:
 
 1. **Interval Scheduling / Activity Selection** (`Amort/Greedy/IntervalScheduling.lean`):

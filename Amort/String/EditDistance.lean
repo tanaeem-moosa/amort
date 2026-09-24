@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Amort Authors
 -/
 import Mathlib.Data.List.Basic
+import Mathlib.Tactic.Ring
 
 /-!
 # Edit Distance (Levenshtein Distance) Dynamic Programming
@@ -30,7 +31,7 @@ This module formalizes the Edit Distance (Levenshtein Distance) problem in Lean 
    - `editDistRec_le_alignmentCost`: Any valid alignment has cost `≥ editDistRec`.
    - `editDist_is_minimal_alignment`: Minimality of edit distance among all alignments.
 6. Bottom-up DP matrix:
-   - `editDistNextRow`: Row computation function.
+   - `editDistRow`: Wagner-Fischer row computation function.
    - `editDistTable`: The $(n + 1) \times (m + 1)$ matrix.
    - `editDistTableCount`: Operation counter bounded by $(n + 1) \cdot (m + 1)$.
 -/
@@ -274,29 +275,180 @@ theorem editDist_is_minimal_alignment (xs ys : List α) :
 
 /-! ### Bottom-Up Dynamic Programming Matrix -/
 
-/-- Auxiliary helper computing the next row of the Edit Distance DP matrix. -/
-def editDistNextRowAux : α → List α → List ℕ → ℕ → List ℕ
-  | _, [], _, _ => []
-  | x, y :: ys, p_diag :: p_up :: ps, left_val =>
-    let cost_sub := p_diag + (if x = y then 0 else 1)
-    let cost_del := p_up + 1
-    let cost_ins := left_val + 1
-    let curr := min cost_sub (min cost_del cost_ins)
-    curr :: editDistNextRowAux x ys (p_up :: ps) curr
-  | _, _ :: _, _, _ => []
+omit [DecidableEq α] in
+/-- Base row of the bottom-up Edit Distance DP matrix for empty suffix `[]`. -/
+def editDistBaseRow : List α → List ℕ
+  | [] => [0]
+  | _ :: ys => (ys.length + 1) :: editDistBaseRow ys
 
-/-- Computes the next row of the Edit Distance DP matrix. -/
-def editDistNextRow (i : ℕ) (x : α) (ys : List α) (prevRow : List ℕ) : List ℕ :=
-  i :: editDistNextRowAux x ys prevRow i
+omit [DecidableEq α] in
+/-- The base row of the Edit Distance DP matrix has length `ys.length + 1`. -/
+theorem editDistBaseRow_length (ys : List α) :
+    (editDistBaseRow ys).length = ys.length + 1 := by
+  induction ys with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistBaseRow, List.length_cons]
+    rw [ih]
+
+/-- Computes a row of the bottom-up Edit Distance DP matrix using Wagner-Fischer transitions
+from the previous row `prevRow` (representing suffix `xs`) and character `x`. -/
+def editDistRow (x : α) : List ℕ → ℕ → List α → List ℕ
+  | _, remX, [] => [remX]
+  | prevRow, remX, y :: ys =>
+    let rest := editDistRow x prevRow.tail remX ys
+    let rightVal := rest.headD remX
+    let down := prevRow.headD 0
+    let diag := prevRow.tail.headD 0
+    let cost := if x = y then 0 else 1
+    let cell := min (diag + cost) (min (down + 1) (rightVal + 1))
+    cell :: rest
+
+/-- Row computation preserves the length invariant `ys.length + 1`. -/
+theorem editDistRow_length (x : α) (prevRow : List ℕ) (remX : ℕ) (ys : List α) :
+    (editDistRow x prevRow remX ys).length = ys.length + 1 := by
+  induction ys generalizing prevRow with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistRow, List.length_cons]
+    rw [ih]
+
+/-- Auxiliary bottom-up table constructor accumulating rows from `xs = []` up to `xs`. -/
+def editDistTableAux (ys : List α) : List α → List (List ℕ)
+  | [] => [editDistBaseRow ys]
+  | x :: xs =>
+    let prevTable := editDistTableAux ys xs
+    let prevRow := prevTable.headD (editDistBaseRow ys)
+    (editDistRow x prevRow (xs.length + 1) ys) :: prevTable
 
 /-- Computes the full bottom-up `(n + 1) × (m + 1)` Edit Distance DP matrix. -/
 def editDistTable (xs ys : List α) : List (List ℕ) :=
-  let row0 := List.range (ys.length + 1)
-  (xs.foldl (fun (pair : List (List ℕ) × ℕ) x ↦
-    match pair.1 with
-    | [] => ([row0], 1)
-    | prev :: _ => ((editDistNextRow pair.2 x ys prev) :: pair.1, pair.2 + 1)
-  ) ([row0], 1)).1.reverse
+  editDistTableAux ys xs
+
+/-- The number of rows in the bottom-up Edit Distance DP matrix is `n + 1`. -/
+theorem editDistTable_length (xs ys : List α) :
+    (editDistTable xs ys).length = xs.length + 1 := by
+  induction xs with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [editDistTable, editDistTableAux, List.length_cons]
+    exact congrArg (· + 1) ih
+
+/-- Safe table lookup at row `i` and column `j`. -/
+def editDistTableEntry (xs ys : List α) (i j : ℕ) : ℕ :=
+  ((editDistTable xs ys)[i]?.bind (fun r ↦ r[j]?)).getD 0
+
+/-- Current head row of the table accumulator for suffix `xs`. -/
+def editDistCurrentRow (xs ys : List α) : List ℕ :=
+  (editDistTableAux ys xs).headD (editDistBaseRow ys)
+
+@[simp]
+theorem editDistCurrentRow_nil (ys : List α) :
+    editDistCurrentRow [] ys = editDistBaseRow ys :=
+  rfl
+
+@[simp]
+theorem editDistCurrentRow_cons (x : α) (xs ys : List α) :
+    editDistCurrentRow (x :: xs) ys =
+      editDistRow x (editDistCurrentRow xs ys) (xs.length + 1) ys :=
+  rfl
+
+omit [DecidableEq α] in
+/-- Tail of the base row equals the base row for `ys`. -/
+theorem editDistBaseRow_tail (y : α) (ys : List α) :
+    (editDistBaseRow (y :: ys)).tail = editDistBaseRow ys :=
+  rfl
+
+/-- Tail of an edited row equals the edited row for `ys`. -/
+theorem editDistRow_tail (x : α) (prevRow : List ℕ) (remX : ℕ) (y : α) (ys : List α) :
+    (editDistRow x prevRow remX (y :: ys)).tail =
+      editDistRow x prevRow.tail remX ys :=
+  rfl
+
+/-- Inductive tail identity across suffixes of `ys`. -/
+theorem editDistCurrentRow_tail (xs : List α) (y : α) (ys : List α) :
+    (editDistCurrentRow xs (y :: ys)).tail = editDistCurrentRow xs ys := by
+  induction xs with
+  | nil => exact editDistBaseRow_tail y ys
+  | cons x xs ih =>
+    simp only [editDistCurrentRow_cons]
+    rw [editDistRow_tail]
+    rw [ih]
+
+/-- The head entry of the bottom-up DP row matches `editDistRec xs ys`. -/
+theorem editDistCurrentRow_headD (xs ys : List α) :
+    (editDistCurrentRow xs ys).headD 0 = editDistRec xs ys := by
+  induction xs generalizing ys with
+  | nil =>
+    cases ys with
+    | nil =>
+      simp only [editDistCurrentRow_nil, editDistBaseRow, List.headD_cons]
+      rw [editDistRec_nil_left]
+      rfl
+    | cons y ys =>
+      simp only [editDistCurrentRow_nil, editDistBaseRow, List.headD_cons]
+      rw [editDistRec_nil_left]
+      rfl
+  | cons x xs ih_xs =>
+    induction ys with
+    | nil =>
+      simp only [editDistCurrentRow_cons, editDistRow, List.headD_cons]
+      rw [editDistRec_nil_right]
+      rfl
+    | cons y ys ih_ys =>
+      simp only [editDistCurrentRow_cons, editDistRow, List.headD_cons]
+      rw [editDistCurrentRow_tail]
+      have h_down : (editDistCurrentRow xs (y :: ys)).headD 0 = editDistRec xs (y :: ys) :=
+        ih_xs (y :: ys)
+      have h_diag : (editDistCurrentRow xs ys).headD 0 = editDistRec xs ys :=
+        ih_xs ys
+      have h_right : (editDistRow x (editDistCurrentRow xs ys) (xs.length + 1) ys).headD
+          (xs.length + 1) = editDistRec (x :: xs) ys := by
+        cases ys with
+        | nil =>
+          simp only [editDistRow, List.headD_cons]
+          rw [editDistRec_nil_right]
+          rfl
+        | cons y' ys' =>
+          simp only [editDistRow, List.headD_cons]
+          have h_rec := ih_ys
+          simp only [editDistCurrentRow_cons, editDistRow, List.headD_cons] at h_rec
+          exact h_rec
+      rw [h_down, h_diag, h_right]
+      rw [editDistRec_cons_cons]
+      congr 1
+      · rw [Nat.add_comm]
+      · congr 1
+        · rw [Nat.add_comm]
+        · rw [Nat.add_comm]
+
+/-- Correctness: top-left entry of the bottom-up DP table equals the recursive edit distance. -/
+theorem editDistTable_eval (xs ys : List α) :
+    editDistTableEntry xs ys 0 0 = editDistRec xs ys := by
+  dsimp [editDistTableEntry, editDistTable]
+  cases xs with
+  | nil =>
+    dsimp [editDistTableAux]
+    have h_head : (editDistBaseRow ys)[0]? = some ((editDistBaseRow ys).headD 0) := by
+      cases ys <;> rfl
+    simp only [List.getElem?_cons_zero, Option.bind_some]
+    rw [h_head]
+    dsimp
+    have h_eval := editDistCurrentRow_headD [] ys
+    exact h_eval
+  | cons x xs =>
+    dsimp [editDistTableAux]
+    change ((editDistCurrentRow (x :: xs) ys :: editDistTableAux ys xs)[0]?.bind
+      (fun r ↦ r[0]?)).getD 0 = editDistRec (x :: xs) ys
+    simp only [List.getElem?_cons_zero, Option.bind_some]
+    have h_head : (editDistCurrentRow (x :: xs) ys)[0]? =
+        some ((editDistCurrentRow (x :: xs) ys).headD 0) := by
+      simp only [editDistCurrentRow_cons]
+      cases ys <;> rfl
+    rw [h_head]
+    dsimp
+    have h_eval := editDistCurrentRow_headD (x :: xs) ys
+    exact h_eval
 
 omit [DecidableEq α] in
 /-- Concrete step counter: computing the `(n + 1) × (m + 1)` DP matrix takes
@@ -316,36 +468,135 @@ theorem editDistTableCount_le (xs ys : List α) :
     editDistTableCount xs ys ≤ (xs.length + 1) * (ys.length + 1) :=
   Nat.le_refl _
 
-/-- The number of rows in the bottom-up Edit Distance DP matrix is `n + 1`. -/
-theorem editDistTable_length (xs ys : List α) :
-    (editDistTable xs ys).length = xs.length + 1 := by
-  dsimp [editDistTable]
-  have h_fold : ∀ (acc : List (List ℕ)) (i : ℕ) (init_len : ℕ),
-      acc.length = init_len + 1 →
-      (xs.foldl (fun (pair : List (List ℕ) × ℕ) x ↦
-        match pair.1 with
-        | [] => ([List.range (ys.length + 1)], 1)
-        | prev :: _ => ((editDistNextRow pair.2 x ys prev) :: pair.1, pair.2 + 1))
-        (acc, i)).1.length = init_len + 1 + xs.length := by
-    intro acc i init_len hacc
-    induction xs generalizing acc i init_len with
-    | nil => simp [hacc]
-    | cons x xs ih =>
-      cases acc with
-      | nil => contradiction
-      | cons prev rest =>
-        simp only [List.foldl_cons]
-        have h_next : (editDistNextRow i x ys prev :: prev :: rest).length =
-            (init_len + 1) + 1 := by
-          simp only [List.length_cons] at hacc ⊢
-          omega
-        have := ih (editDistNextRow i x ys prev :: prev :: rest) (i + 1) (init_len + 1) h_next
-        simp only [this]
-        have : (x :: xs).length = xs.length + 1 := rfl
-        omega
-  have h_base : [List.range (ys.length + 1)].length = 0 + 1 := rfl
-  have h := h_fold [List.range (ys.length + 1)] 1 0 h_base
-  simp only [List.length_reverse, h]
-  omega
+omit [DecidableEq α] in
+/-- Computes base row with instrumented cell initialization count. -/
+def editDistBaseRowWithCount : List α → List ℕ × ℕ
+  | [] => ([0], 1)
+  | _ :: ys =>
+    let (rest, c) := editDistBaseRowWithCount ys
+    ((ys.length + 1) :: rest, c + 1)
+
+omit [DecidableEq α] in
+/-- First projection of base row generator matches `editDistBaseRow`. -/
+theorem editDistBaseRowWithCount_fst (ys : List α) :
+    (editDistBaseRowWithCount ys).1 = editDistBaseRow ys := by
+  induction ys with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistBaseRowWithCount, editDistBaseRow]
+    rw [ih]
+
+omit [DecidableEq α] in
+/-- Second projection of base row generator equals `ys.length + 1`. -/
+theorem editDistBaseRowWithCount_snd (ys : List α) :
+    (editDistBaseRowWithCount ys).2 = ys.length + 1 := by
+  induction ys with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistBaseRowWithCount, List.length_cons]
+    rw [ih]
+
+/-- Computes a row with instrumented cell operation count, performing actual
+Wagner-Fischer transitions at each cell. -/
+def editDistRowWithCount (x : α) : List ℕ → ℕ → List α → List ℕ × ℕ
+  | _, remX, [] => ([remX], 1)
+  | prevRow, remX, y :: ys =>
+    let (rest, c) := editDistRowWithCount x prevRow.tail remX ys
+    let rightVal := rest.headD remX
+    let down := prevRow.headD 0
+    let diag := prevRow.tail.headD 0
+    let cost := if x = y then 0 else 1
+    let cell := min (diag + cost) (min (down + 1) (rightVal + 1))
+    (cell :: rest, c + 1)
+
+/-- First projection of instrumented row matches `editDistRow`. -/
+theorem editDistRowWithCount_fst (x : α) (prevRow : List ℕ) (remX : ℕ) (ys : List α) :
+    (editDistRowWithCount x prevRow remX ys).1 = editDistRow x prevRow remX ys := by
+  induction ys generalizing prevRow with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistRowWithCount, editDistRow]
+    rw [ih prevRow.tail]
+
+/-- Second projection of instrumented row matches `ys.length + 1`. -/
+theorem editDistRowWithCount_snd (x : α) (prevRow : List ℕ) (remX : ℕ) (ys : List α) :
+    (editDistRowWithCount x prevRow remX ys).2 = ys.length + 1 := by
+  induction ys generalizing prevRow with
+  | nil => rfl
+  | cons y ys ih =>
+    simp only [editDistRowWithCount, List.length_cons]
+    rw [ih prevRow.tail]
+
+/-- Auxiliary row accumulator for table generation with step counting. -/
+def editDistTableWithCountAux (ys : List α) : List α → List (List ℕ) × ℕ
+  | [] =>
+    let (row, c) := editDistBaseRowWithCount ys
+    ([row], c)
+  | x :: xs =>
+    let (prevTable, c_prev) := editDistTableWithCountAux ys xs
+    let prevRow := prevTable.headD (editDistBaseRow ys)
+    let (row, c_row) := editDistRowWithCount x prevRow (xs.length + 1) ys
+    (row :: prevTable, c_prev + c_row)
+
+/-- Full table generator returning both the DP matrix and accumulated cell computations. -/
+def editDistTableWithCount (xs ys : List α) : List (List ℕ) × ℕ :=
+  editDistTableWithCountAux ys xs
+
+/-- First projection of auxiliary accumulator produces the exact DP table. -/
+theorem editDistTableWithCountAux_fst (xs ys : List α) :
+    (editDistTableWithCountAux ys xs).1 = editDistTableAux ys xs := by
+  induction xs with
+  | nil =>
+    simp only [editDistTableWithCountAux, editDistTableAux]
+    rw [editDistBaseRowWithCount_fst]
+  | cons x xs ih =>
+    simp only [editDistTableWithCountAux, editDistTableAux]
+    rw [ih, editDistRowWithCount_fst]
+
+/-- First projection of instrumented table generation matches `editDistTable`. -/
+theorem editDistTableWithCount_fst (xs ys : List α) :
+    (editDistTableWithCount xs ys).1 = editDistTable xs ys :=
+  editDistTableWithCountAux_fst xs ys
+
+/-- Step counter of table generation matches row product `(k + 1) * (m + 1)`. -/
+theorem editDistTableWithCountAux_snd (xs ys : List α) :
+    (editDistTableWithCountAux ys xs).2 = (xs.length + 1) * (ys.length + 1) := by
+  induction xs with
+  | nil =>
+    simp only [editDistTableWithCountAux, editDistBaseRowWithCount_snd, List.length_nil]
+    omega
+  | cons x xs ih =>
+    simp only [editDistTableWithCountAux, editDistRowWithCount_snd, List.length_cons]
+    have h_succ : (xs.length + 1 + 1) * (ys.length + 1) =
+        (xs.length + 1) * (ys.length + 1) + (ys.length + 1) :=
+      Nat.add_one_mul (xs.length + 1) (ys.length + 1)
+    rw [ih, h_succ]
+
+/-- Second projection of table generation equals `(n + 1) * (m + 1)`. -/
+theorem editDistTableWithCount_snd (xs ys : List α) :
+    (editDistTableWithCount xs ys).2 = (xs.length + 1) * (ys.length + 1) :=
+  editDistTableWithCountAux_snd xs ys
+
+/-- Full instrumented Levenshtein edit distance returning the computed distance from the
+table and the actual executed cell operation count. -/
+def editDistWithCount (xs ys : List α) : ℕ × ℕ :=
+  (editDistTableEntry xs ys 0 0, (editDistTableWithCount xs ys).2)
+
+/-- First projection matches the exact recursive edit distance via table evaluation. -/
+theorem editDistWithCount_fst (xs ys : List α) :
+    (editDistWithCount xs ys).1 = editDistRec xs ys := by
+  dsimp [editDistWithCount]
+  exact editDistTable_eval xs ys
+
+/-- Second projection matches the table cell count $(n + 1) \cdot (m + 1)$. -/
+theorem editDistWithCount_snd (xs ys : List α) :
+    (editDistWithCount xs ys).2 = (xs.length + 1) * (ys.length + 1) := by
+  dsimp [editDistWithCount]
+  exact editDistTableWithCount_snd xs ys
+
+/-- Second projection is bounded by $(n + 1) \cdot (m + 1)$. -/
+theorem editDistWithCount_snd_le (xs ys : List α) :
+    (editDistWithCount xs ys).2 ≤ (xs.length + 1) * (ys.length + 1) := by
+  rw [editDistWithCount_snd]
 
 end Amort.String

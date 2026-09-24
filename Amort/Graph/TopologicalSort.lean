@@ -8,6 +8,9 @@ import Amort.Graph.Traversal
 /-!
 # Topological Sort and Kahn's Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; topological order acyclicity is
+> proven, but Kahn queue algorithm execution is a specification stub).
+
 This module formalizes Kahn's queue-based in-degree zero algorithm for topological sorting of
 directed graphs on vertex set `Fin n`. It establishes the operational work bound
 $\text{Work} \le |V| + |E|$ ($O(|V| + |E|)$) and proves mathematical correctness: any valid
@@ -22,7 +25,7 @@ contains no directed cycles (is a Directed Acyclic Graph, or DAG).
    - 1 step for outputting / dequeuing $u$.
    - $\text{outdeg}(u)$ steps for scanning outgoing edges and decrementing neighbors' in-degrees.
    Across any sequence of distinct visited vertices $L$ ($L.Nodup$):
-   $$\text{kahnWork}(L) = |L| + \sum_{u \in L} \text{outdeg}(u) \le |V| + |E|$$
+   $$\text{kahnBound}(L) = |L| + \sum_{u \in L} \text{outdeg}(u) \le |V| + |E|$$
 
 2. **Topological Sort Correctness**:
    A permutation $L$ of `Fin n` is a valid topological sort (`IsTopologicalSort`) if:
@@ -35,7 +38,7 @@ contains no directed cycles (is a Directed Acyclic Graph, or DAG).
    - No directed cycles of any length $\ge 2$ can exist (`toposort_no_cycle`).
 
 ## Key Definitions and Theorems
-- `Amort.Graph.kahnWork`: Total work performed across vertex list $L$.
+- `Amort.Graph.kahnBound`: Total work performed across vertex list $L$.
 - `Amort.Graph.kahnWork_le`: Total Kahn work bounded by $|V| + |E|$.
 - `Amort.Graph.IsTopologicalSort`: Correctness predicate for topological ordering.
 - `Amort.Graph.toposort_no_backward_edge`: Forbids backward edges.
@@ -54,13 +57,13 @@ variable {n : ℕ}
 
 /-- Work performed by Kahn's algorithm processing vertex sequence `L`:
 1 step per dequeued vertex plus `outdeg u` steps to decrement neighbors' in-degrees. -/
-def kahnWork (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
-  bfsWork adj L
+def kahnBound (adj : Fin n → List (Fin n)) (L : List (Fin n)) : ℕ :=
+  bfsBound adj L
 
 /-- Kahn's algorithm total work on any distinct sequence of vertices is bounded by `|V| + |E|`. -/
 theorem kahnWork_le (adj : Fin n → List (Fin n)) (L : List (Fin n)) (hL : L.Nodup) :
-    kahnWork adj L ≤ n + edgeCount adj :=
-  bfsWork_le adj L hL
+    kahnBound adj L ≤ n + edgeCount adj :=
+  bfsWork_le adj L
 
 /-! ### Topological Sort Definition and Correctness -/
 

@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Priority Queues & Binary Heaps
 
+> **Status: stub — not verified** (Phase 3 canon stub; build-heap summation is proven,
+> but array heap siftUp/siftDown operations are specification stubs).
+
 This module formalizes binary heaps, the min-heap order invariant, logarithmic height,
 sift-down and sift-up step bounds, the linear build-heap theorem, and heapsort complexity.
 
@@ -52,10 +55,10 @@ sift-down and sift-up step bounds, the linear build-heap theorem, and heapsort c
 - `Amort.DataStructure.min_heap_root_le`: Root minimality theorem.
 - `Amort.DataStructure.geomSum`: Shifted geometric series $\sum_{h=0}^k h \cdot 2^{k-h}$.
 - `Amort.DataStructure.geomSum_le`: Upper bound $\le 2^{k+1}$.
-- `Amort.DataStructure.buildHeapWork`: Build-heap operational summation.
+- `Amort.DataStructure.buildHeapBound`: Build-heap operational summation.
 - `Amort.DataStructure.buildHeap_linear_bound`: Linear bound $\le 2n$ for all $k$.
 - `Amort.DataStructure.buildHeap_size_bound`: Linear bound for $k = \text{Nat.size } n$.
-- `Amort.DataStructure.heapsortTotalWork`: Total heapsort operational model.
+- `Amort.DataStructure.heapsortTotalBound`: Total heapsort operational model.
 - `Amort.DataStructure.heapsortTotalWork_le`: Linear-logarithmic bound $O(n \log n)$.
 - `Amort.DataStructure.isSortedList`: Predicate for sorted lists.
 -/
@@ -250,15 +253,15 @@ theorem geomSum_le (k : ℕ) : geomSum k ≤ 2^(k + 1) := by
 
 /-- Total operational work for linear build-heap on `n` elements with maximum
 height index `k`:
-$$\text{buildHeapWork}(n, k) = \sum_{h=0}^k \lfloor n / 2^h \rfloor \cdot h$$ -/
-def buildHeapWork (n k : ℕ) : ℕ :=
+$$\text{buildHeapBound}(n, k) = \sum_{h=0}^k \lfloor n / 2^h \rfloor \cdot h$$ -/
+def buildHeapBound (n k : ℕ) : ℕ :=
   ∑ h ∈ range (k + 1), (n / 2^h) * h
 
 /-- Linear build-heap theorem: for any element count `n` and height bound `k`,
 the total work is bounded by `2 * n`. -/
-theorem buildHeap_linear_bound (n k : ℕ) : buildHeapWork n k ≤ 2 * n := by
+theorem buildHeap_linear_bound (n k : ℕ) : buildHeapBound n k ≤ 2 * n := by
   rcases eq_or_ne n 0 with rfl | _
-  · simp [buildHeapWork]
+  · simp [buildHeapBound]
   have h_term : ∀ h ∈ range (k + 1),
       2^k * ((n / 2^h) * h) ≤ n * (h * 2^(k - h)) := by
     intro h hh
@@ -273,8 +276,8 @@ theorem buildHeap_linear_bound (n k : ℕ) : buildHeapWork n k ≤ 2 * n := by
         rw [hpow]
         ring
       _ ≤ n * (h * 2^(k - h)) := Nat.mul_le_mul_right _ hdiv
-  have h_sum : 2^k * buildHeapWork n k ≤ n * geomSum k := by
-    dsimp [buildHeapWork, geomSum]
+  have h_sum : 2^k * buildHeapBound n k ≤ n * geomSum k := by
+    dsimp [buildHeapBound, geomSum]
     rw [Finset.mul_sum, Finset.mul_sum]
     exact sum_range_le_sum_range _ _ (k + 1) h_term
   have h_geom := geomSum_le k
@@ -284,35 +287,35 @@ theorem buildHeap_linear_bound (n k : ℕ) : buildHeapWork n k ≤ 2 * n := by
       ring
     rw [← this]
     exact Nat.mul_le_mul_left n h_geom
-  have h_comb : 2^k * buildHeapWork n k ≤ 2^k * (2 * n) := h_sum.trans h_bound
+  have h_comb : 2^k * buildHeapBound n k ≤ 2^k * (2 * n) := h_sum.trans h_bound
   have hpos : 0 < 2^k := by positivity
   exact Nat.le_of_mul_le_mul_left h_comb hpos
 
 /-- Setting `k = Nat.size n` bounds build-heap work on `n` elements by `2 * n`. -/
-theorem buildHeap_size_bound (n : ℕ) : buildHeapWork n (Nat.size n) ≤ 2 * n :=
+theorem buildHeap_size_bound (n : ℕ) : buildHeapBound n (Nat.size n) ≤ 2 * n :=
   buildHeap_linear_bound n (Nat.size n)
 
 /-! ### Heapsort Operational Complexity -/
 
 /-- Total comparison work for extracting `n` elements from a binary heap of size `n`:
 each extraction performs at most `2 * Nat.size n` child comparisons. -/
-def heapsortExtractionWork (n : ℕ) : ℕ :=
+def heapsortExtractionBound (n : ℕ) : ℕ :=
   2 * n * Nat.size n
 
 /-- Combined total operations for Heapsort on `n` elements:
 linear build-heap phase plus $n$ logarithmic extractions. -/
-def heapsortTotalWork (n : ℕ) : ℕ :=
-  2 * n + heapsortExtractionWork n
+def heapsortTotalBound (n : ℕ) : ℕ :=
+  2 * n + heapsortExtractionBound n
 
 /-- Total heapsort work is bounded by `2 * n + 2 * n * Nat.size n`. -/
 theorem heapsortTotalWork_eq (n : ℕ) :
-    heapsortTotalWork n = 2 * n + 2 * n * Nat.size n :=
+    heapsortTotalBound n = 2 * n + 2 * n * Nat.size n :=
   rfl
 
 /-- Heapsort comparison complexity is bounded by `4 * n * Nat.size n + 2`. -/
 theorem heapsortTotalWork_le (n : ℕ) :
-    heapsortTotalWork n ≤ 4 * n * Nat.size n + 2 := by
-  dsimp [heapsortTotalWork, heapsortExtractionWork]
+    heapsortTotalBound n ≤ 4 * n * Nat.size n + 2 := by
+  dsimp [heapsortTotalBound, heapsortExtractionBound]
   have h_le : 2 * n ≤ 2 * n * Nat.size n + 2 := by
     rcases eq_or_ne n 0 with rfl | _
     · omega

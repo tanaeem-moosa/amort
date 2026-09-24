@@ -10,6 +10,9 @@ import Mathlib.Data.Fintype.Prod
 /-!
 # Floyd-Warshall All-Pairs Shortest Paths
 
+> **Status: stub — not verified** (Phase 3 canon stub; state-space model is formulated,
+> but bottom-up shortest path dynamic programming is a specification stub).
+
 This module formalizes the textbook Floyd-Warshall dynamic programming algorithm for all-pairs
 shortest paths on finite directed graphs with vertex set `Fin n`, and establishes its $O(n^3)$
 operational complexity in the `Amort.Recurrence.DP` state-space complexity framework.

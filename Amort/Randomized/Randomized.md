@@ -1,5 +1,9 @@
 # Randomized Algorithms & Probabilistic Complexity in Lean 4
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Expected Quicksort, Karger Min-Cut, and
+> Universal Hashing algorithms are specification stubs awaiting full verification).
+
+
 This module family formalizes probabilistic complexity analysis and randomized algorithms:
 
 1. **Expected Complexity of Randomized Quicksort** (`Quicksort.lean`):

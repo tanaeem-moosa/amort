@@ -93,10 +93,10 @@ theorem isBigO_kahnWork_atTop :
 
 /-! ### Disjoint Set Union (DSU) Asymptotics -/
 
-/-- DSU $m$ operations on $n$ elements is $O((n + m) \log n)$ under `Filter.atTop`
-on $\mathbb{N} \times \mathbb{N}$. -/
+/-- **Stub Model**: DSU operation complexity is modeled on closed-form formula
+`dsuBound` awaiting instrumented execution implementation. -/
 theorem isBigO_dsuWork_mul_size_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((dsuWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((dsuBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.2 + p.1) * Nat.size p.2 : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 3 ?_
   rw [Filter.eventually_atTop]
@@ -107,7 +107,7 @@ theorem isBigO_dsuWork_mul_size_atTop :
     have : 0 < n := by omega
     exact Nat.size_pos.mpr this
   have h_le := dsuWork_le_three_mul m n hn_size
-  have h_le_real : ((dsuWork m n : ℕ) : ℝ) ≤ ((3 * (n + m) * Nat.size n : ℕ) : ℝ) := by
+  have h_le_real : ((dsuBound m n : ℕ) : ℝ) ≤ ((3 * (n + m) * Nat.size n : ℕ) : ℝ) := by
     exact_mod_cast h_le
   have h_ring : ((3 * (n + m) * Nat.size n : ℕ) : ℝ) =
       3 * (((n + m) * Nat.size n : ℕ) : ℝ) := by
@@ -117,11 +117,11 @@ theorem isBigO_dsuWork_mul_size_atTop :
 
 /-! ### Kruskal's Algorithm Asymptotics -/
 
-/-- Kruskal total operational complexity is $O((6 \log |V| + 3) |E| + |V|)$
-under any filter where $\text{Nat.size } |E| \le 2 \cdot \text{Nat.size } |V| + 1$. -/
+/-- **Stub Model**: Kruskal MST operational complexity is modeled on closed-form
+formula `kruskalTotalBound` awaiting instrumented execution implementation. -/
 theorem isBigO_kruskalTotalWork_of_size_le (l : Filter (ℕ × ℕ))
     (h_size : ∀ᶠ p in l, Nat.size p.2 ≤ 2 * Nat.size p.1 + 1) :
-    (fun (p : ℕ × ℕ) ↦ (((kruskalTotalWork p.1 p.2 : ℕ) : ℝ))) =O[l]
+    (fun (p : ℕ × ℕ) ↦ (((kruskalTotalBound p.1 p.2 : ℕ) : ℝ))) =O[l]
       (fun p ↦ (((6 * Nat.size p.1 + 3) * p.2 + p.1 : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 1 ?_
   filter_upwards [h_size] with ⟨numV, numE⟩ hE

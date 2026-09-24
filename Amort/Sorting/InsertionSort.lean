@@ -198,4 +198,55 @@ theorem insertionSortWithCount_snd_le_sq (l : List α) :
   rw [insertionSortWithCount_snd]
   exact insertionSortCount_le_sq r l
 
+/-! ### In-Repo Correctness: Permutation and Sortedness -/
+
+/-- Permutation preservation for `orderedInsert`: inserting `a` into `l` produces
+a list that is a permutation of `a :: l`. -/
+theorem orderedInsert_perm (a : α) (l : List α) :
+    orderedInsert r a l ~ a :: l := by
+  induction l with
+  | nil => rfl
+  | cons b l ih =>
+    rw [orderedInsert_cons]
+    split_ifs with h
+    · rfl
+    · have h_swap : b :: orderedInsert r a l ~ b :: a :: l := ih.cons b
+      have h_trans : b :: a :: l ~ a :: b :: l := Perm.swap a b l
+      exact h_swap.trans h_trans
+
+/-- Permutation preservation for `insertionSort`: the sorted list is a permutation
+of the input list. -/
+theorem insertionSort_perm (l : List α) :
+    insertionSort r l ~ l := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [insertionSort_cons]
+    have h1 := orderedInsert_perm r a (insertionSort r l)
+    have h2 := ih.cons a
+    exact h1.trans h2
+
+/-- Instrumented `insertionSortWithCount` produces a permutation of the input list. -/
+theorem insertionSortWithCount_perm (l : List α) :
+    (insertionSortWithCount r l).1 ~ l := by
+  rw [insertionSortWithCount_fst]
+  exact insertionSort_perm r l
+
+/-- Sorting invariant: `orderedInsert` preserves sortedness. -/
+theorem pairwise_orderedInsert [Std.Total r] [IsTrans α r]
+    (a : α) (l : List α) (hl : l.Pairwise r) :
+    (orderedInsert r a l).Pairwise r :=
+  hl.orderedInsert a l
+
+/-- In-repo correctness theorem: `insertionSort` produces a sorted list. -/
+theorem insertionSort_sorted [Std.Total r] [IsTrans α r]
+    (l : List α) : (insertionSort r l).Pairwise r :=
+  pairwise_insertionSort r l
+
+/-- Instrumented `insertionSortWithCount` produces a sorted list. -/
+theorem insertionSortWithCount_fst_sorted [Std.Total r] [IsTrans α r]
+    (l : List α) : (insertionSortWithCount r l).1.Pairwise r := by
+  rw [insertionSortWithCount_fst]
+  exact insertionSort_sorted r l
+
 end List

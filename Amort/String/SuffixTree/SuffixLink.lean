@@ -9,6 +9,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Suffix Links and Depth Invariants in Suffix Trees
 
+> **Status: stub — not verified** (Phase 4 canon stub; suffix link depth is modeled,
+> but link construction is a specification stub).
+
 This module formalizes suffix links in compact suffix trees:
 1. **Suffix Link Mapping**: For every internal node $u$ representing string $a \beta$
    (where $a \in \Sigma$ and $\beta \in \Sigma^*$), its suffix link $\text{link}(u)$ points

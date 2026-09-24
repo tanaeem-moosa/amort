@@ -56,6 +56,24 @@ theorem isBigO_modExpMulSteps_log :
       (fun b : ℕ ↦ Real.log (b : ℝ)) :=
   isBigO_modExpMulSteps_size.trans Amort.Recurrence.isBigO_size_log
 
+/-- Instrumented modular exponentiation multiplications are asymptotically
+$O(\text{Nat.size } b)$ under `Filter.atTop` on the exponent. -/
+theorem isBigO_modExpWithCount_snd_size (a m : ℕ) :
+    (fun b : ℕ ↦ (((modExpWithCount a b m).2 : ℕ) : ℝ)) =O[Filter.atTop]
+      (fun b : ℕ ↦ ((Nat.size b : ℕ) : ℝ)) := by
+  refine IsBigO.of_bound (2 : ℝ) ?_
+  rw [Filter.eventually_atTop]
+  refine ⟨0, fun b _ ↦ ?_⟩
+  simp only [Real.norm_eq_abs, Nat.abs_cast]
+  have h := modExpWithCount_snd_le a b m
+  have h_real : ((((modExpWithCount a b m).2 : ℕ) : ℝ) ≤ ((2 * Nat.size b : ℕ) : ℝ)) := by
+    exact_mod_cast h
+  have h_assoc : ((2 * Nat.size b : ℕ) : ℝ) = 2 * ((Nat.size b : ℕ) : ℝ) := by
+    push_cast
+    ring
+  rw [h_assoc] at h_real
+  exact h_real
+
 /-- Extended Euclidean division steps are asymptotically $O(\text{Nat.size}(\min a\ b))$
 under `Filter.comap` towards `Filter.atTop` on the minimum input. -/
 theorem isBigO_extGCDSteps_comap_min_atTop :
@@ -79,14 +97,14 @@ theorem isBigO_extGCDSteps_comap_min_atTop :
 /-- Sieve of Eratosthenes work is asymptotically $O(n \cdot \text{Nat.size } n)$
 under `Filter.atTop` on $\mathbb{N}$. -/
 theorem isBigO_sieveWork_mul_size :
-    (fun n : ℕ ↦ ((sieveWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((sieveBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (2 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := sieveWork_le n hn
-  have h_real : (((sieveWork n : ℕ) : ℝ) ≤ ((2 * n * Nat.size n : ℕ) : ℝ)) := by
+  have h_real : (((sieveBound n : ℕ) : ℝ) ≤ ((2 * n * Nat.size n : ℕ) : ℝ)) := by
     exact_mod_cast h
   have h_assoc : ((2 * n * Nat.size n : ℕ) : ℝ) = 2 * ((n * Nat.size n : ℕ) : ℝ) := by
     push_cast

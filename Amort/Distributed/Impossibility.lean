@@ -8,6 +8,9 @@ import Mathlib.Data.Finset.Basic
 /-!
 # Impossibility Theorems: CAP & Two Generals
 
+> **Status: stub — not verified** (Phase 4 canon stub; two-node CAP toy model is proven,
+> but full asynchronous consensus impossibility is a specification stub).
+
 This module formalizes two foundational impossibility theorems in distributed computing:
 1. **Gilbert-Lynch CAP Theorem (2002)**:
    In an asynchronous network with a network partition separating nodes into disconnected

@@ -11,6 +11,9 @@ import Mathlib.Data.Fintype.BigOperators
 /-!
 # Dijkstra's Single-Source Shortest Paths Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; specification formulas and invariants
+> awaiting executable priority queue implementation).
+
 This module formalizes Dijkstra's algorithm for directed graphs with non-negative edge weights
 on finite vertex sets `Fin n`. It establishes:
 1. Shortest path distance specifications and path weights.
@@ -41,13 +44,13 @@ on finite vertex sets `Fin n`. It establishes:
    Using a binary min-heap priority queue over $|V| = n$ vertices:
    - $n$ extract-min operations, each taking at most $\text{Nat.size } n$ steps.
    - $|E| = m$ decrease-key / relaxation operations, each taking at most $\text{Nat.size } n$ steps.
-   - Total operational steps: $\text{dijkstraWork}(n, m) \le (n + m) \cdot \text{Nat.size } n$.
+   - Total operational steps: $\text{dijkstraBound}(n, m) \le (n + m) \cdot \text{Nat.size } n$.
 
 ## Key Definitions and Theorems
 - `Amort.Graph.pathWeight`: Cumulative weight of a sequence of vertices.
 - `Amort.Graph.DijkstraSpec`: Shortest-path distance specification.
 - `Amort.Graph.dijkstra_greedy_choice`: Greedy choice correctness theorem.
-- `Amort.Graph.dijkstraWork`: Total operational work function.
+- `Amort.Graph.dijkstraBound`: Total operational work function.
 - `Amort.Graph.dijkstra_work_le`: Linear-logarithmic step bound.
 -/
 
@@ -99,8 +102,7 @@ theorem dist_le_pathWeight (w : Fin n → Fin n → WithTop ℕ) (s : Fin n)
     subst h1
     have ih := dist_le_pathWeight w s spec (y :: rest) y v rfl h2
     have h_tri := spec.triangle x y
-    have h_step := withTop_add_le_add_right (spec.dist y) (spec.dist x + w x y)
-      (pathWeight w (y :: rest)) h_tri
+    have h_step := add_le_add_left h_tri (pathWeight w (y :: rest))
     have h_assoc : (spec.dist x + w x y) + pathWeight w (y :: rest) =
         spec.dist x + (w x y + pathWeight w (y :: rest)) := add_assoc _ _ _
     have h_pw : w x y + pathWeight w (y :: rest) = pathWeight w (x :: y :: rest) := rfl
@@ -153,14 +155,14 @@ theorem dijkstra_greedy_choice {w : Fin n → Fin n → WithTop ℕ}
 and `m` edges using a binary min-heap priority queue:
 - `n` extract-min operations, each taking at most `Nat.size n` steps.
 - `m` decrease-key / relaxation operations, each taking at most `Nat.size n` steps. -/
-def dijkstraWork (n : ℕ) (m : ℕ) : ℕ := (n + m) * Nat.size n
+def dijkstraBound (n : ℕ) (m : ℕ) : ℕ := (n + m) * Nat.size n
 
 /-- Dijkstra work bound: total operations are bounded by `(n + m) * Nat.size n`. -/
-theorem dijkstra_work_le (n m : ℕ) : dijkstraWork n m ≤ (n + m) * Nat.size n :=
+theorem dijkstra_work_le (n m : ℕ) : dijkstraBound n m ≤ (n + m) * Nat.size n :=
   le_refl _
 
 /-- In terms of explicit graph degrees, total Dijkstra work across vertices and edge list. -/
 theorem dijkstra_work_graph_le (adj : Fin n → List (Fin n)) :
-    dijkstraWork n (edgeCount adj) = (n + edgeCount adj) * Nat.size n := rfl
+    dijkstraBound n (edgeCount adj) = (n + edgeCount adj) * Nat.size n := rfl
 
 end Amort.Graph

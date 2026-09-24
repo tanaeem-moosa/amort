@@ -470,3 +470,132 @@ Integrity mode: development
 - [ ] Byzantine $N \le 3f$ impossibility and $N \ge 3f + 1$ quorum intersection are proven.
 - [ ] Chandy-Lamport consistent cut property is proven.
 - [ ] All modules are exported in `Amort.lean` and documented.
+
+## 2026-09-23T04:09:22Z
+
+Systematically resolve the proof gaps, vacuous definitions, and anti-patterns identified in `proof_review.md` across the Lean 4 formalization repository (`Amort/`), upgrading modules to satisfy the strict Definition of Done.
+
+Working directory: `/workspace/amort`
+Integrity mode: development
+
+Reference: `proof_review.md` in repository root.
+
+## Requirements
+
+### R1. Phase 0 Guardrails & Anti-Pattern Elimination
+Establish `Amort/Audit.lean` validating `#print axioms` on headline theorems, and eliminate recurring anti-patterns (A1–A10):
+- Replace closed-form `…Work` formulas (A1) with real instrumented execution counters (`fooWithCount x : Output × ℕ` where `(fooWithCount x).1 = foo x`).
+- Eliminate unconstructed hypotheses and assumed structure fields (A2).
+- Ensure correctness and cost theorems operate on the real algorithm, not stand-in functions (A3).
+- Remove tautological or near-tautological theorems (A4).
+- Strengthen one-sided specifications to both soundness and optimality (A5).
+- Ensure fuel usage includes an exhaustiveness theorem on valid inputs (A6).
+- Ensure `IsBigO` left-hand sides represent actual instrumented execution runs rather than self-formulas (A7).
+
+### R2. Phase 1 Pilot Nodes Upgrade
+Bring all Phase 1 pilot nodes to solid (✅) status matching the Definition of Done:
+- `GCD/EuclideanGCD.lean`: Implement `euclidGcd` and `euclidGcdWithSteps`, proving `euclidGcd = Nat.gcd` and step equality.
+- `Sorting/InsertionSort.lean` & `Sorting/MergeSort.lean`: In-repo `sorted` and `perm` proofs; replace internal `splitInTwo` dependency with custom `split`.
+- `DataStructure/DynamicArray.lean`: Provide an end-to-end bound from `initOne` with no assumed hypotheses.
+- `DataStructure/TwoStackQueue.lean`: Prove FIFO correctness for `pop`.
+- `String/KMP.lean`: Implement full `computePi` with fallback loop, prove `computePi_eq_piSpec`, implement pattern scanning loop, and link step counting and correctness to the same term.
+- `Recurrence/BinarySearch.lean`: Implement executable binary search over sorted arrays, prove `found ↔ x ∈ a`, count probes, and connect to recurrence.
+
+### R3. Phase 2 Missing Pieces
+Resolve missing components in partially solid modules:
+- `String/LCS.lean`: Add the optimality half (`∀ s, IsCommonSubsequence s xs ys → s.length ≤ lcsRec xs ys`), link bottom-up table to recursion, and count cell operations.
+- `String/EditDistance.lean` & `DP/Knapsack.lean`: Formally prove bottom-up dynamic programming tables equal their recursive definitions and instrument table fill counts.
+- `NumberTheory/ModExp.lean`: Link step counting directly to `modExpAux`.
+- `Greedy/IntervalScheduling.lean`: Replace closed-form work with genuine scan steps plus sort cost.
+- `Sorting/Quicksort.lean`: Link `quicksortWithCount` worst-case bound to actual comparison counts.
+- `Graph/BellmanFord.lean`: Support `ℤ` weights and prove that `n - 1` passes yield shortest paths.
+- `Graph/Traversal.lean`: Implement executable BFS with queue and visited state, proving distance optimality and `O(V + E)` step bounds.
+
+### R4. Phases 3 & 4 Core & Advanced Rebuilds
+Iterate through the core and advanced modules as scoped in `proof_review.md`:
+- DSU: Implement union-by-rank, prove rank bounds, and define genuine unbounded $\alpha(n)$.
+- Graph algorithms: Implement Dijkstra, Kruskal, Prim, and augmenting-path Max Flow.
+- Data structures: Implement array-based Binary Heap with sift operations and Balanced BST insertions.
+- String algorithms: Implement Z-box algorithm, Rabin-Karp matcher, and Trie/Aho-Corasick.
+- Distributed & randomized protocols: Align definitions with honest step models, proving protocol invariants from step rules.
+- Mark `Complexity/Classes.lean` as stub or out-of-scope while preserving genuine `KarpReductions.lean` and `TwoSAT.lean`.
+
+### R5. Documentation & Truthfulness Alignment
+Update `README.md` and all individual `.md` files across `Amort/` to strictly describe only theorems that are genuinely proved, clearly marking any unverified components as stubs.
+
+## Acceptance Criteria
+
+### Build & Axiom Integrity
+- [ ] `lake build Amort && lake build` succeeds with 0 errors and 0 warnings.
+- [ ] Zero `sorry`, `admit`, or `sorryAx` across all modified files.
+- [ ] `#print axioms` on all headline theorems shows only `[propext, Classical.choice, Quot.sound]`.
+
+### Anti-Pattern Elimination
+- [ ] Automated check confirms no closed-form `def …Work (n : ℕ) : ℕ := <formula>` definitions exist in active headline results.
+- [ ] All `IsBigO` complexity statements bound the execution of an instrumented function `(fooWithCount x).2`.
+
+### Pilot & Phase Deliverables
+- [ ] All 6 Phase 1 pilot nodes (`EuclideanGCD`, `InsertionSort`/`MergeSort`, `DynamicArray`, `TwoStackQueue`, `KMP`, `BinarySearch`) satisfy the 7-point Definition of Done in `proof_review.md`.
+- [ ] `Amort/Audit.lean` builds cleanly and verifies all headline theorems.
+- [ ] Documentation (`README.md` and module `.md` files) accurately reflects the verified status of every algorithm.
+
+## 2026-09-23T14:26:16Z
+
+<USER_REQUEST>
+Comprehensively fix and verify the entire `Amort/` repository (all modules across Phases 0 to 4 in `proof_review.md`), eliminating all anti-patterns (A1–A10), implementing genuine executable algorithms with independent specifications and two-sided correctness, and proving actual execution step complexity, strictly validated by independent adversarial reviewers.
+
+Working directory: `/workspace/amort`
+Integrity mode: development
+
+Reference: `proof_review.md` (all sections: §1 anti-patterns, §2 Definition of Done, §3 per-module review, §5 fix order, §7 Round 2 review, and §7.3 exact acceptance targets).
+
+## Requirements
+
+### R1. Complete Repository Scope & Anti-Pattern Elimination (Repo-Wide)
+Resolve proof gaps and anti-patterns across all 97 modules in `Amort/`:
+- Eliminate all closed-form `...Work` formulas (A1) repo-wide; every complexity result must bound instrumented executions `(fooWithCount x).2`.
+- Eliminate unconstructed hypotheses and assumed structure fields (A2).
+- Ensure all correctness and cost theorems operate on the real algorithm, with zero delegation to stand-in functions (A3).
+- Remove tautological or near-tautological theorems (A4).
+- Strengthen one-sided specifications to both soundness and optimality (A5).
+- Ensure any fuel recursion has an exhaustiveness lemma on valid states (A6).
+- Ensure all `IsBigO` statements bound instrumented runtimes rather than self-formulas (A7).
+- Discard or truthfully label vacuous complexity classes (A9) while keeping genuine reductions.
+
+### R2. Round 3 Immediate Acceptance Targets (§7.3)
+Implement and verify the exact required theorems specified in §7.3:
+1. **KMP (`String/KMP.lean`)**: Native linear fallback loop `computePi` / `computePiWithCount`, equivalence `computePi_getD = piSpec`, preprocessing bound $\le 2|P|$, native match loop `mem_kmpMatch_iff : s ∈ kmpMatch P T ↔ IsSubstringAt P T s`, and combined bound $\le 2(|T| + |P|)$.
+2. **BFS (`Graph/Traversal.lean`)**: Independent `Reachable` and `IsWalkOfLength` definitions, two-sided distance correctness (`bfs_eq_top_iff` and `bfs_eq_coe_iff`), and in-loop step count $\le n + m$.
+3. **Bellman-Ford (`Graph/BellmanFord.lean`)**: Path realization `bellmanFord_achieved`, optimality under independent `NoNegCycle` hypothesis `bellmanFord_optimal`, and negative cycle detection `hasNegCycleCheck_iff`.
+4. **LCS & Knapsack Table Counts**: Inductive table row constructions with real cell fill counters (`lcsWithCount`, `knapsackWithCount`), retiring formula stand-ins `lcsTableCount` and `knapsackTableCount`.
+5. **Binary Search & Interval Scheduling**: Index correctness `binarySearch_some_get : binarySearch xs x = some i → xs[i]? = some x`, and end-to-end `intervalSchedule_optimal` without caller-provided sort hypotheses.
+
+### R3. Core & Advanced Module Rebuilds (Phases 3 & 4)
+Systematically rebuild and verify the core and advanced algorithmic canons to meet the 7-point Definition of Done:
+- **Graph & Optimization**: Dijkstra (executable priority queue/selection with two-sided distance correctness), Kruskal (spanning forest cut property), Prim, Augmenting-path Max-Flow (Ford-Fulkerson/Edmonds-Karp), DSU (union-by-rank with $2^{\text{rank}} \le \text{subtree\_size}$ and true unbounded $\alpha(n)$), and Bridges (Tarjan DFS).
+- **Data Structures**: Array-based Binary Heap (siftUp/siftDown with build-heap bound), Balanced BST (AVL/Red-Black insertions and height bounds).
+- **Strings**: Z-box algorithm, Rabin-Karp Las Vegas matcher, Trie/Aho-Corasick dictionary automata, Suffix Array + Kasai, and Suffix Tree online construction.
+- **Randomized Algorithms & Approximation**: Quicksort expectation on Mathlib `PMF`, Universal Hashing, Karger Min-Cut, Metric TSP (MST + Euler tour + shortcutting), and Greedy Set Cover ($H_n$ bound).
+- **Distributed Systems**: Prove protocol invariants (Paxos P2 proposal invariant, Raft log matching, Vector clock causal soundness, Chandy-Lamport execution) from actual protocol step transition rules.
+
+### R4. Guardrails & Documentation Truthfulness
+- Expand `Amort/Audit.lean` to validate `#print axioms` across every headline theorem in the repository.
+- Update `README.md` and every `.md` file to truthfully describe verified theorems, with zero overclaiming.
+
+## Acceptance Criteria
+
+### Adversarial Verification Standard
+- [ ] Every module is audited by an independent adversarial reviewer against the 7-point Definition of Done in §2 of `proof_review.md`.
+- [ ] All exact theorem statements in §7.3 exist with their specified names and types.
+- [ ] Self-certified completion without independent adversarial confirmation is disallowed.
+
+### Build & Axiom Integrity
+- [ ] `lake build Amort && lake build` succeeds across all compilation units with 0 errors and 0 warnings.
+- [ ] Zero `sorry`, `admit`, or `sorryAx` anywhere in the repository.
+- [ ] `#print axioms` on all headline theorems shows exclusively `[propext, Classical.choice, Quot.sound]`.
+
+### Anti-Pattern Elimination
+- [ ] Automated check confirms zero closed-form `def …Work (n : ℕ) : ℕ := <formula>` definitions in active results.
+- [ ] All `IsBigO` complexity statements bound the execution of an instrumented function `(fooWithCount x).2`.
+- [ ] All documentation reflects the exact scope of genuinely verified theorems.
+</USER_REQUEST>

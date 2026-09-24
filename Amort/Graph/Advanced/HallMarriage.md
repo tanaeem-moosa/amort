@@ -1,5 +1,9 @@
 # Hall's Marriage Theorem and Max-Flow Equivalence
 
+> **Status: stub — not verified** (Phase 4 canon stub; Hall condition necessity is proven,
+> but sufficiency reduction is a specification stub).
+
+
 ## Theoretical Foundations
 Let $G = (L, R, E)$ be a finite bipartite graph. For any subset $S \subseteq L$, the collective neighborhood is defined as:
 $$N(S) = \{ v \in R \mid \exists u \in S, (u, v) \in E \}$$

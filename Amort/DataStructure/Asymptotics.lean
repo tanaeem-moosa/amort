@@ -16,6 +16,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Asymptotic Complexity Bridges for Data Structures
 
+> **Status: stub — not verified** (Phase 3 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module connects concrete operational and amortized step bounds for textbook data structures
 to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framework under `Filter.atTop`:
 - Linear Build-Heap: $O(n)$ total operations.
@@ -41,23 +44,25 @@ namespace Amort.DataStructure
 
 /-! ### Priority Queue & Heap Asymptotics -/
 
-/-- Linear build-heap executes in $O(n)$ operations under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Linear build-heap operational complexity is modeled as a closed-form
+formula `buildHeapBound` awaiting instrumented execution implementation. -/
 theorem isBigO_buildHeap_atTop :
-    (fun n ↦ ((buildHeapWork n (Nat.size n) : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n ↦ ((buildHeapBound n (Nat.size n) : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n ↦ ((n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 2 ?_
   apply Filter.Eventually.of_forall
   intro n
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := buildHeap_size_bound n
-  have h_real : ((buildHeapWork n (Nat.size n) : ℕ) : ℝ) ≤ ((2 * n : ℕ) : ℝ) := by
+  have h_real : ((buildHeapBound n (Nat.size n) : ℕ) : ℝ) ≤ ((2 * n : ℕ) : ℝ) := by
     exact_mod_cast h
   have h_eq : ((2 * n : ℕ) : ℝ) = 2 * ((n : ℕ) : ℝ) := by push_cast; ring
   exact h_real.trans (le_of_eq h_eq)
 
-/-- Heapsort comparison complexity is $O(n \log n)$ under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Heapsort comparison complexity is modeled as a closed-form formula
+`heapsortTotalBound` awaiting instrumented execution implementation. -/
 theorem isBigO_heapsort_atTop :
-    (fun n ↦ ((heapsortTotalWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n ↦ ((heapsortTotalBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 4 ?_
   rw [Filter.eventually_atTop]
@@ -80,7 +85,8 @@ theorem isBigO_heapsort_atTop :
 
 /-! ### Online Running Median Asymptotics -/
 
-/-- Online median query executes in $O(1)$ operations under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Online median query is modeled as a closed-form step constant
+awaiting instrumented execution implementation. -/
 theorem isBigO_medianQuery_atTop :
     (fun (_ : ℕ) ↦ ((medianQuerySteps : ℕ) : ℝ)) =O[Filter.atTop]
       (fun (_ : ℕ) ↦ (1 : ℝ)) := by
@@ -89,19 +95,20 @@ theorem isBigO_medianQuery_atTop :
   intro _
   simp only [medianQuerySteps_eq, Nat.cast_one, Real.norm_eq_abs, abs_one, mul_one, le_rfl]
 
-/-- Online median insertion and rebalancing is $O(\log n)$ under `Filter.atTop`. -/
+/-- **Stub Model**: Online median insertion is modeled as a closed-form formula
+`onlineMedianInsertBound` awaiting instrumented execution implementation. -/
 theorem isBigO_onlineMedianInsert_atTop :
-    (fun n ↦ ((onlineMedianInsertWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n ↦ ((onlineMedianInsertBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n ↦ ((Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound 6 ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have hsz : 1 ≤ Nat.size n := Nat.size_pos.mpr (by omega)
-  have h_le : onlineMedianInsertWork n ≤ 6 * Nat.size n := by
-    dsimp [onlineMedianInsertWork]
+  have h_le : onlineMedianInsertBound n ≤ 6 * Nat.size n := by
+    dsimp [onlineMedianInsertBound]
     omega
-  have h_real : ((onlineMedianInsertWork n : ℕ) : ℝ) ≤ ((6 * Nat.size n : ℕ) : ℝ) := by
+  have h_real : ((onlineMedianInsertBound n : ℕ) : ℝ) ≤ ((6 * Nat.size n : ℕ) : ℝ) := by
     exact_mod_cast h_le
   have h_eq : ((6 * Nat.size n : ℕ) : ℝ) = 6 * ((Nat.size n : ℕ) : ℝ) := by
     push_cast; ring
@@ -109,22 +116,22 @@ theorem isBigO_onlineMedianInsert_atTop :
 
 /-! ### Balanced Binary Search Tree Asymptotics -/
 
-/-- Balanced BST insertion and order-statistic query work is $O(\log n)$
+/-- **Stub Model**: Balanced BST insertion and order-statistic query work is $O(\log n)$
 under `Filter.atTop` on $\mathbb{N}$ for any balance constant $c$. -/
 theorem isBigO_bbstInsertWork_atTop (c : ℕ) :
-    (fun n ↦ ((insertWork n c : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n ↦ ((insertBound n c : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n ↦ ((Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (c + 2 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have hsz : 1 ≤ Nat.size n := Nat.size_pos.mpr (by omega)
-  have h_le : insertWork n c ≤ (c + 2) * Nat.size n := by
-    dsimp [insertWork]
+  have h_le : insertBound n c ≤ (c + 2) * Nat.size n := by
+    dsimp [insertBound]
     calc c * Nat.size n + 2
       _ ≤ c * Nat.size n + 2 * Nat.size n := by omega
       _ = (c + 2) * Nat.size n := by ring
-  have h_real : ((insertWork n c : ℕ) : ℝ) ≤ (((c + 2) * Nat.size n : ℕ) : ℝ) := by
+  have h_real : ((insertBound n c : ℕ) : ℝ) ≤ (((c + 2) * Nat.size n : ℕ) : ℝ) := by
     exact_mod_cast h_le
   have h_eq : (((c + 2) * Nat.size n : ℕ) : ℝ) = (c + 2 : ℝ) * ((Nat.size n : ℕ) : ℝ) := by
     push_cast; ring
@@ -132,7 +139,7 @@ theorem isBigO_bbstInsertWork_atTop (c : ℕ) :
 
 /-! ### Pure Amortized Classics Asymptotics -/
 
-/-- Cumulative work across $k$ dynamic array pushes is bounded by $3k$,
+/-- **Stub Model**: Cumulative work across $k$ dynamic array pushes is bounded by $3k$,
 yielding asymptotic complexity $O(k)$ under `Filter.atTop`. -/
 theorem isBigO_dynArrayTotalCost_atTop :
     (fun k ↦ ((3 * k : ℕ) : ℝ)) =O[Filter.atTop]
@@ -144,7 +151,7 @@ theorem isBigO_dynArrayTotalCost_atTop :
   have h_eq : ((3 * k : ℕ) : ℝ) = 3 * ((k : ℕ) : ℝ) := by push_cast; ring
   rw [h_eq]
 
-/-- Cumulative work across $m$ Two-Stack Queue operations is bounded by $3m$,
+/-- **Stub Model**: Cumulative work across $m$ Two-Stack Queue operations is bounded by $3m$,
 yielding asymptotic complexity $O(m)$ under `Filter.atTop`. -/
 theorem isBigO_twoStackQueueTotalCost_atTop :
     (fun m ↦ ((3 * m : ℕ) : ℝ)) =O[Filter.atTop]

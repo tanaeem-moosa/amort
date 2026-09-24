@@ -11,9 +11,6 @@ import Mathlib.Data.Fintype.Card
 import Mathlib.Logic.Relation
 import Mathlib.Tactic.Ring
 
-set_option linter.style.openClassical false
-open scoped Classical
-
 /-!
 # 2-SAT Linear-Time Solver via Strongly Connected Components
 
@@ -54,8 +51,11 @@ $\neg v \implies u$.
 - `Amort.Complexity.twoSAT_soundness`: Satisfiability implies no $x \approx \neg x$.
 - `Amort.Complexity.twoSAT_completeness`: No $x \approx \neg x$ implies satisfiability.
 - `Amort.Complexity.twoSAT_soundness_and_completeness`: Equivalence characterization.
-- `Amort.Complexity.twoSATWork`: Operational step model bounded by $O(n + m)$.
+- `Amort.Complexity.twoSATBound`: Operational step model bounded by $O(n + m)$.
 -/
+
+set_option linter.style.openClassical false
+open scoped Classical
 
 namespace Amort.Complexity
 
@@ -500,18 +500,18 @@ theorem twoSAT_soundness_and_completeness {n : ℕ} (φ : Formula2CNF n) :
 /-- Total operational steps for 2-SAT SCC decomposition on $n$ variables and $m$ clauses:
 implication graph construction ($2m$), Kosaraju two-pass DFS on $2n$ vertices and $2m$ edges
 ($2(2n + 2m) = 4(n + m)$), and final SCC consistency check on $n$ variables. -/
-def twoSATWork (n : ℕ) (m : ℕ) : ℕ :=
-  Amort.Graph.kosarajuWork (2 * n) (2 * m) + 2 * m + n
+def twoSATBound (n : ℕ) (m : ℕ) : ℕ :=
+  Amort.Graph.kosarajuBound (2 * n) (2 * m) + 2 * m + n
 
 /-- Operational steps decompose into linear graph traversal operations. -/
 theorem twoSAT_work_eq (n m : ℕ) :
-    twoSATWork n m = 5 * n + 6 * m := by
-  dsimp [twoSATWork, Amort.Graph.kosarajuWork]
+    twoSATBound n m = 5 * n + 6 * m := by
+  dsimp [twoSATBound, Amort.Graph.kosarajuBound]
   ring
 
 /-- Linear operational step upper bound: operations are bounded by $6(n + m)$. -/
 theorem twoSAT_work_linear (n m : ℕ) :
-    twoSATWork n m ≤ 6 * (n + m) := by
+    twoSATBound n m ≤ 6 * (n + m) := by
   rw [twoSAT_work_eq]
   omega
 

@@ -111,6 +111,32 @@ theorem isBigO_editDistTableCount_list {α : Type*} (F : Filter (List α × List
   have h := editDistTableCount_le xs ys
   exact_mod_cast h
 
+/-- Instrumented LCS table operation count is bounded by `(n + 1) * (m + 1)`
+under any filter on sequence pairs. -/
+theorem isBigO_lcsWithCount_snd_list {α : Type*} [DecidableEq α]
+    (F : Filter (List α × List α)) :
+    (fun (p : List α × List α) ↦ (((lcsWithCount p.1 p.2).2 : ℕ) : ℝ)) =O[F]
+      (fun p ↦ (((p.1.length + 1) * (p.2.length + 1) : ℕ) : ℝ)) := by
+  have heq : (fun (p : List α × List α) ↦ (((lcsWithCount p.1 p.2).2 : ℕ) : ℝ)) =
+      (fun (p : List α × List α) ↦ ((lcsTableCount p.1 p.2 : ℕ) : ℝ)) := by
+    funext ⟨xs, ys⟩
+    rw [lcsWithCount_snd, lcsTableCount_eq]
+  rw [heq]
+  exact isBigO_lcsTableCount_list F
+
+/-- Instrumented Edit Distance matrix operation count is bounded by `(n + 1) * (m + 1)`
+under any filter on sequence pairs. -/
+theorem isBigO_editDistWithCount_snd_list {α : Type*} [DecidableEq α]
+    (F : Filter (List α × List α)) :
+    (fun (p : List α × List α) ↦ (((editDistWithCount p.1 p.2).2 : ℕ) : ℝ)) =O[F]
+      (fun p ↦ (((p.1.length + 1) * (p.2.length + 1) : ℕ) : ℝ)) := by
+  have heq : (fun (p : List α × List α) ↦ (((editDistWithCount p.1 p.2).2 : ℕ) : ℝ)) =
+      (fun (p : List α × List α) ↦ ((editDistTableCount p.1 p.2 : ℕ) : ℝ)) := by
+    funext ⟨xs, ys⟩
+    rw [editDistWithCount_snd, editDistTableCount_eq]
+  rw [heq]
+  exact isBigO_editDistTableCount_list F
+
 /-! ### String Matching Asymptotics (Naive vs. KMP) -/
 
 /-- Naive string matching worst-case comparison bound `n * m` is reflexive `O(n * m)`
@@ -190,5 +216,18 @@ theorem isBigO_kmpTotalSteps_list {α : Type*} [DecidableEq α]
     rfl
   rw [h2] at h_real
   exact h_real
+
+/-- Total instrumented KMP execution steps on sequence pairs are bounded by `2 * (|T| + |P|)`
+under any filter on sequence pairs. -/
+theorem isBigO_kmpWithCount_snd_list {α : Type*} [DecidableEq α]
+    (F : Filter (List α × List α)) :
+    (fun (p : List α × List α) ↦ (((kmpWithCount p.1 p.2).2 : ℕ) : ℝ)) =O[F]
+      (fun p ↦ ((p.2.length + p.1.length : ℕ) : ℝ)) := by
+  have heq : (fun (p : List α × List α) ↦ (((kmpWithCount p.1 p.2).2 : ℕ) : ℝ)) =
+      (fun (p : List α × List α) ↦ ((kmpTotalSteps p.1 p.2 : ℕ) : ℝ)) := by
+    funext ⟨P, T⟩
+    rw [kmpWithCount_snd]
+  rw [heq]
+  exact isBigO_kmpTotalSteps_list F
 
 end Amort.String

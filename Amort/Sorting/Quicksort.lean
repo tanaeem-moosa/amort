@@ -339,6 +339,190 @@ theorem quicksortWorstCaseRec_eq (n : ℕ) :
       rw [Nat.add_mul_div_right _ _ (by decide : 0 < 2)]
     rw [h_arith, h_div]
 
+/-- Instrumented quicksort counting element comparisons during partitioning. -/
+def quicksortFuelWithCount : ℕ → List α → List α × ℕ
+  | 0, _ => ([], 0)
+  | _fuel + 1, [] => ([], 0)
+  | fuel + 1, x :: xs =>
+    let lt := xs.filter (· < x)
+    let ge := xs.filter (x ≤ ·)
+    let (res_lt, c_lt) := quicksortFuelWithCount fuel lt
+    let (res_ge, c_ge) := quicksortFuelWithCount fuel ge
+    (res_lt ++ [x] ++ res_ge, c_lt + c_ge + xs.length)
+
+/-- Canonical instrumented quicksort using list length as fuel. -/
+def quicksortWithCount (xs : List α) : List α × ℕ :=
+  quicksortFuelWithCount xs.length xs
+
+@[simp]
+theorem quicksortFuelWithCount_nil (fuel : ℕ) :
+    quicksortFuelWithCount (α := α) fuel [] = ([], 0) := by
+  cases fuel <;> rfl
+
+/-- Correctness projection: the first component of `quicksortFuelWithCount` equals
+`quicksortFuel`. -/
+theorem quicksortFuelWithCount_fst (fuel : ℕ) (xs : List α) :
+    (quicksortFuelWithCount fuel xs).1 = quicksortFuel fuel xs := by
+  induction fuel generalizing xs with
+  | zero => cases xs <;> rfl
+  | succ fuel ih =>
+    cases xs with
+    | nil => rfl
+    | cons x xs =>
+      dsimp [quicksortFuelWithCount, quicksortFuel]
+      rw [ih, ih]
+
+/-- Correctness projection: the first component of `quicksortWithCount` equals `quicksort`. -/
+theorem quicksortWithCount_fst (xs : List α) :
+    (quicksortWithCount xs).1 = quicksort xs :=
+  quicksortFuelWithCount_fst xs.length xs
+
+/-- The worst-case recurrence is superadditive: $T(a) + T(b) \le T(a + b)$. -/
+lemma quicksortWorstCaseRec_superadditive (a b : ℕ) :
+    quicksortWorstCaseRec a + quicksortWorstCaseRec b ≤ quicksortWorstCaseRec (a + b) := by
+  induction b with
+  | zero => rfl
+  | succ b ih =>
+    have h1 : quicksortWorstCaseRec (b + 1) = quicksortWorstCaseRec b + b := rfl
+    have h2 : quicksortWorstCaseRec (a + (b + 1)) = quicksortWorstCaseRec (a + b) + (a + b) := by
+      have : a + (b + 1) = (a + b) + 1 := by omega
+      rw [this]
+      rfl
+    rw [h1, h2]
+    omega
+
+/-- Partition lengths sum to the original list length. -/
+lemma length_filter_lt_add_length_filter_ge (x : α) (xs : List α) :
+    (xs.filter (· < x)).length + (xs.filter (x ≤ ·)).length = xs.length := by
+  have h_perm := perm_filter_append_filter_neg (· < x) xs
+  have h_neg : (xs.filter fun y ↦ ¬y < x) = xs.filter (x ≤ ·) := by
+    apply List.filter_congr
+    intro y _
+    simp only [not_lt]
+  rw [h_neg] at h_perm
+  have h_len := h_perm.length_eq
+  rw [List.length_append] at h_len
+  exact h_len
+
+/-- Recurrence split step: worst-case recurrence bounds partition subproblems. -/
+lemma quicksortWorstCaseRec_split (x : α) (xs : List α) :
+    quicksortWorstCaseRec (xs.filter (· < x)).length +
+      quicksortWorstCaseRec (xs.filter (x ≤ ·)).length + xs.length ≤
+    quicksortWorstCaseRec (xs.length + 1) := by
+  rw [quicksortWorstCaseRec_step]
+  have h_sum := length_filter_lt_add_length_filter_ge x xs
+  have h_sup := quicksortWorstCaseRec_superadditive (xs.filter (· < x)).length
+    (xs.filter (x ≤ ·)).length
+  rw [h_sum] at h_sup
+  omega
+
+/-- Fuel-bounded instrumented quicksort comparison upper bound. -/
+theorem quicksortFuelWithCount_snd_le (fuel : ℕ) (xs : List α) :
+    (quicksortFuelWithCount fuel xs).2 ≤ quicksortWorstCaseRec xs.length := by
+  induction fuel generalizing xs with
+  | zero =>
+    dsimp [quicksortFuelWithCount]
+    exact Nat.zero_le _
+  | succ fuel ih =>
+    cases xs with
+    | nil =>
+      dsimp [quicksortFuelWithCount]
+      exact Nat.zero_le _
+    | cons x xs =>
+      dsimp [quicksortFuelWithCount]
+      have h1 := ih (xs.filter (· < x))
+      have h2 := ih (xs.filter (x ≤ ·))
+      have h_split := quicksortWorstCaseRec_split x xs
+      omega
+
+/-- **Quicksort Comparison Upper Bound**:
+Comparisons performed by `quicksortWithCount` are bounded by `quicksortWorstCaseRec xs.length`. -/
+theorem quicksortWithCount_snd_le (xs : List α) :
+    (quicksortWithCount xs).2 ≤ quicksortWorstCaseRec xs.length :=
+  quicksortFuelWithCount_snd_le xs.length xs
+
+/-- **Quicksort Comparison Quadratic Upper Bound**:
+Comparisons performed by `quicksortWithCount` are bounded by $n(n - 1) / 2$. -/
+theorem quicksortWithCount_snd_le_mul (xs : List α) :
+    (quicksortWithCount xs).2 ≤ xs.length * (xs.length - 1) / 2 := by
+  have h := quicksortWithCount_snd_le xs
+  rw [quicksortWorstCaseRec_eq] at h
+  exact h
+
+lemma filter_lt_replicate (n : ℕ) (x : α) :
+    (List.replicate n x).filter (· < x) = [] := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.replicate_succ, List.filter_cons]
+    simp [ih]
+
+lemma filter_ge_replicate (n : ℕ) (x : α) :
+    (List.replicate n x).filter (x ≤ ·) = List.replicate n x := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.replicate_succ, List.filter_cons]
+    simp [ih]
+
+lemma quicksortFuelWithCount_replicate_eq (n : ℕ) (fuel : ℕ) (hfuel : n ≤ fuel) (x : α) :
+    (quicksortFuelWithCount fuel (List.replicate n x)).2 = quicksortWorstCaseRec n := by
+  induction n generalizing fuel with
+  | zero =>
+    cases fuel <;> rfl
+  | succ n ih =>
+    cases fuel with
+    | zero => omega
+    | succ fuel =>
+      have hf : n ≤ fuel := by omega
+      have h_cons : List.replicate (n + 1) x = x :: List.replicate n x := rfl
+      rw [h_cons]
+      dsimp [quicksortFuelWithCount]
+      rw [filter_lt_replicate, filter_ge_replicate]
+      have h_ge := ih fuel hf
+      have h_nil : (quicksortFuelWithCount fuel [] (α := α)).2 = 0 := by
+        cases fuel <;> rfl
+      rw [h_nil, h_ge]
+      simp only [List.length_replicate]
+      rw [quicksortWorstCaseRec_step]
+      omega
+
+/-- **Worst-Case Attainment on Replicate Elements**:
+For any all-equal list (e.g. `List.replicate n x`), `quicksortWithCount` attains exactly
+the worst-case comparison count $T(n)$. -/
+theorem quicksortWithCount_replicate_eq (n : ℕ) (x : α) :
+    (quicksortWithCount (List.replicate n x)).2 = quicksortWorstCaseRec n := by
+  dsimp [quicksortWithCount]
+  rw [List.length_replicate]
+  exact quicksortFuelWithCount_replicate_eq n n (le_refl _) x
+
+/-- **Worst-Case Attainment Closed Form**:
+For any all-equal list (e.g. `List.replicate n x`), comparisons equal $n(n - 1) / 2$. -/
+theorem quicksortWithCount_replicate_eq_mul (n : ℕ) (x : α) :
+    (quicksortWithCount (List.replicate n x)).2 = n * (n - 1) / 2 := by
+  rw [quicksortWithCount_replicate_eq, quicksortWorstCaseRec_eq]
+
+/-- Instrumented quicksort comparisons are asymptotically $O(n^2)$ under
+`Filter.comap List.length Filter.atTop`. -/
+theorem isBigO_quicksortWithCount_snd_sq :
+    (fun xs : List α ↦ (((quicksortWithCount xs).2 : ℕ) : ℝ)) =O[
+      Filter.comap List.length Filter.atTop]
+    (fun xs : List α ↦ ((xs.length ^ 2 : ℕ) : ℝ)) := by
+  refine IsBigO.of_bound (1 : ℝ) ?_
+  rw [Filter.eventually_comap, Filter.eventually_atTop]
+  refine ⟨0, fun n _ xs hn ↦ ?_⟩
+  subst hn
+  simp only [Real.norm_eq_abs, Nat.abs_cast, one_mul]
+  have h_bound := quicksortWithCount_snd_le_mul xs
+  have h_div : xs.length * (xs.length - 1) / 2 ≤ xs.length * (xs.length - 1) :=
+    Nat.div_le_self _ 2
+  have h_mul : xs.length * (xs.length - 1) ≤ xs.length * xs.length :=
+    Nat.mul_le_mul_left _ (Nat.sub_le _ _)
+  have h_sq : xs.length * xs.length = xs.length ^ 2 := by ring
+  have h_le : (quicksortWithCount xs).2 ≤ xs.length ^ 2 :=
+    h_bound.trans (h_div.trans (h_mul.trans (le_of_eq h_sq)))
+  exact_mod_cast h_le
+
 /-- Quicksort worst-case comparisons are $O(n^2)$ under `Filter.atTop`. -/
 theorem isBigO_quicksortWorstCase_sq :
     (fun n : ℕ ↦ ((quicksortWorstCaseRec n : ℕ) : ℝ)) =O[Filter.atTop]
@@ -416,38 +600,6 @@ theorem bfprtQuicksortRec_step (c : ℕ) (n : ℕ) (hn : 2 ≤ n) :
   obtain ⟨k, rfl⟩ : ∃ k, n = k + 2 := ⟨n - 2, by omega⟩
   rw [bfprtQuicksortRec]
 
-/-- Concrete operational bound on deterministic Median-of-Medians Quicksort comparisons:
-bounded by $4(c + 1) \cdot n \cdot \text{Nat.size } n$. -/
-def bfprtQuicksortBound (c : ℕ) (n : ℕ) : ℕ :=
-  4 * (c + 1) * n * Nat.size n
-
-theorem bfprtQuicksortBound_le (c : ℕ) (n : ℕ) :
-    bfprtQuicksortBound c n ≤ 4 * (c + 1) * n * Nat.size n :=
-  le_refl _
-
-/-- BFPRT deterministic median Quicksort is $O(n \cdot \text{Nat.size } n)$ under `Filter.atTop`. -/
-theorem isBigO_bfprtQuicksort_mul_size (c : ℕ) :
-    (fun n : ℕ ↦ ((bfprtQuicksortBound c n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
-  refine IsBigO.of_bound ((4 * (c + 1) : ℕ) : ℝ) ?_
-  apply Filter.Eventually.of_forall
-  intro n
-  simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [bfprtQuicksortBound]
-  have : ((4 * (c + 1) * n * Nat.size n : ℕ) : ℝ) =
-      ((4 * (c + 1) : ℕ) : ℝ) * ((n * Nat.size n : ℕ) : ℝ) := by
-    push_cast; ring
-  rw [this]
-
-/-- **Deterministic Median-of-Medians Worst-Case $O(n \log n)$ Theorem**:
-Quicksort with BFPRT deterministic median selection achieves a strictly worst-case
-$O(n \log n)$ runtime under `Filter.atTop`. -/
-theorem isBigO_bfprtQuicksort_n_log_n (c : ℕ) :
-    (fun n : ℕ ↦ ((bfprtQuicksortBound c n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ (n : ℝ) * Real.log (n : ℝ)) :=
-  (isBigO_bfprtQuicksort_mul_size c).trans
-    (Amort.Recurrence.isBigO_mul_size_n_log_n Amort.Recurrence.isBigO_size_log)
-
 /-! ### 4. Quicksort Average-Case Complexity ($O(n \log n)$) (R5) -/
 
 /-- Characteristic condition for the average-case quicksort comparison recurrence
@@ -476,34 +628,5 @@ theorem expected_quicksort_le_harmonic_bound (n : ℕ) :
     Amort.Randomized.expectedQuicksortComparisons n ≤
       2 * (n : ℝ) * Amort.Approximation.harmonic n :=
   Amort.Randomized.expected_quicksort_le_harmonic n
-
-/-- Operational bound bridging expected comparisons to $2n \cdot \text{Nat.size } n$. -/
-def quicksortAvgWorkBound (n : ℕ) : ℕ :=
-  Amort.Randomized.quicksortWorkBound n
-
-theorem quicksortAvgWorkBound_eq (n : ℕ) :
-    quicksortAvgWorkBound n = 2 * n * Nat.size n :=
-  rfl
-
-/-- Expected quicksort comparison bound is $O(n \cdot \text{Nat.size } n)$ under `Filter.atTop`. -/
-theorem isBigO_quicksortAvg_mul_size :
-    (fun n : ℕ ↦ ((quicksortAvgWorkBound n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
-  refine IsBigO.of_bound (2 : ℝ) ?_
-  apply Filter.Eventually.of_forall
-  intro n
-  simp only [Real.norm_eq_abs, Nat.abs_cast]
-  dsimp [quicksortAvgWorkBound, Amort.Randomized.quicksortWorkBound]
-  have : ((2 * n * Nat.size n : ℕ) : ℝ) = 2 * ((n * Nat.size n : ℕ) : ℝ) := by
-    push_cast; ring
-  rw [this]
-
-/-- **Average-Case $O(n \log n)$ Complexity Theorem**:
-Expected comparisons under uniform random pivot selection are $O(n \log n)$ under `Filter.atTop`. -/
-theorem isBigO_quicksortAvg_n_log_n :
-    (fun n : ℕ ↦ ((quicksortAvgWorkBound n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n ↦ (n : ℝ) * Real.log (n : ℝ)) :=
-  isBigO_quicksortAvg_mul_size.trans
-    (Amort.Recurrence.isBigO_mul_size_n_log_n Amort.Recurrence.isBigO_size_log)
 
 end Amort.Sorting

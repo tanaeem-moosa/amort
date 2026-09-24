@@ -1,5 +1,9 @@
 # Advanced Graph Algorithms & Bipartite Matching in Lean 4
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Hopcroft-Karp, Tarjan Bridge, and Hall
+> Marriage algorithms are specification stubs awaiting full verification).
+
+
 This module family formalizes advanced graph algorithms, matching theory, and DFS invariants:
 
 1. **Hopcroft-Karp Maximum Bipartite Matching** (`HopcroftKarp.lean`):

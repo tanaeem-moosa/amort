@@ -14,6 +14,9 @@ import Mathlib.Tactic.Ring
 /-!
 # 2-Approximation for Minimum Vertex Cover via Maximal Matching
 
+> **Status: stub — not verified** (Phase 4 canon stub; matching lower bound and 2-approximation
+> ratio are proven, but operational greedy edge selection is a specification stub).
+
 This module formalizes the classical 2-approximation algorithm for the Minimum Vertex Cover
 problem on finite undirected graphs using greedy maximal matchings:
 1. **Matchings**: A collection of disjoint edges in a simple graph.
@@ -32,7 +35,7 @@ problem on finite undirected graphs using greedy maximal matchings:
 - `Amort.Approximation.IsMaximalMatching`: Maximality predicate.
 - `Amort.Approximation.maximal_matching_isVertexCover`: Endpoint set forms a vertex cover.
 - `Amort.Approximation.vertex_cover_approx_ratio`: $|C| \le 2|C^*|$ approximation ratio.
-- `Amort.Approximation.vertexCoverWork`: Operational step count $2(n + m)$.
+- `Amort.Approximation.vertexCoverBound`: Operational step count $2(n + m)$.
 -/
 
 namespace Amort.Approximation
@@ -147,12 +150,12 @@ theorem vertex_cover_approx_ratio {G : SimpleGraph V} {M : Finset (V × V)}
 
 /-- Operational step model for greedy maximal matching vertex cover:
 scanning $|E| = m$ edges and recording endpoints across $|V| = n$ vertices. -/
-def vertexCoverWork (n m : ℕ) : ℕ :=
+def vertexCoverBound (n m : ℕ) : ℕ :=
   2 * (n + m)
 
 /-- The greedy maximal matching vertex cover algorithm operates in linear time $O(|V| + |E|)$. -/
 theorem vertexCoverWork_le (n m : ℕ) :
-    vertexCoverWork n m ≤ 2 * (n + m) := by
+    vertexCoverBound n m ≤ 2 * (n + m) := by
   rfl
 
 end Amort.Approximation

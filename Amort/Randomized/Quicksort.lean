@@ -17,6 +17,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Expected Complexity of Randomized Quicksort
 
+> **Status: stub — not verified** (Phase 4 canon stub; harmonic indicator sum is proven,
+> but randomized execution on Mathlib PMF is a specification stub).
+
 This module formalizes the classical backward analysis of randomized quicksort:
 1. **Indicator Variables**: $X_{ij}$ indicates whether the $i$-th and $j$-th smallest elements
    $z_i, z_j$ ($i < j$) are compared.
@@ -32,7 +35,7 @@ This module formalizes the classical backward analysis of randomized quicksort:
 - `Amort.Randomized.pairComparisonProb`: Pairwise probability $\frac{2}{k + 1}$.
 - `Amort.Randomized.expectedQuicksortComparisons`: Expected comparisons grouped by distance $k$.
 - `Amort.Randomized.expected_quicksort_le_harmonic`: $\mathbb{E}[C] \le 2n H(n)$.
-- `Amort.Randomized.quicksortWorkBound`: Operational bound $2n \cdot \text{size } n$.
+- `Amort.Randomized.quicksortStepBound`: Operational bound $2n \cdot \text{size } n$.
 -/
 
 namespace Amort.Randomized
@@ -108,12 +111,12 @@ theorem expected_quicksort_le_harmonic (n : ℕ) :
 
 /-- Concrete operational bound on expected randomized quicksort comparisons:
 bounded by $2n \cdot \text{size } n$. -/
-def quicksortWorkBound (n : ℕ) : ℕ :=
+def quicksortStepBound (n : ℕ) : ℕ :=
   2 * n * Nat.size n
 
 /-- Quicksort expected comparison bound. -/
 theorem quicksortWorkBound_le (n : ℕ) :
-    quicksortWorkBound n ≤ 2 * n * Nat.size n := by
+    quicksortStepBound n ≤ 2 * n * Nat.size n := by
   rfl
 
 end Amort.Randomized

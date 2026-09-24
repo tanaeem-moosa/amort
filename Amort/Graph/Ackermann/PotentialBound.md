@@ -1,5 +1,9 @@
 # Potential Function Analysis and Amortized Bound for DSU
 
+> **Status: stub — not verified** (Phase 4 canon stub; telescoping potential sum is proven,
+> but operation work bounds are specification formulas).
+
+
 This document details the Lean 4 formalization of the amortized analysis of DSU with path compression in `Amort.Graph.Ackermann.PotentialBound`.
 
 ## Potential Function and Amortized Analysis

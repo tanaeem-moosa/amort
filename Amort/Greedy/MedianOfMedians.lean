@@ -10,6 +10,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Median-of-Medians Deterministic Selection (BFPRT)
 
+> **Status: stub — not verified** (Phase 3 canon stub; BFPRT recurrence is proven,
+> but linear selection algorithm execution is a specification stub).
+
 This module formalizes the Median-of-Medians (BFPRT) deterministic selection algorithm:
 - Block partitioning of $n$ elements into groups of size 5.
 - Group medians and the median-of-medians pivot selection.

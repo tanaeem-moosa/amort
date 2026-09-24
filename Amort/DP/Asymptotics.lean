@@ -15,6 +15,9 @@ import Mathlib.Order.Filter.Prod
 /-!
 # Asymptotic Complexity Bridges for Dynamic Programming Algorithms
 
+> **Status: stub — not verified** (Phase 3 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module establishes formal asymptotic complexity bounds in Mathlib's
 `Mathlib.Analysis.Asymptotics.IsBigO` framework for dynamic programming algorithms:
 - Interval DP: Matrix Chain Multiplication ($O(n^3)$ operations).
@@ -44,8 +47,8 @@ open Amort.Recurrence
 
 /-! ### Matrix Chain Multiplication Asymptotics -/
 
-/-- Total work of Matrix Chain Multiplication interval DP is asymptotically $O(n^3)$
-under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Matrix Chain Multiplication interval DP work is modeled as
+a state-space bound `(matrixChainDP n).totalCost` awaiting table implementation. -/
 theorem isBigO_matrixChainDP_totalCost_atTop :
     (fun n ↦ (((matrixChainDP n).totalCost : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n ↦ ((n ^ 3 : ℕ) : ℝ)) := by
@@ -58,7 +61,8 @@ theorem isBigO_matrixChainDP_totalCost_atTop :
 
 /-! ### 0/1 Knapsack Grid DP Asymptotics -/
 
-/-- Total work of 0/1 Knapsack grid DP is bounded by $(n + 1)(W + 1)$ under any filter. -/
+/-- **Stub Model**:
+Total work of 0/1 Knapsack grid DP is bounded by $(n + 1)(W + 1)$ under any filter. -/
 theorem isBigO_knapsackGridDP_totalCost_succ_mul_atTop (l : Filter (ℕ × ℕ)) :
     (fun (p : ℕ × ℕ) ↦ (((knapsackGridDP p.1 p.2).toDPModel.totalCost : ℕ) : ℝ)) =O[l]
       (fun p ↦ (((p.1 + 1) * (p.2 + 1) : ℕ) : ℝ)) := by
@@ -69,7 +73,8 @@ theorem isBigO_knapsackGridDP_totalCost_succ_mul_atTop (l : Filter (ℕ × ℕ))
   have h := knapsackGridDP_totalCost_le n W
   exact_mod_cast h
 
-/-- Total work of 0/1 Knapsack grid DP is asymptotically $O(n \cdot W)$ under `Filter.atTop`
+/-- **Stub Model**:
+Total work of 0/1 Knapsack grid DP is asymptotically $O(n \cdot W)$ under `Filter.atTop`
 on $\mathbb{N} \times \mathbb{N}$. -/
 theorem isBigO_knapsackGridDP_totalCost_atTop :
     (fun (p : ℕ × ℕ) ↦ (((knapsackGridDP p.1 p.2).toDPModel.totalCost : ℕ) : ℝ)) =O[Filter.atTop]
@@ -80,7 +85,8 @@ theorem isBigO_knapsackGridDP_totalCost_atTop :
 
 /-! ### Longest Increasing Subsequence Asymptotics -/
 
-/-- Total work of the LIS state-space DP is asymptotically $O(n^2)$ under `Filter.atTop`
+/-- **Stub Model**:
+Total work of the LIS state-space DP is asymptotically $O(n^2)$ under `Filter.atTop`
 on $\mathbb{N}$. -/
 theorem isBigO_lisDP_totalCost_atTop :
     (fun n ↦ (((lisDP n).totalCost : ℕ) : ℝ)) =O[Filter.atTop]

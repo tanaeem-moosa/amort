@@ -1,5 +1,9 @@
 # 2D Convex Hull: Andrew's Monotone Chain
 
+> **Status: stub — not verified** (Phase 4 canon stub; cross-product orientation is proven,
+> but Graham scan monotone chain execution is a specification stub).
+
+
 ## Orientation Determinant
 For points $p, q, r \in \mathbb{Z}^2$:
 $$\text{cross}(p, q, r) = (q_x - p_x)(r_y - p_y) - (q_y - p_y)(r_x - p_x)$$

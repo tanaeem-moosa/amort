@@ -14,6 +14,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Network Flow and the Max-Flow Min-Cut Theorem
 
+> **Status: stub — not verified** (Phase 3 canon stub; flow-cut duality is proven,
+> but augmenting-path execution and Edmonds-Karp bounds are specification stubs).
+
 This module formalizes flow networks, capacity constraints, flow conservation at intermediate
 vertices, $s$-$t$ cuts, residual networks, and proves the Max-Flow Min-Cut Theorem. It also
 formalizes the polynomial $O(|V| \cdot |E|^2)$ operational step complexity of Edmonds-Karp.
@@ -60,7 +63,7 @@ formalizes the polynomial $O(|V| \cdot |E|^2)$ operational step complexity of Ed
 - `Amort.Graph.flow_cut_identity`: Net flow across any $s$-$t$ cut equals `flowVal`.
 - `Amort.Graph.weak_duality`: Flow value is bounded above by any $s$-$t$ cut capacity.
 - `Amort.Graph.max_flow_min_cut`: Max-flow equals min-cut capacity on tight residual cuts.
-- `Amort.Graph.edmondsKarpWork`: Operational step model $O(|V| \cdot |E|^2)$.
+- `Amort.Graph.edmondsKarpBound`: Operational step model $O(|V| \cdot |E|^2)$.
 -/
 
 open BigOperators
@@ -202,15 +205,15 @@ theorem max_flow_min_cut (N : FlowNetwork n) (f : Fin n → Fin n → ℕ)
 /-- Total operational work for Edmonds-Karp augmenting path algorithm on a network
 with `n` vertices and `m` edges: at most `n * m` augmenting phases, each taking
 `m` operations via BFS, yielding `n * m^2` total steps ($O(|V| \cdot |E|^2)$). -/
-def edmondsKarpWork (n : ℕ) (m : ℕ) : ℕ := n * m ^ 2
+def edmondsKarpBound (n : ℕ) (m : ℕ) : ℕ := n * m ^ 2
 
 /-- Edmonds-Karp work bound: operations are bounded by `n * m^2`. -/
-theorem edmondsKarp_work_le (n m : ℕ) : edmondsKarpWork n m ≤ n * m ^ 2 :=
+theorem edmondsKarp_work_le (n m : ℕ) : edmondsKarpBound n m ≤ n * m ^ 2 :=
   le_refl _
 
 /-- In terms of $|V| = n$ and $|E| = m$, work product factoring. -/
-theorem edmondsKarp_work_eq_mul (n m : ℕ) : edmondsKarpWork n m = (n * m) * m := by
-  dsimp [edmondsKarpWork]
+theorem edmondsKarp_work_eq_mul (n m : ℕ) : edmondsKarpBound n m = (n * m) * m := by
+  dsimp [edmondsKarpBound]
   ring
 
 end Amort.Graph

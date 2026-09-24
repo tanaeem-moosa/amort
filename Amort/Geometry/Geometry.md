@@ -1,5 +1,9 @@
 # Computational Geometry Architecture (`Amort.Geometry`)
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Convex Hull and Closest Pair algorithms
+> are specification stubs awaiting full verification).
+
+
 This suite formalizes foundational algorithms in 2D computational geometry:
 
 1. **2D Convex Hull: Andrew's Monotone Chain** (`Amort/Geometry/ConvexHull.lean`):

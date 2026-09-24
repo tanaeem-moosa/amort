@@ -1,5 +1,9 @@
 # Consistent Global Snapshots (`Amort.Distributed.Snapshot`)
 
+> **Status: stub — not verified** (Phase 4 canon stub; consistent cut properties are modeled,
+> but Chandy-Lamport protocol execution is a specification stub).
+
+
 ## 1. System Model & Consistent Cuts
 
 In a distributed system without a shared global memory or synchronized physical clocks, capturing

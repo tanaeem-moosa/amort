@@ -1,5 +1,9 @@
 # Asymptotic Complexity of Linear Programming Operations
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 This document details the asymptotic complexity bridges in `Amort.LP.Asymptotics` connecting operational step bounds for Linear Programming to Mathlib's `Asymptotics.IsBigO` under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 
 ## Theorems

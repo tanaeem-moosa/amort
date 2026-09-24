@@ -12,6 +12,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Hopcroft-Karp Maximum Bipartite Matching Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; alternating path structures are
+> defined, but phased BFS/DFS execution is a specification stub).
+
 This module formalizes the Hopcroft-Karp algorithm for finding a maximum cardinality matching
 in a bipartite graph $G = (L, R, E)$:
 1. **Bipartite Matchings**: Sets of edges $M \subseteq L \times R$ with unique endpoint incidence.
@@ -28,7 +31,7 @@ in a bipartite graph $G = (L, R, E)$:
 ## Key Definitions and Theorems
 - `Amort.Graph.Advanced.IsBipartiteMatching`: Bipartite matching predicate.
 - `Amort.Graph.Advanced.hopcroftKarpPhasesBound`: Total phases $\le 2\sqrt{|V|}$.
-- `Amort.Graph.Advanced.hopcroftKarpWork`: Operational step count $2\sqrt{n} \cdot (n + m)$.
+- `Amort.Graph.Advanced.hopcroftKarpBound`: Operational step count $2\sqrt{n} \cdot (n + m)$.
 - `Amort.Graph.Advanced.hopcroftKarpWork_le`: Complexity bound $O(|E|\sqrt{|V|})$.
 -/
 
@@ -66,13 +69,13 @@ theorem hopcroftKarpPhasesBound (n : ℕ) :
 /-- Operational step model for Hopcroft-Karp:
 At most $2\sqrt{n}$ phases, each executing a BFS level construction and DFS augmentation
 in $O(|V| + |E|) = O(n + m)$ steps. -/
-def hopcroftKarpWork (n m : ℕ) : ℕ :=
+def hopcroftKarpBound (n m : ℕ) : ℕ :=
   2 * Nat.sqrt n * (n + m)
 
 /-- The worst-case operational step bound for Hopcroft-Karp is $O(|E|\sqrt{|V|})$
 (or $O((|V| + |E|)\sqrt{|V|})$). -/
 theorem hopcroftKarpWork_le (n m : ℕ) :
-    hopcroftKarpWork n m ≤ 2 * Nat.sqrt n * (n + m) := by
+    hopcroftKarpBound n m ≤ 2 * Nat.sqrt n * (n + m) := by
   rfl
 
 end Amort.Graph.Advanced

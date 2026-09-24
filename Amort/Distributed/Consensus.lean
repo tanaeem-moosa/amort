@@ -9,6 +9,9 @@ import Mathlib.Data.Fintype.Card
 /-!
 # Crash-Tolerant Consensus: Paxos & Raft
 
+> **Status: stub — not verified** (Phase 4 canon stub; quorum intersection is proven,
+> but Paxos P2 invariant and Raft log matching are specification stubs).
+
 This module formalizes the foundational theory of crash-tolerant consensus in distributed
 systems following Lamport (1998, 2001) and Ongaro & Ousterhout (2014):
 1. **Majority Quorum Intersection**:

@@ -1,5 +1,8 @@
 # Ukkonen's Online Linear-Time Suffix Tree Construction
 
+> **Status: stub — not verified** (Phase 4 canon stub; operational bounds and online tree
+> construction algorithms are specification stubs awaiting full Phase 4 implementation).
+
 This document details the Lean 4 formalization of Ukkonen's algorithm in `Amort.String.SuffixTree.Ukkonen`.
 
 ## Algorithm Mechanics and Amortized $O(n)$ Bound

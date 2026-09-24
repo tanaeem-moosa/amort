@@ -1,5 +1,9 @@
 # Asymptotic Complexity of Ukkonen's Suffix Tree Construction
 
+> **Status: stub — not verified** (Phase 4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
+
 This document details the asymptotic complexity bridges in `Amort.String.SuffixTree.Asymptotics` connecting Ukkonen's operational step bounds to Mathlib's `Asymptotics.IsBigO` under `Filter.atTop` on $\mathbb{N}$.
 
 ## Theorems

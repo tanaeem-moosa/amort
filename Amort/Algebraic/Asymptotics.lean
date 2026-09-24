@@ -17,6 +17,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Fast Algebraic Algorithms
 
+> **Status: stub — not verified** (Phase 3/4 canon stub; asymptotic theorems bound specification
+> formulas awaiting instrumented execution implementations).
+
 This module establishes formal connections between concrete operational work models
 and Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic complexity framework
 under `Filter.atTop`:
@@ -54,17 +57,17 @@ open Real
 
 /-! ### Fast Fourier Transform Asymptotics -/
 
-/-- Operational work of Radix-2 FFT is asymptotically $O(n \cdot \text{Nat.size } n)$
-under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Radix-2 FFT operational work is modeled as a closed-form formula
+`fftBound` awaiting instrumented execution implementation. -/
 theorem isBigO_fftWork_mul_size :
-    (fun n : ℕ ↦ ((fftWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((fftBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (3 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := fftWork_le n hn
-  have h_real : (((fftWork n : ℕ) : ℝ) ≤ ((3 * n * Nat.size n : ℕ) : ℝ)) := by
+  have h_real : (((fftBound n : ℕ) : ℝ) ≤ ((3 * n * Nat.size n : ℕ) : ℝ)) := by
     exact_mod_cast h
   have h_assoc : ((3 * n * Nat.size n : ℕ) : ℝ) = 3 * ((n * Nat.size n : ℕ) : ℝ) := by
     push_cast
@@ -72,25 +75,25 @@ theorem isBigO_fftWork_mul_size :
   rw [h_assoc] at h_real
   exact h_real
 
-/-- Operational work of Radix-2 FFT is asymptotically $O(n \log n)$
-under `Filter.atTop` on $\mathbb{N}$. -/
+/-- **Stub Model**: Radix-2 FFT operational work is modeled as a closed-form formula
+`fftBound` awaiting instrumented execution implementation. -/
 theorem isBigO_fftWork_n_log_n :
-    (fun n : ℕ ↦ ((fftWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((fftBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) :=
   isBigO_fftWork_mul_size.trans
     (Amort.Recurrence.isBigO_mul_size_n_log_n Amort.Recurrence.isBigO_size_log)
 
-/-- Operational work of FFT-based polynomial multiplication is asymptotically
+/-- **Stub Model**: Operational work of FFT-based polynomial multiplication is asymptotically
 $O(n \cdot \text{Nat.size } n)$ under `Filter.atTop` on $\mathbb{N}$. -/
 theorem isBigO_fftPolyMulWork_mul_size :
-    (fun n : ℕ ↦ ((fftPolyMulWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((fftPolyMulBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (38 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := fftPolyMulWork_le n hn
-  have h_real : (((fftPolyMulWork n : ℕ) : ℝ) ≤ ((38 * n * Nat.size n : ℕ) : ℝ)) := by
+  have h_real : (((fftPolyMulBound n : ℕ) : ℝ) ≤ ((38 * n * Nat.size n : ℕ) : ℝ)) := by
     exact_mod_cast h
   have h_assoc : ((38 * n * Nat.size n : ℕ) : ℝ) = 38 * ((n * Nat.size n : ℕ) : ℝ) := by
     push_cast
@@ -98,45 +101,49 @@ theorem isBigO_fftPolyMulWork_mul_size :
   rw [h_assoc] at h_real
   exact h_real
 
-/-- Operational work of FFT-based polynomial multiplication is asymptotically $O(n \log n)$
+/-- **Stub Model**:
+Operational work of FFT-based polynomial multiplication is asymptotically $O(n \log n)$
 under `Filter.atTop` on $\mathbb{N}$. -/
 theorem isBigO_fftPolyMulWork_n_log_n :
-    (fun n : ℕ ↦ ((fftPolyMulWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((fftPolyMulBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ (n : ℝ) * Real.log (n : ℝ)) :=
   isBigO_fftPolyMulWork_mul_size.trans
     (Amort.Recurrence.isBigO_mul_size_n_log_n Amort.Recurrence.isBigO_size_log)
 
-/-- Naive polynomial multiplication is asymptotically $O(n^2)$ under `Filter.atTop`. -/
+/-- **Stub Model**:
+Naive polynomial multiplication is asymptotically $O(n^2)$ under `Filter.atTop`. -/
 theorem isBigO_naivePolyMulWork_sq :
-    (fun n : ℕ ↦ ((naivePolyMulWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((naivePolyMulBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n ^ 2 : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (1 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨0, fun n _hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast, one_mul]
-  unfold naivePolyMulWork
+  unfold naivePolyMulBound
   rfl
 
 /-! ### Strassen's Matrix Multiplication Asymptotics -/
 
-/-- Operational work of Strassen's algorithm is asymptotically $O(7^{\text{Nat.size } n})$
+/-- **Stub Model**:
+Operational work of Strassen's algorithm is asymptotically $O(7^{\text{Nat.size } n})$
 under `Filter.atTop`. -/
 theorem isBigO_strassenWork_pow7_size :
-    (fun n : ℕ ↦ ((strassenWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((strassenBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((7 ^ Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (1 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨0, fun n _hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast, one_mul]
-  unfold strassenWork
+  unfold strassenBound
   rfl
 
-/-- Concrete upper bound connecting Strassen's operational work to the continuous power
+/-- **Stub Model**:
+Concrete upper bound connecting Strassen's operational work to the continuous power
 $7 \cdot n^{\log_2 7}$:
 For all $n \ge 1$, $W(n) \le 7 \cdot n^{\log_2 7}$. -/
 theorem strassenWork_le_rpow (n : ℕ) (hn : 1 ≤ n) :
-    ((strassenWork n : ℕ) : ℝ) ≤ 7 * (n : ℝ) ^ (Real.log 7 / Real.log 2) := by
-  unfold strassenWork
+    ((strassenBound n : ℕ) : ℝ) ≤ 7 * (n : ℝ) ^ (Real.log 7 / Real.log 2) := by
+  unfold strassenBound
   have hn_pos : 0 < (n : ℝ) := by positivity
   have h7_pos : 0 < (7 : ℝ) := by norm_num
   have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
@@ -189,7 +196,7 @@ theorem strassenWork_le_rpow (n : ℕ) (hn : 1 ≤ n) :
 /-- Operational work of Strassen's algorithm is asymptotically $O(n^{\log_2 7})$
 under `Filter.atTop` on $\mathbb{N}$. -/
 theorem isBigO_strassenWork_rpow :
-    (fun n : ℕ ↦ ((strassenWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((strassenBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ (n : ℝ) ^ (Real.log 7 / Real.log 2)) := by
   refine IsBigO.of_bound (7 : ℝ) ?_
   rw [Filter.eventually_atTop]
@@ -202,15 +209,16 @@ theorem isBigO_strassenWork_rpow :
   rw [_root_.abs_of_nonneg hrpow_nonneg]
   exact h
 
-/-- Standard matrix multiplication is asymptotically cubic $O(n^3)$ under `Filter.atTop`. -/
+/-- **Stub Model**:
+Standard matrix multiplication is asymptotically cubic $O(n^3)$ under `Filter.atTop`. -/
 theorem isBigO_standardMatrixMulWork_cube :
-    (fun n : ℕ ↦ ((standardMatrixMulWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((standardMatrixMulBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n ^ 3 : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (2 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨0, fun n _hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  unfold standardMatrixMulWork
+  unfold standardMatrixMulBound
   have h_assoc : ((2 * n ^ 3 : ℕ) : ℝ) = 2 * ((n ^ 3 : ℕ) : ℝ) := by
     push_cast
     ring

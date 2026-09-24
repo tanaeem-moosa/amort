@@ -11,6 +11,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Prim's Minimum Spanning Tree Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; specification formulas awaiting
+> executable priority queue frontier implementation).
+
 This module formalizes Prim's algorithm for finding a Minimum Spanning Tree (MST) on finite
 undirected connected graphs with vertex set `Fin n`. It establishes:
 1. Priority queue frontier selection and key specifications.
@@ -41,7 +44,7 @@ undirected connected graphs with vertex set `Fin n`. It establishes:
    Using a binary min-heap:
    - $|V| = n$ extract-mins, each requiring $\le \text{Nat.size } n$ heap steps.
    - $|E| = m$ decrease-key updates, each requiring $\le \text{Nat.size } n$ heap steps.
-   - Total operational work: $\text{primWork}(n, m) = (n + m) \cdot \text{Nat.size } n$.
+   - Total operational work: $\text{primBound}(n, m) = (n + m) \cdot \text{Nat.size } n$.
    - In connected graphs ($n \le m + 1$), this is bounded by $(2m + 1) \cdot \text{Nat.size } n$
      ($O(|E| \log |V|)$).
 
@@ -55,7 +58,7 @@ undirected connected graphs with vertex set `Fin n`. It establishes:
 ## Key Definitions and Theorems
 - `Amort.Graph.PrimFrontier`: Structure representing frontier keys and crossing edge witnesses.
 - `Amort.Graph.prim_frontier_min_crossing`: Proof that minimal frontier key yields a min cut edge.
-- `Amort.Graph.primWork`: Operational step model $(n + m) \cdot \text{Nat.size } n$.
+- `Amort.Graph.primBound`: Operational step model $(n + m) \cdot \text{Nat.size } n$.
 - `Amort.Graph.prim_work_le`: Operational step bound $O(|E| \log |V|)$ for connected graphs.
 - `Amort.Graph.prim_le_kruskal_of_le`: Contrast analysis comparing operational bounds.
 -/
@@ -96,18 +99,18 @@ theorem prim_frontier_min_crossing {w : Fin n → Fin n → ℕ} {S : Fin n → 
 using a binary min-heap priority queue:
 - `n` extract-min operations, each taking at most `Nat.size n` steps.
 - `m` decrease-key operations, each taking at most `Nat.size n` steps. -/
-def primWork (n : ℕ) (m : ℕ) : ℕ := (n + m) * Nat.size n
+def primBound (n : ℕ) (m : ℕ) : ℕ := (n + m) * Nat.size n
 
 /-- Operational step bound for Prim's algorithm on connected graphs ($n \le m + 1$):
 bounded by $(2m + 1) \cdot \text{Nat.size } n$ ($O(|E| \log |V|)$). -/
 theorem prim_work_le (n m : ℕ) (h_conn : n ≤ m + 1) :
-    primWork n m ≤ (2 * m + 1) * Nat.size n := by
-  dsimp [primWork]
+    primBound n m ≤ (2 * m + 1) * Nat.size n := by
+  dsimp [primBound]
   have h_add : n + m ≤ 2 * m + 1 := by omega
   exact Nat.mul_le_mul_right (Nat.size n) h_add
 
 /-- In terms of $|V| = n$ and $|E| = m$, work product factoring. -/
-theorem prim_work_eq (n m : ℕ) : primWork n m = (n + m) * Nat.size n := rfl
+theorem prim_work_eq (n m : ℕ) : primBound n m = (n + m) * Nat.size n := rfl
 
 /-! ### Algorithmic Contrast: Prim vs. Kruskal -/
 
@@ -115,8 +118,8 @@ theorem prim_work_eq (n m : ℕ) : primWork n m = (n + m) * Nat.size n := rfl
 or equal to Kruskal's total work, demonstrating the efficiency advantage of maintaining
 a local frontier priority queue over global sorting and DSU overhead. -/
 theorem prim_le_kruskal_of_le (n m : ℕ) (h_le : n ≤ m) :
-    primWork n m ≤ kruskalTotalWork n m := by
-  dsimp [primWork, kruskalTotalWork]
+    primBound n m ≤ kruskalTotalBound n m := by
+  dsimp [primBound, kruskalTotalBound]
   have h_add : n + m ≤ 2 * m := by omega
   have h_mul : (n + m) * Nat.size n ≤ (2 * m) * Nat.size n := Nat.mul_le_mul_right _ h_add
   rw [mul_assoc] at h_mul

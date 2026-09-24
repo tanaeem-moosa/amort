@@ -11,6 +11,9 @@ import Mathlib.Tactic.Linarith
 /-!
 # Ukkonen's Online Linear-Time Suffix Tree Construction
 
+> **Status: stub — not verified** (Phase 4 canon stub; operational bounds and online tree
+> construction algorithms are specification stubs awaiting full Phase 4 implementation).
+
 This module formalizes Ukkonen's online linear-time suffix tree construction algorithm:
 1. **Online Extension State & Active Point**: The active point
    `(active_node, active_edge, active_len)` tracks the current location in the compact suffix
@@ -27,7 +30,7 @@ This module formalizes Ukkonen's online linear-time suffix tree construction alg
    - Total Rule 2 splits across all phases is bounded by the maximum number of internal nodes
      ($\le n - 1$).
    - Total suffix link traversals is bounded by $2n$.
-   - Total operational work is bounded by $\text{ukkonenWork}(n) = 4n$ ($O(n)$ linear time).
+   - Total operational work is bounded by $\text{ukkonenBound}(n) = 4n$ ($O(n)$ linear time).
 
 ## Mathematical Architecture
 
@@ -37,7 +40,7 @@ This module formalizes Ukkonen's online linear-time suffix tree construction alg
 4. `global_end_leaf_extension_bound`: $O(1)$ amortized leaf extensions across $n$ phases.
 5. `rule2_total_splits_le`: Total node splits bounded by $n - 1$.
 6. `suffix_link_traversals_le`: Total link traversals bounded by $2n$.
-7. `ukkonenWork_le_linear`: Operational step bound $\text{ukkonenWork}(n) \le 4n = O(n)$.
+7. `ukkonenWork_le_linear`: Operational step bound $\text{ukkonenBound}(n) \le 4n = O(n)$.
 -/
 
 namespace Amort.String
@@ -105,20 +108,20 @@ theorem suffix_link_traversals_le (n : ℕ) :
 /-- Operational step counter for Ukkonen's online linear-time suffix tree construction:
 Accounting for $n$ global end pointer extensions, at most $n$ Rule 2 node splits, at most
 $2n$ suffix link traversals, and $O(1)$ active point normalizations per phase. -/
-def ukkonenWork (n : ℕ) : ℕ :=
+def ukkonenBound (n : ℕ) : ℕ :=
   4 * n
 
 /-- The Linear Time $O(n)$ Theorem for Ukkonen's Algorithm:
 Total operational work is bounded by $4n$ across all $n$ phases. -/
 theorem ukkonenWork_le_linear (n : ℕ) :
-    ukkonenWork n ≤ 4 * n := by
-  dsimp [ukkonenWork]
+    ukkonenBound n ≤ 4 * n := by
+  dsimp [ukkonenBound]
   exact le_rfl
 
 /-- Operational step work is non-negative and monotone in string length. -/
 theorem ukkonenWork_monotone (a b : ℕ) (h : a ≤ b) :
-    ukkonenWork a ≤ ukkonenWork b := by
-  dsimp [ukkonenWork]
+    ukkonenBound a ≤ ukkonenBound b := by
+  dsimp [ukkonenBound]
   omega
 
 end Amort.String

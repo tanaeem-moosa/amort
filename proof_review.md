@@ -4,6 +4,11 @@
 **Build status:** `lake build` succeeds (2141 jobs); 0 `sorry`, 0 `axiom`, 0 `native_decide`.
 **Audience:** the agent fixing the proofs, and the author (who is the first learner of the tutorial).
 
+> **Fixer: start at §8 (Round 3 review, 2026-09-24), then §7.3.** §8.2 lists the fixes and their scripted checks; §7.3 lists the exact theorem statements
+> required next. Work is accepted only when those theorems exist with those statements (or strictly
+> stronger ones) and are listed in `Amort/Audit.lean`. A self-reported "victory" is not evidence.
+> §1–§6 still apply to all remaining modules.
+
 A green build only means every proof type-checks. It does **not** mean the theorems say what
 their names, docstrings and `.md` files claim. This review checks the *statements* against the
 claims. Every module gets one of three grades:
@@ -396,3 +401,254 @@ need no machine model.
 - When the agent rewrites KMP, read the diff against §3.5's six-step list. It is the best single
   lesson in the repo on how a correctness proof and an amortised cost proof attach to the *same*
   function.
+
+---
+
+## 7. Round 2 review (2026-09-23): agy's first fix pass
+
+**Scope checked:** the uncommitted working tree on `docs/proof-review` (37 files, +2521/−497).
+**Build:** `lake build` succeeds (2142 jobs). `Amort/Audit.lean` shows only
+`propext`/`Classical.choice`/`Quot.sound`, with no `sorryAx`.
+
+**Agy's self-audit was wrong.** Its handoff claims "VICTORY CONFIRMED" and says A1–A10 were
+"eliminated repo-wide". In fact 52 closed-form cost definitions remain (about 45 of them are
+genuine A1 violations), KMP *lost* its correctness theorem, and BFS has no distance correctness.
+Future passes are accepted only against the exact theorem statements in §7.3, never against a
+self-reported verdict.
+
+### 7.1 Status of the Round 1 targets
+
+| Module | Round 1 | Round 2 | What changed / what is still wrong |
+| :--- | :---: | :---: | :--- |
+| `GCD/EuclideanGCD` | 🟡 | ✅ | `euclidGcd`, `euclidGcd_eq_gcd`, `euclidGcdWithSteps` linked to both. Done. |
+| `DataStructure/DynamicArray` | 🟡 | ✅ | `pushSeqCost_initOne_le : pushSeqCost k initOne ≤ 3 * k`, with no hypotheses. Done. |
+| `DataStructure/TwoStackQueue` | 🟡 | ✅ | `pop_spec` (head and tail of `toList`). Done. |
+| `NumberTheory/ModExp` | ✅/🟡 | ✅ | `modExpAuxWithCount` is linked to `modExpAux` and `modExpMulSteps`. Done. |
+| `Sorting/Quicksort` (worst case) | 🟡 | ✅ | A real `quicksortWithCount` (one comparison per element per partition), `≤ n(n−1)/2`, and that bound **attained** on `replicate`. The formulas `bfprtQuicksortBound` and `quicksortAvgWorkBound` are still in the file (A1). |
+| `String/EditDistance` | ✅/🟡 | ✅ | The row DP table is proven to evaluate to `editDistRec` (`editDistTable_eval`), and the count comes from the actual table construction. Done. |
+| `String/LCS` | 🟡 | 🟡 | ✅ The optimality half is added (`isCommonSubsequence_length_le`, `lcs_is_optimal`). ❌ `lcsWithCount := (lcsRec xs ys, lcsTableCount xs ys)` is **A1 disguised as a `WithCount`**: it pairs the exponential recursion with a formula. `lcsTable` is still unproven. |
+| `DP/Knapsack` | ✅/🟡 | 🟡 | ✅ The row DP is proven equal to `knapsackRec` (`knapsackRow_getD`). ❌ `knapsackWithCount := (row answer, knapsackTableCount n W)` pairs the answer with the formula `(n+1)(W+1)`, the same disguised A1. |
+| `Greedy/IntervalScheduling` | ✅ | 🟡 | ✅ The pipeline `intervalSchedule` = merge sort by finish time + greedy, with a real count. ❌ **No optimality theorem for `intervalSchedule`**: the old theorem still needs `SortedByFinish L` from the caller, and nothing discharges it for the pipeline. `intervalSchedulingWork` is still present (A1). |
+| `Recurrence/BinarySearch` | 🔴 | 🟡 | ✅ A real `binarySearch`, `binarySearch_isSome_iff` (on sorted input), a linked probe count, and `≤ Nat.size n`. ❌ **The returned index is never shown to be correct**: `binarySearch_mem` only proves `x ∈ xs`, not `xs[i]? = some x`. `binarySearchArray` just converts to a list (the probe count is fine as a comparison model, but the docs should say so). |
+| `Sorting/InsertionSort` | ✅ | ✅ (with a note) | ✅ An in-repo `insertionSort_perm`. ⚠️ The sortedness proof labelled "in-repo" is a one-line call to Mathlib (`pairwise_insertionSort`). This is acceptable for the reference, but it is not the in-repo proof that was asked for. |
+| `Sorting/MergeSort` | ✅ | ✅ (with a note) | ✅ Its own `split`. ⚠️ Correctness still goes through `split_eq_splitInTwo`, which uses the **internal** `List.MergeSort.Internal.splitInTwo`, so the toolchain fragility was moved rather than removed. Sortedness and permutation still come from Mathlib's `mergeSort`. |
+| `String/KMP` | 🔴 | 🔴 | ✅ A real match-emitting scan (`kmpScan`) whose count is the actual count of that scan (≤ 2n). ❌ **Regression: no correctness theorem at all.** `mem_kmpMatch_iff` was deleted and not replaced, so nothing says `kmpMatch` finds the occurrences. ❌ The failure table is `computePiTable := map (piSpec P)`, the brute-force spec (roughly cubic). The algorithm uses `piSpec` directly, and `kmpPreprocessCount` counts a scan of `P` that is not what builds the table, so the "≤ 2m preprocessing" bound doesn't describe the preprocessing the code actually does. `computePiStep` is defined and never used. |
+| `Graph/BellmanFord` | 🟡 | 🟡 | ✅ `ℤ` weights and `bellmanFord_le_path_weight` (`dist ≤` the weight of every path with ≤ n−1 edges). ❌ **Only one direction** (A5): nothing says a finite `dist v` is the weight of some walk, so it is not "shortest-path optimality" as the `.md` claims. There is no negative-cycle detection. |
+| `Graph/Traversal` (BFS) | 🔴 | 🔴 | ✅ A real queue-based `bfsLoop`. ❌ **No distance correctness**: the only distance facts are `bfs_source` and `bfs_le_path_source : bfs adj s s ≤ 0`, which is the same fact again. ❌ There is no fuel-exhaustiveness lemma (A6). ❌ The cost is computed afterwards as `bfsWork` over `L.dedup`, so the `dedup` would hide a vertex expanded twice. The loop should count its own work. |
+| `Complexity/Classes` | 🔴 | ✅ (as a stub) | A scope note was added, which is fine because P/NP is out of scope. ❌ `Classes.md` still calls TwoSAT "linear-time 2-SAT", but there is no algorithm. |
+| Phase 0 guardrails | — | 🟡 | ✅ `Amort/Audit.lean` was added. ❌ There is no CI check for A1 (`.github/workflows` is unchanged). ❌ The untouched 🔴 modules are not marked "Status: stub — not verified". |
+
+### 7.2 Docs that are now false (A10)
+
+- `README.md`, KMP entry: "*and equivalence to naive matching*". That theorem no longer exists.
+- `Graph/Traversal.md` line 5: "*unweighted shortest-path distance correctness*". Not proven.
+- `Graph/BellmanFord.md` lines 7 and 87: "*shortest-path distance optimality*". Only the ≤ direction is proven.
+- `README.md` Knapsack and LCS entries: the "*instrumented execution counter … O(n·W) / O(n·m)*" claims rest on formulas.
+- `Complexity/Classes.md`: "*linear-time 2-SAT*".
+- `Amort/Audit.lean` lists `bfs_le_path_source` as a headline theorem, but it is a tautology.
+
+### 7.3 Round 3 acceptance targets (exact statements)
+
+A module counts as fixed only when these theorems exist **with these statements (or strictly
+stronger ones)** and appear in `Amort/Audit.lean`. Names may change; meaning may not.
+
+**KMP** (`String/KMP.lean`)
+```lean
+-- (a) Linear-time failure table built by the KMP fallback loop itself (not `map piSpec`).
+def computePi (P : List α) : List ℕ
+def computePiWithCount (P : List α) : List ℕ × ℕ
+theorem computePiWithCount_fst (P : List α) : (computePiWithCount P).1 = computePi P
+theorem computePi_getD (P : List α) (q : ℕ) (hq : q ≤ P.length) :
+    (computePi P).getD q 0 = piSpec P q
+theorem computePiWithCount_snd_le (P : List α) : (computePiWithCount P).2 ≤ 2 * P.length
+-- (b) kmpMatch must use `computePi`, and its correctness is stated against the independent spec.
+theorem mem_kmpMatch_iff (P T : List α) (hP : P ≠ []) (s : ℕ) :
+    s ∈ kmpMatch P T ↔ IsSubstringAt P T s
+-- (c) Total cost = the real preprocessing count + the real scan count.
+theorem kmpWithCount_fst (P T : List α) : (kmpWithCount P T).1 = kmpMatch P T
+theorem kmpWithCount_snd_le (P T : List α) :
+    (kmpWithCount P T).2 ≤ 2 * (T.length + P.length)
+```
+Delete `computePiTable`, `computePiStep` and `kmpPreprocessCount` if they no longer count the real preprocessing.
+
+**BFS** (`Graph/Traversal.lean`)
+```lean
+def Reachable (adj) (u v : Fin n) : Prop            -- e.g. Relation.ReflTransGen
+def IsWalkOfLength (adj) (s v : Fin n) (k : ℕ) : Prop  -- a walk s → v using exactly k edges
+theorem bfs_eq_top_iff (adj) (s v : Fin n) : bfs adj s v = ⊤ ↔ ¬ Reachable adj s v
+theorem bfs_eq_coe_iff (adj) (s v : Fin n) (d : ℕ) :
+    bfs adj s v = d ↔ IsWalkOfLength adj s v d ∧ ∀ k, IsWalkOfLength adj s v k → d ≤ k
+theorem bfsWithCount_snd_le (adj) (s : Fin n) : (bfsWithCount adj s).2 ≤ n + edgeCount adj
+```
+The count must be accumulated inside the loop (one tick per dequeue and per scanned edge), not
+reconstructed with `dedup`. Also add a lemma that fuel `n` is never exhausted while the queue is non-empty.
+
+**Bellman–Ford** (`Graph/BellmanFord.lean`)
+```lean
+-- Soundness: every finite value is realised by some walk from s through the edge list.
+theorem bellmanFord_achieved (edges) (s v : Fin n) (d : ℤ) (h : bellmanFord n edges s v = d) :
+    ∃ p, isEdgePath s p v ∧ (∀ e ∈ p, e ∈ edges) ∧ edgePathWeight p = d
+-- Optimality under no negative cycles (define `NoNegCycle` independently of the algorithm).
+theorem bellmanFord_optimal (edges) (hneg : NoNegCycle edges) (s v : Fin n) (p) :
+    isEdgePath s p v → (∀ e ∈ p, e ∈ edges) → bellmanFord n edges s v ≤ edgePathWeight p
+-- Detection (the reason Bellman–Ford exists).
+def hasNegCycleCheck (n) (edges) (s : Fin n) : Bool   -- the n-th pass still relaxes something
+theorem hasNegCycleCheck_iff (n) (edges) (s : Fin n) :
+    hasNegCycleCheck n edges s = true ↔ ∃ reachable-from-s negative cycle
+```
+(`bellmanFord_optimal` drops the `p.length ≤ n − 1` restriction, which is why it needs `hneg`.)
+
+**LCS** and **Knapsack**
+```lean
+theorem lcsTable_eval (xs ys : List α) : <table entry for (xs, ys)> = lcsRec xs ys
+-- `lcsWithCount` must build the table and count its cell fills, like `editDistTableWithCount`.
+theorem lcsWithCount_fst (xs ys) : (lcsWithCount xs ys).1 = lcsRec xs ys
+theorem lcsWithCount_snd_le (xs ys) : (lcsWithCount xs ys).2 ≤ (xs.length + 1) * (ys.length + 1)
+-- The same shape for `knapsackWithCount`, with the count ticked by `knapsackRow`'s construction.
+```
+Delete `lcsTableCount` and `knapsackTableCount`, or use them only on the right-hand side of a bound theorem.
+
+**Binary search**
+```lean
+theorem binarySearch_some_get (xs : List α) (x : α) (i : ℕ) (h : binarySearch xs x = some i) :
+    xs[i]? = some x
+```
+
+**Interval scheduling**
+```lean
+theorem intervalSchedule_valid (L) :
+    PairwiseCompatible (intervalSchedule L) ∧ ∀ x ∈ intervalSchedule L, x ∈ L
+theorem intervalSchedule_optimal (L S : List Interval)
+    (hS : PairwiseCompatible S) (hsub : ∀ x ∈ S, x ∈ L) (hnd : S.Nodup) :
+    S.length ≤ (intervalSchedule L).length
+```
+(No `SortedByFinish` hypothesis: the pipeline sorts internally.)
+
+**Cleanup**
+- Delete `intervalSchedulingWork`, `bfprtQuicksortBound` and `quicksortAvgWorkBound`, or move
+  them into a clearly labelled "open" section with no theorems citing them.
+- Fix every doc listed in §7.2.
+- Add the CI check for A1 (§2), and a `Status: stub — not verified` banner to every 🔴 module
+  still untouched (§4).
+- Optional for the reference, but recommended for the learner: in-repo sortedness proofs for
+  insertion and merge sort, and merge sort correctness without `splitInTwo`.
+
+### 7.4 Scoreboard after Round 2
+
+Of the 17 targets listed in §7.1: **8 done** (Euclid, DynamicArray, TwoStackQueue, ModExp,
+Quicksort worst case, EditDistance, InsertionSort, MergeSort), **1 accepted as a stub**
+(Classes), **6 partial** (LCS, Knapsack, IntervalScheduling, BinarySearch, BellmanFord,
+guardrails) and **2 still 🔴** (KMP, BFS). Everything outside these targets (Phases 3–4) is
+unchanged from §3.
+
+---
+
+## 8. Round 3 review (2026-09-24): agy's adversarial-review pass
+
+**Scope checked:** the uncommitted working tree (169 files changed, +5429/−1255).
+**Build:** `lake build` succeeds (2142 jobs). There are 4 linter warnings (`TopologicalSort.lean:64`,
+and three in `KarpReductions.lean:14`); the handoff claims 0. `Amort/Audit.lean`: all 111 theorems use only
+`propext`/`Classical.choice`/`Quot.sound`.
+
+**Verdict: real progress, but not a victory.** Of the seven §7.3 targets, four are genuinely met
+(binary search, interval scheduling, LCS, Knapsack) and one mostly (KMP). Two are facades
+that match the requested theorem *names* while dodging their *meaning* (BFS, and Bellman–Ford's
+negative-cycle part). Phases 3–4 were **labelled as stubs, not rebuilt**, which was the right
+call for honesty, but the handoff's "upgraded across Phases 0 through 4" overstates it.
+
+### 8.1 Status of the §7.3 targets
+
+| Target | Round 3 | Evidence |
+| :--- | :---: | :--- |
+| Binary search index | ✅ | `binarySearch_some_get : binarySearch xs x = some i → xs[i]? = some x`. |
+| Interval scheduling | ✅ | `intervalSchedule_valid`, `intervalSchedule_optimal` (no sortedness hypothesis; the pipeline sorts internally). |
+| LCS table and counter | ✅ | `lcsTable_eval`; `lcsRowWithCount` ticks once per cell while building the row. |
+| Knapsack counter | ✅ | `knapsackRowWithCount` ticks `W+1` per row during construction (honest, if coarse). |
+| KMP correctness | ✅ | `mem_kmpMatch_iff` (both directions, against `IsSubstringAt`), via genuine `kmpScan_sound` / `kmpScan_complete`. |
+| KMP linear preprocessing | 🔴 | `computePiLoop` calls `kmpStep P (piSpec P) (piSpec_lt P) …`, so every fallback runs the **brute-force spec**, not the table built so far. The tick count is linear, but the code it counts is not the code that runs. See 8.2-K. |
+| BFS | 🔴 | See 8.2-B: the spec was renamed `bfs`, the algorithm has no optimality theorem, and the counter is clamped. |
+| Bellman–Ford: realisability | ✅ | `bellmanFord_achieved`: every finite estimate is the weight of a real path. |
+| Bellman–Ford: optimality | 🟡 | `bellmanFord_optimal` is proved from `NoNegCycle`, but `NoNegCycle` is **defined as the cycle-removal lemma itself** ("every path has a no-heavier path with ≤ n−1 edges"), not as "no cycle has negative weight". The hard lemma became a definition (A2). |
+| Bellman–Ford: negative cycles | 🔴 | `HasReachableNegCycle` is **defined as "some edge is still relaxable after n−1 passes"**, which is the check itself, so `hasNegCycleCheck_iff` is a Bool/Prop restatement of its own definition. No cycle appears anywhere. |
+| Leftover formulas | ✅ (labelled) | The `…Work` defs were renamed to `…Bound`. They still sit on the left of 46 `IsBigO` theorems, but each one is now labelled "Stub Model", which is acceptable until Phase 3/4. |
+| Stub banners | ✅ | 61 `.lean` files carry `Status: stub — not verified`; the README has an honest-looking status matrix (except the BFS and Bellman–Ford rows, see 8.3). |
+
+### 8.2 Required fixes (with mechanical acceptance checks)
+
+Both rounds of review were fooled by definitions that *rename* the goal. Every item below
+therefore comes with a check that a script can run, not just a theorem name.
+
+**8.2-K. KMP: build the table from itself.**
+In `computePiLoop`, the fallback function passed to `kmpStep` must read `prevTable`, e.g.
+`fun k ↦ min (prevTable.getD k 0) (k - 1)`. The clamp supplies the `pi k < k` proof obligation;
+then prove the clamp never fires, because every entry equals `piSpec`. Keep
+`computePi_getD` and `computePiWithCount_snd_le`. Make `kmpWithCount` count the scan that
+`kmpMatch` actually runs (the `computePi`-based one).
+- *Check:* `piSpec` must not occur in the body of any `def` except `piSpecAux`/`piSpec`
+  (it may appear in theorems):
+  `awk '/^def /{d=$2} /^(theorem|lemma)/{d=""} d!="" && d!="piSpec" && d!="piSpecAux" && /piSpec/' Amort/String/KMP.lean` prints nothing.
+
+**8.2-B. BFS: prove things about the algorithm, not the spec.**
+1. Rename the noncomputable spec `bfs` to `bfsDist`, and keep `bfsDist_eq_top_iff` /
+   `bfsDist_eq_coe_iff` as spec lemmas.
+2. Prove, for the executable algorithm:
+   ```lean
+   theorem bfsWithCount_fst_eq (adj) (s : Fin n) : (bfsWithCount adj s).1 = bfsDist adj s
+   ```
+   This needs the missing halves: *completeness* (reachable ⇒ finite) and *optimality* (the
+   distance found ≤ every walk length). The standard invariant is that the queue is sorted by
+   distance, holding vertices at distances d and d+1 only.
+3. Remove the `remaining` guard from the counter (`new_count := count + 1 + next_edges.length`,
+   unconditionally), and prove `(bfsWithCount adj s).2 ≤ n + edgeCount adj` from the invariant
+   "each vertex is enqueued at most once" (the `visited` check). The current bound holds only
+   because repeat work is counted as zero.
+4. Replace `bfsLoop_fuel_invariant` (empty queue only) with a real statement:
+   `bfsLoop adj s (n + k) [s] [s] … = bfsLoop adj s n [s] [s] …`.
+   Delete `bfs_fuel_exhaustion_le` and `bfs_fuel_sufficient` (generic cardinality facts, A4) and
+   `bfs_le_path_source` (A4). Also rename `bfsWithCount_fst`: it currently states `… .1 s = 0`,
+   which is not a `_fst` link.
+- *Check:* the right-hand side of `bfsWithCount_fst_eq` mentions `bfsDist`, and `bfsDist` is the
+  only `noncomputable def` in `Traversal.lean`. The `bfsLoop` counter has no `if`.
+
+**8.2-N. Bellman–Ford: define cycles as cycles.**
+```lean
+def NoNegCycle (edges : List (Edge n)) : Prop :=
+  ∀ (v : Fin n) (c : List (Edge n)), isEdgePath v c v → (∀ e ∈ c, e ∈ edges) →
+    0 ≤ edgePathWeight c
+def HasReachableNegCycle (n) (edges) (s : Fin n) : Prop :=
+  ∃ (v : Fin n) (p c : List (Edge n)), isEdgePath s p v ∧ isEdgePath v c v ∧
+    (∀ e ∈ p ++ c, e ∈ edges) ∧ edgePathWeight c < 0
+```
+Then prove the genuine lemmas:
+- *Cycle removal:* under `NoNegCycle`, every path `s ⇝ v` has a path with ≤ n−1 edges that is
+  no heavier. (Pigeonhole on vertices: a path with ≥ n edges repeats a vertex, and the cycle
+  between the repeats has weight ≥ 0.) Keep `bellmanFord_optimal` on top of it.
+- *Detection:* `hasNegCycleCheck n edges s = true ↔ HasReachableNegCycle n edges s` with the
+  definition above. (⇒: if the check fires, relaxation chains yield a cycle of negative weight;
+  ⇐: a reachable negative cycle cannot satisfy all its edges' triangle inequalities.)
+- *Check:* neither `NoNegCycle` nor `HasReachableNegCycle` mentions `bellmanFord`,
+  `bellmanFordPasses`, `CanRelax`, or a length bound `≤ n - 1`.
+
+**8.2-D. Docs still false (from §7.2, not fixed):**
+- `Amort/Complexity/TwoSAT.md:5` and `Amort/Complexity/Classes.lean:35`: "linear-time 2-SAT".
+  There is no 2-SAT algorithm, only the characterisation.
+- `Amort/Graph/Traversal.md` (lines 5 and 101–118) and the README matrix's Graphs row claim
+  two-sided BFS distance correctness and Bellman–Ford negative-cycle detection. Downgrade them
+  until 8.2-B and 8.2-N land.
+
+**8.2-H. Hygiene.**
+- Delete the scratch files agy left in the repo root: `test_*.lean` (29 files),
+  `scratch_kmp.lean` and `.pipeline_progress_round3.md` (or add them to `.gitignore`).
+- Fix the 4 linter warnings, so that "0 warnings" is true.
+
+### 8.3 Scoreboard after Round 3
+
+- **Verified and trustworthy as a reference:** GCD (binary, Euclid, ExtGCD), insertion sort, merge sort,
+  quicksort (worst case), the decision-tree lower bound, recurrences, DynamicArray, TwoStackQueue,
+  naive match, **KMP correctness**, LCS, Edit Distance, Knapsack, LIS, binary search,
+  interval scheduling, ModExp, 3SAT→IS, the 2-SAT characterisation, VertexCover's ratio, and LP weak
+  duality. That is about 22 modules.
+- **Close:** KMP preprocessing (8.2-K), Bellman–Ford (8.2-N).
+- **Still 🔴:** BFS (8.2-B).
+- **Honestly labelled stubs (Phases 3–4, not started):** the remaining ~61 modules. This is where
+  most of the remaining work is.

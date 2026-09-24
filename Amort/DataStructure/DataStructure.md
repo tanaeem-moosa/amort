@@ -1,5 +1,9 @@
 # Textbook Data Structures & Online Query Algorithms in Lean 4
 
+> **Status: partially verified / contains stubs** (Contains verified Dynamic Array and Two-Stack
+> Queue algorithms alongside Phase 3 Heap and BST stubs).
+
+
 This document synthesizes the formalization of textbook data structures and online query algorithms
 in `Amort.DataStructure`, covering priority queues, heaps, online running median, balanced BSTs,
 dynamic arrays, two-stack queues, and their asymptotic bridges to Mathlib `IsBigO`:

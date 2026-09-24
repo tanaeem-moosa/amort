@@ -1,5 +1,9 @@
 # Rabin-Karp Rolling Hash String Matching
 
+> **Status: stub — not verified** (Phase 3 canon stub; rolling hash algebra is proven,
+> but Las Vegas verification matcher is a specification stub).
+
+
 ## 1. Overview
 
 The Rabin-Karp algorithm (Karp & Rabin, 1987) is an algebraic randomized string matching technique based on fingerprinting. Given a pattern $P$ of length $m$ and text $T$ of length $n$:

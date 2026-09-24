@@ -20,7 +20,7 @@ selection to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framewor
 - Median-of-Medians BFPRT Selection ($O(n)$ linear time deterministic selection).
 
 ## Key Definitions and Theorems
-- `Amort.Greedy.isBigO_intervalSchedulingWork_mul_size`: Interval scheduling O(n log n).
+- `Amort.Greedy.isBigO_intervalScheduleWithCount_snd_mul_size`: Interval scheduling O(n log n).
 - `Amort.Greedy.isBigO_huffmanConstructionWork_mul_size`: Huffman construction O(n log n).
 - `Amort.Greedy.isBigO_bfprt_linear_atTop`: BFPRT linear recurrence $O(n)$ in `IsBigO`.
 -/
@@ -29,19 +29,25 @@ namespace Amort.Greedy
 
 open Asymptotics
 
-/-- Operational work of interval scheduling is asymptotically $O(n \cdot \text{Nat.size } n)$
-under `Filter.atTop` on $\mathbb{N}$. -/
-theorem isBigO_intervalSchedulingWork_mul_size :
-    (fun n : ℕ ↦ ((intervalSchedulingWork n : ℕ) : ℝ)) =O[Filter.atTop]
-      (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
+/-- Operational cost of instrumented interval scheduling is asymptotically
+$O(n \cdot \text{Nat.size } n)$ under `Filter.comap List.length Filter.atTop`. -/
+theorem isBigO_intervalScheduleWithCount_snd_mul_size :
+    (fun L : List Interval ↦ (((intervalScheduleWithCount L).2 : ℕ) : ℝ)) =O[
+      Filter.comap List.length Filter.atTop]
+    (fun L : List Interval ↦ ((L.length * Nat.size L.length : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (2 : ℝ) ?_
-  rw [Filter.eventually_atTop]
-  refine ⟨1, fun n hn ↦ ?_⟩
+  rw [Filter.eventually_comap]
+  have hev : ∀ᶠ n in Filter.atTop, 1 ≤ n := Filter.eventually_ge_atTop 1
+  refine hev.mono ?_
+  intro n hn L (hL : L.length = n)
+  subst hL
   simp only [Real.norm_eq_abs, Nat.abs_cast]
-  have h := intervalSchedulingWork_le n hn
-  have h_real : (((intervalSchedulingWork n : ℕ) : ℝ) ≤ ((2 * n * Nat.size n : ℕ) : ℝ)) := by
+  have h := intervalScheduleWithCount_snd_le_mul L hn
+  have h_real : ((((intervalScheduleWithCount L).2 : ℕ) : ℝ) ≤
+      ((2 * L.length * Nat.size L.length : ℕ) : ℝ)) := by
     exact_mod_cast h
-  have h_assoc : ((2 * n * Nat.size n : ℕ) : ℝ) = 2 * ((n * Nat.size n : ℕ) : ℝ) := by
+  have h_assoc : ((2 * L.length * Nat.size L.length : ℕ) : ℝ) =
+      2 * ((L.length * Nat.size L.length : ℕ) : ℝ) := by
     push_cast
     ring
   rw [h_assoc] at h_real
@@ -50,14 +56,14 @@ theorem isBigO_intervalSchedulingWork_mul_size :
 /-- Operational work of Huffman tree construction is asymptotically $O(n \cdot \text{Nat.size } n)$
 under `Filter.atTop` on $\mathbb{N}$. -/
 theorem isBigO_huffmanConstructionWork_mul_size :
-    (fun n : ℕ ↦ ((huffmanConstructionWork n : ℕ) : ℝ)) =O[Filter.atTop]
+    (fun n : ℕ ↦ ((huffmanConstructionBound n : ℕ) : ℝ)) =O[Filter.atTop]
       (fun n : ℕ ↦ ((n * Nat.size n : ℕ) : ℝ)) := by
   refine IsBigO.of_bound (7 : ℝ) ?_
   rw [Filter.eventually_atTop]
   refine ⟨1, fun n hn ↦ ?_⟩
   simp only [Real.norm_eq_abs, Nat.abs_cast]
   have h := huffmanConstructionWork_le n hn
-  have h_real : (((huffmanConstructionWork n : ℕ) : ℝ) ≤ ((7 * n * Nat.size n : ℕ) : ℝ)) := by
+  have h_real : (((huffmanConstructionBound n : ℕ) : ℝ) ≤ ((7 * n * Nat.size n : ℕ) : ℝ)) := by
     exact_mod_cast h
   have h_assoc : ((7 * n * Nat.size n : ℕ) : ℝ) = 7 * ((n * Nat.size n : ℕ) : ℝ) := by
     push_cast

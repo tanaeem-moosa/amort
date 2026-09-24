@@ -1,5 +1,9 @@
 # Approximation Algorithms in Lean 4
 
+> **Status: stub — not verified** (Phase 4 canon stubs; Set Cover, Metric TSP, and Vertex Cover
+> algorithms are specification stubs awaiting full verification).
+
+
 This directory formalizes foundational approximation algorithms for NP-hard optimization problems:
 
 1. **Vertex Cover 2-Approximation** (`VertexCover.lean`):

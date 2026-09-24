@@ -10,6 +10,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Complexity Classes P and NP, Polynomial Verifiers, and Reductions
 
+> **Status: stub — not verified** (Phase 0 canon stub; polynomial closure arithmetic is proven,
+> but machine model for P vs NP is an abstract specification stub).
+
 This module formalizes:
 1. Languages over alphabets as `Language α := Set (List α)`.
 2. Canonical polynomial growth evaluation `polyEval c k n = c * (n + 1) ^ k` and `IsPolyBound`.
@@ -22,6 +25,14 @@ This module formalizes:
    $A \le_P B \wedge B \le_P C \implies A \le_P C$.
 8. Preservation theorem: if $A \le_P B$ and $B \in P$, then $A \in P$.
 9. Formal definitions of NP-hardness and NP-completeness.
+
+## Scope Note (Anti-Pattern A9 Prevention)
+This module provides an algebraic and axiomatic framework for complexity classes ($P \subseteq NP$,
+$\le_P$ preorder, transitivity, and preservation under reduction). Note that `Decider` and
+`Verifier` define operational interfaces rather than formal Turing machine models
+(e.g., Mathlib's `Turing.TM2ComputableInPolyTime`). Concrete, fully formal combinatorial complexity
+theorems are established in `Amort.Complexity.KarpReductions` (3SAT to Independent Set reduction)
+and `Amort.Complexity.TwoSAT` (linear-time 2-SAT correctness and completeness).
 
 ## Mathematical Architecture
 

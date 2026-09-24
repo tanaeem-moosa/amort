@@ -1,5 +1,9 @@
 # Simplex Slack Form and Dictionary Feasibility Invariants
 
+> **Status: stub — not verified** (Phase 4 canon stub; ratio test feasibility is proven,
+> but dictionary pivot loop and Bland termination are specification stubs).
+
+
 This document details the Lean 4 formalization of Simplex Slack Form and Dictionary Invariants in `Amort.LP.Simplex`.
 
 ## Mathematical Architecture

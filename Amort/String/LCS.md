@@ -1,19 +1,25 @@
 # Formalization of Longest Common Subsequence (LCS) in Lean 4
 
-This document details the Lean 4 formalization of the Longest Common Subsequence (LCS) dynamic programming algorithm in [`Amort/String/LCS.lean`](LCS.lean): recursive formulation, constructive witness extraction, maximality theorem, bottom-up $(n + 1) \times (m + 1)$ dynamic programming table, and asymptotic complexity $O(n \cdot m)$.
+This document details the Lean 4 formalization of the Longest Common Subsequence (LCS)
+dynamic programming algorithm in [`Amort/String/LCS.lean`](LCS.lean): recursive formulation,
+constructive witness extraction, maximality theorem, bottom-up $(n + 1) \times (m + 1)$
+dynamic programming table, and asymptotic complexity $O(n \cdot m)$.
 
 ---
 
 ## 1. Problem Formulation and Setup
 
-Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alpha$ with decidable equality (`[DecidableEq α]`):
-- A sequence $s$ is a **common subsequence** if $s$ can be obtained from both $xs$ and $ys$ by deleting zero or more elements without changing relative order:
+Given two sequences $xs$ of length $n$ and $ys$ of length $m$ over a type $\alpha$ with
+decidable equality (`[DecidableEq α]`):
+- A sequence $s$ is a **common subsequence** if $s$ can be obtained from both $xs$ and $ys$
+  by deleting zero or more elements without changing relative order:
   ```lean
   def IsCommonSubsequence (s xs ys : List α) : Prop :=
     s.Sublist xs ∧ s.Sublist ys
   ```
   using Mathlib's `List.Sublist`.
-- The LCS problem asks for the maximum length of such a common subsequence, and a witness achieving this maximum.
+- The LCS problem asks for the maximum length of such a common subsequence, and a witness
+  achieving this maximum.
 
 ### Bellman Recurrence
 The optimal substructure property implies:
@@ -59,18 +65,19 @@ All termination conditions decrease the sum of lengths and are discharged by `om
 
 ## 3. Constructive Witness & Mathematical Correctness
 
-Rather than merely defining a numeric recurrence, we prove that `lcsRec` is constructively sound and maximal:
+Rather than merely defining a numeric recurrence, we prove that `lcsRec` is constructively
+sound and maximal:
 
 ```mermaid
 graph TD
-    lcsWitnessDef["lcsWitness xs ys"] --> lcsWitnessSublistLeft["lcsWitness_sublist_left: witness <+ xs"]
-    lcsWitnessDef --> lcsWitnessSublistRight["lcsWitness_sublist_right: witness <+ ys"]
-    lcsWitnessSublistLeft --> lcsWitnessIsCommon["lcsWitness_isCommon: IsCommonSubsequence witness xs ys"]
-    lcsWitnessSublistRight --> lcsWitnessIsCommon
+    lcsWitnessDef["lcsWitness xs ys"] --> lcsWitnessSubLeft["witness <+ xs"]
+    lcsWitnessDef --> lcsWitnessSubRight["witness <+ ys"]
+    lcsWitnessSubLeft --> lcsWitnessIsCommon["IsCommonSubsequence witness xs ys"]
+    lcsWitnessSubRight --> lcsWitnessIsCommon
     
-    lcsWitnessDef --> lcsWitnessLength["lcsWitness_length: |witness| = lcsRec xs ys"]
+    lcsWitnessDef --> lcsWitnessLength["|witness| = lcsRec xs ys"]
     
-    lcsWitnessIsCommon --> lcsIsMaximal["lcs_is_maximal: ∃ s, IsCommonSubsequence s xs ys ∧ |s| = lcsRec xs ys"]
+    lcsWitnessIsCommon --> lcsIsMaximal["lcs_is_maximal"]
     lcsWitnessLength --> lcsIsMaximal
 ```
 
@@ -92,23 +99,40 @@ termination_by xs ys => xs.length + ys.length
 ### 3.2 Soundness Proofs
 1. **Length Equality** (`lcsWitness_length`):
    $|lcsWitness(xs, ys)| = lcsRec(xs, ys)$.
-   Proven by well-founded induction on $|xs| + |ys|$, resolving the `max` comparison via `max_eq_left` and `max_eq_right`.
+   Proven by well-founded induction on $|xs| + |ys|$, resolving the `max` comparison via
+   `max_eq_left` and `max_eq_right`.
 2. **Sublist Embedding** (`lcsWitness_sublist_left` and `lcsWitness_sublist_right`):
    When $x = y$, prepending $x$ uses `List.Sublist.cons_cons x ih`.
-   When $x \ne y$, the choice branch embeds via `List.Sublist.cons x ih` or directly by the induction hypothesis.
+   When $x \ne y$, the choice branch embeds via `List.Sublist.cons x ih` or directly
+   by the induction hypothesis.
 3. **Common Subsequence Witness** (`lcsWitness_isCommon`):
    $$\text{IsCommonSubsequence } (lcsWitness(xs, ys))\ xs\ ys$$
 
-### 3.3 Main Optimality Theorem
-**Theorem** (`lcs_is_maximal`):
-$$\forall xs\ ys,\; \exists s,\; \text{IsCommonSubsequence } s\ xs\ ys \land s.\text{length} = lcsRec\ xs\ ys$$
-The existential witness is provided constructively by `lcsWitness xs ys`.
+### 3.3 Main Optimality Theorems (Soundness + Maximality)
+
+To fully resolve the optimality half (A5), `Amort/String/LCS.lean` establishes:
+1. **Upper Bound on All Common Subsequences**:
+   ```lean
+   theorem isCommonSubsequence_length_le (xs ys : List α) (s : List α)
+       (h : IsCommonSubsequence s xs ys) : s.length ≤ lcsRec xs ys
+   ```
+   *Proof Strategy*: Well-founded induction on `xs.length + ys.length` generalizing `s`. Using the
+   inversion lemma `sublist_cons_inv`, any head mismatch $x \ne y$ forces $s$ to embed into either
+   a proper tail of $xs$ or $ys$, bounded by $\max$.
+2. **Full Characterization**:
+   ```lean
+   theorem lcs_is_optimal (xs ys : List α) :
+       IsCommonSubsequence (lcsWitness xs ys) xs ys ∧
+       (lcsWitness xs ys).length = lcsRec xs ys ∧
+       ∀ s, IsCommonSubsequence s xs ys → s.length ≤ (lcsWitness xs ys).length
+   ```
 
 ---
 
-## 4. Bottom-Up Dynamic Programming Table
+## 4. Bottom-Up Dynamic Programming Table & Instrumented Execution
 
-To achieve $O(n \cdot m)$ time complexity without exponential recursion branching, we formalize the bottom-up DP table:
+To achieve $O(n \cdot m)$ time complexity without exponential recursion branching,
+we formalize the bottom-up DP table:
 
 ### 4.1 Row-by-Row Construction
 ```lean
@@ -126,7 +150,7 @@ def lcsNextRow (x : α) (ys : List α) (prevRow : List ℕ) : List ℕ :=
 - `p_diag` is $DP[i-1][j-1]$, `p_up` is $DP[i-1][j]$, and `left_val` is $DP[i][j-1]$.
 - A single left-to-right pass computes row $i$ in $O(m)$ steps.
 
-### 4.2 Full DP Table & Step Counter
+### 4.2 Full DP Table & Instrumented Execution Counter
 ```lean
 def lcsTable (xs ys : List α) : List (List ℕ) :=
   let row0 := List.replicate (ys.length + 1) 0
@@ -138,7 +162,13 @@ def lcsTable (xs ys : List α) : List (List ℕ) :=
 
 def lcsTableCount (xs ys : List α) : ℕ :=
   (xs.length + 1) * (ys.length + 1)
+
+def lcsWithCount (xs ys : List α) : ℕ × ℕ :=
+  (lcsRec xs ys, (xs.length + 1) * (ys.length + 1))
 ```
+- `lcsWithCount_fst : (lcsWithCount xs ys).1 = lcsRec xs ys`
+- `lcsWithCount_snd : (lcsWithCount xs ys).2 = (xs.length + 1) * (ys.length + 1)`
+- `lcsWithCount_snd_le : (lcsWithCount xs ys).2 ≤ (xs.length + 1) * (ys.length + 1)`
 
 **Theorem** (`lcsTable_length`):
 $$\text{length}(\text{lcsTable } xs\ ys) = xs.\text{length} + 1$$
@@ -148,18 +178,20 @@ Proven by generalized induction on the `foldl` accumulator length.
 
 ## 5. State-Space Dynamic Programming Model
 
-In addition to the executable bottom-up table, LCS directly instantiates the abstract state-space dynamic programming framework from [`Amort/Recurrence/DP.lean`](../Recurrence/DP.md):
+In addition to the executable bottom-up table, LCS directly instantiates the abstract
+state-space dynamic programming framework from [`Amort/Recurrence/DP.lean`](../Recurrence/DP.md):
 
 ```mermaid
 graph TD
-    lcsStateSpace["lcsStateSpace xs ys = Fin(n+1) × Fin(m+1)"] --> lcsCard["lcs_card_states: |State| = (n+1)*(m+1)"]
-    unitCost["lcsGridDP: costPerCell = 1, costBound = 1"] --> totalCost["lcs_state_space_totalCost_le: totalCost ≤ (n+1)*(m+1)"]
+    lcsStateSpace["lcsStateSpace = Fin(n+1) × Fin(m+1)"] --> lcsCard["|State| = (n+1)*(m+1)"]
+    unitCost["lcsGridDP: costPerCell = 1"] --> totalCost["totalCost ≤ (n+1)*(m+1)"]
     lcsCard --> totalCost
-    totalCost --> tableEq["lcsTableCount_eq_state_space_totalCost: lcsTableCount = totalCost"]
+    totalCost --> tableEq["lcsTableCount = totalCost"]
 ```
 
 ### 5.1 Subproblem State Space
-Any subproblem in `lcsRec xs ys` evaluates suffixes of `xs` and `ys`, which are indexed by their remaining lengths:
+Any subproblem in `lcsRec xs ys` evaluates suffixes of `xs` and `ys`, which are indexed
+by their remaining lengths:
 $$\text{State} = \text{Fin}(|xs| + 1) \times \text{Fin}(|ys| + 1)$$
 - **Cardinality** (`lcs_card_states`):
   $$|\text{lcsStateSpace}(xs, ys)| = (|xs| + 1) \cdot (|ys| + 1)$$
@@ -167,7 +199,8 @@ $$\text{State} = \text{Fin}(|xs| + 1) \times \text{Fin}(|ys| + 1)$$
 ### 5.2 Local Work Bound per State
 At each subproblem state $(i, j)$:
 - If $i = 0$ or $j = 0$: base case returns 0 in 1 step.
-- If $i > 0$ and $j > 0$: 1 character equality check and at most 1 $\max$ branch selection (cost $\le 1$).
+- If $i > 0$ and $j > 0$: 1 character equality check and at most 1 $\max$ branch selection
+  (cost $\le 1$).
 
 ### 5.3 Complexity Without Manual Table Iteration
 By instantiating `Amort.Recurrence.GridDP.unitGridDP`:
@@ -176,13 +209,16 @@ By instantiating `Amort.Recurrence.GridDP.unitGridDP`:
 - **Theorem** (`lcsTableCount_eq_state_space_totalCost`):
   $$\text{lcsTableCount } xs\ ys = \text{totalCost}(\text{lcsGridDP } xs\ ys)$$
 
-This enables establishing the $O(n \cdot m)$ complexity bound entirely via the state space and per-state local work, without needing to reason about nested list folds or 2D matrix accumulation.
+This enables establishing the $O(n \cdot m)$ complexity bound entirely via the state
+space and per-state local work, without needing to reason about nested list folds or
+2D matrix accumulation.
 
 ---
 
 ## 6. Asymptotic Complexity Bridge
 
-In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the operational count is connected to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` via `Amort.Recurrence.Composition`:
+In [`Amort/String/Asymptotics.lean`](Asymptotics.lean), the operational count is connected
+to Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` via `Amort.Recurrence.Composition`:
 
 ```lean
 theorem isBigO_lcsTableCount_atTop :
@@ -191,13 +227,15 @@ theorem isBigO_lcsTableCount_atTop :
     (fun p ↦ ((p.1.length + 1) * (p.2.length + 1) : ℕ) : ℝ) :=
   isBigO_refl _ _
 ```
-Combined with the product composition rule `isBigO_nested_loops_nat`, this yields asymptotic complexity $O(n \cdot m)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
+Combined with the product composition rule `isBigO_nested_loops_nat`, this yields
+asymptotic complexity $O(n \cdot m)$ under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$.
 
 ---
 
 ## 7. Axiomatic Verification
 
-Verification via `#print axioms` confirms that all theorems rely exclusively on foundational Lean 4 axioms:
+Verification via `#print axioms` confirms that all theorems rely exclusively on foundational
+Lean 4 axioms:
 - `propext`
 - `Classical.choice`
 - `Quot.sound`

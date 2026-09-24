@@ -15,6 +15,9 @@ import Mathlib.Tactic.FieldSimp
 /-!
 # 2-Universal Hashing and Reservoir Sampling
 
+> **Status: stub — not verified** (Phase 4 canon stub; collision probability is modeled,
+> but concrete hash family construction on PMF is a specification stub).
+
 This module formalizes 2-Universal hash families and reservoir stream sampling:
 1. **2-Universal Hash Families**: A finite family $\mathcal{H}$ of hash functions
    $h : U \to \text{Fin } m$ such that $\forall x \ne y, \mathbb{P}[h(x) = h(y)] \le \frac{1}{m}$.
@@ -32,7 +35,7 @@ This module formalizes 2-Universal hash families and reservoir stream sampling:
 - `Amort.Randomized.universal_collision_bound`: Collision bound $\le 1/m$.
 - `Amort.Randomized.reservoirRetentionProb`: Uniform retention probability $k / t$.
 - `Amort.Randomized.reservoir_inductive_step`: Inductive retention theorem.
-- `Amort.Randomized.hashLookupExpectedWork`: $O(1)$ expected lookup work.
+- `Amort.Randomized.hashLookupExpectedBound`: $O(1)$ expected lookup work.
 -/
 
 namespace Amort.Randomized
@@ -101,12 +104,12 @@ theorem reservoir_inductive_step (k t : ℕ) (hk : 1 ≤ k) (hkt : k ≤ t) :
 
 /-- Operational step model for hash table lookup with 2-Universal hashing:
 $O(1)$ expected steps when load factor $\alpha = n/m \le 1$. -/
-def hashLookupExpectedWork : ℕ :=
+def hashLookupExpectedBound : ℕ :=
   1
 
 /-- Hash lookup operates in $O(1)$ expected steps. -/
 theorem hashLookupExpectedWork_bound :
-    hashLookupExpectedWork ≤ 1 := by
+    hashLookupExpectedBound ≤ 1 := by
   rfl
 
 end Amort.Randomized

@@ -11,6 +11,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Eulerian Circuits and Hierholzer's Algorithm
 
+> **Status: stub — not verified** (Phase 3 canon stub; degree balance conditions are
+> proven, but Hierholzer cycle splicing is a specification stub).
+
 This module formalizes Eulerian circuits in directed and undirected graphs on `Fin n`,
 degree balance conditions ($\text{indeg}(v) = \text{outdeg}(v)$ and even degrees),
 circuit continuity, Hierholzer's cycle splicing algorithm, and linear operational
@@ -45,7 +48,7 @@ complexity $O(|V| + |E|)$.
 5. **Linear Operational Step Complexity**:
    Hierholzer's algorithm traverses each edge twice (once to follow cycles, once to splice)
    and visits vertices in $O(|V|)$ operations:
-   $$\text{hierholzerWork}(n, m) = 2(n + m) \le 2(|V| + |E|) = O(|V| + |E|)$$
+   $$\text{hierholzerBound}(n, m) = 2(n + m) \le 2(|V| + |E|) = O(|V| + |E|)$$
 
 ## Key Definitions and Theorems
 - `Amort.Graph.indeg`: In-degree of vertex $v$.
@@ -55,7 +58,7 @@ complexity $O(|V| + |E|)$.
 - `Amort.Graph.IsValidTrail`: Consecutive continuity predicate.
 - `Amort.Graph.IsClosedTrail`: Closed loop predicate.
 - `Amort.Graph.IsEulerianCircuit`: Complete Eulerian circuit specification.
-- `Amort.Graph.hierholzerWork`: Operational step model $2(n + m)$.
+- `Amort.Graph.hierholzerBound`: Operational step model $2(n + m)$.
 - `Amort.Graph.hierholzer_work_le`: Linear operational bound $O(|V| + |E|)$.
 -/
 
@@ -150,15 +153,15 @@ theorem isValidTrail_cons (e1 e2 : Fin n × Fin n) (rest : List (Fin n × Fin n)
 /-- Total operational work for Hierholzer's cycle splicing algorithm on a graph with
 `n` vertices and `m` edges: traversing and splicing edges in `2 * m` operations plus
 `2 * n` vertex pointer initializations, bounded by `2 * (n + m)` ($O(|V| + |E|)$). -/
-def hierholzerWork (n : ℕ) (m : ℕ) : ℕ := 2 * (n + m)
+def hierholzerBound (n : ℕ) (m : ℕ) : ℕ := 2 * (n + m)
 
 /-- Hierholzer work bound: operations are bounded by `2 * (n + m)`. -/
-theorem hierholzer_work_le (n m : ℕ) : hierholzerWork n m ≤ 2 * (n + m) :=
+theorem hierholzer_work_le (n m : ℕ) : hierholzerBound n m ≤ 2 * (n + m) :=
   le_refl _
 
 /-- Decomposition of Hierholzer work into vertex scans and edge traversals. -/
-theorem hierholzer_work_split (n m : ℕ) : hierholzerWork n m = 2 * n + 2 * m := by
-  dsimp [hierholzerWork]
+theorem hierholzer_work_split (n m : ℕ) : hierholzerBound n m = 2 * n + 2 * m := by
+  dsimp [hierholzerBound]
   ring
 
 end Amort.Graph

@@ -1,5 +1,8 @@
 # Set Cover Greedy $H(n)$-Approximation via Harmonic Potential
 
+> **Status: stub — not verified** (Phase 4 canon stub; harmonic charging scheme is proven,
+> but operational greedy subset extraction is a specification stub).
+
 ## Theoretical Foundations
 Given a universe $U$ of size $n$ and a family of subsets $\mathcal{S}$, the Set Cover problem seeks a minimum-size subcollection $\mathcal{C} \subseteq \mathcal{S}$ that covers $U$.
 

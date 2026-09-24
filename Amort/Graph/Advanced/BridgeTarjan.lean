@@ -10,6 +10,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Tarjan's Bridge and Articulation Point Finding Algorithm
 
+> **Status: stub — not verified** (Phase 4 canon stub; bridge condition is defined,
+> but DFS tree traversal and low-link algorithms are specification stubs).
+
 This module formalizes Tarjan's linear-time DFS algorithm for identifying bridges
 and articulation points in undirected finite graphs:
 1. **DFS Discovery & Low-Link Invariants**: Discovery time `disc[u]` and low-link value `low[u]`.
@@ -28,7 +31,7 @@ and articulation points in undirected finite graphs:
 - `Amort.Graph.Advanced.IsBridge`: Semantic definition of a bridge edge.
 - `Amort.Graph.Advanced.bridge_characterization`: Bridge characterization theorem.
 - `Amort.Graph.Advanced.IsArticulationPoint`: Semantic cut-vertex predicate.
-- `Amort.Graph.Advanced.tarjanBridgeWork`: Operational step count $3(n + m)$.
+- `Amort.Graph.Advanced.tarjanBridgeBound`: Operational step count $3(n + m)$.
 -/
 
 namespace Amort.Graph.Advanced
@@ -86,12 +89,12 @@ def IsRootArticulationPoint (dfs : DFSTreeState V) (root : V) : Prop :=
 
 /-- Operational step complexity model for Tarjan's DFS bridge finding:
 each vertex is visited once and each edge is examined from both endpoints. -/
-def tarjanBridgeWork (n m : ℕ) : ℕ :=
+def tarjanBridgeBound (n m : ℕ) : ℕ :=
   3 * (n + m)
 
 /-- Tarjan's DFS operates in linear time $O(|V| + |E|)$. -/
 theorem tarjanBridgeWork_le (n m : ℕ) :
-    tarjanBridgeWork n m ≤ 3 * (n + m) := by
+    tarjanBridgeBound n m ≤ 3 * (n + m) := by
   rfl
 
 end Amort.Graph.Advanced

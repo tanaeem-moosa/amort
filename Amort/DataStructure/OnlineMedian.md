@@ -1,5 +1,9 @@
 # Online Running Median with Dual Heaps
 
+> **Status: stub — not verified** (Phase 3 canon stub; partition median soundness is proven,
+> but heap insertion/rebalancing operations are specification stubs).
+
+
 This document details the Lean 4 formalization of the dual-heap online running median data structure
 in `Amort.DataStructure.OnlineMedian`. It maintains a streaming partition of numbers into a max-heap
 `low` and a min-heap `high`, proving balance and partition invariants, $O(\log n)$ insertion,

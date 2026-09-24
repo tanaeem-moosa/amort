@@ -13,6 +13,9 @@ import Mathlib.Tactic.Ring
 /-!
 # Asymptotic Complexity Bridges for Complexity Classes and Reductions
 
+> **Status: stub — not verified** (Phase 4 canon stub; gadget size formulas are proven,
+> but Turing reduction bounds are specification stubs).
+
 This module connects concrete operational step counts and problem size bounds to
 Mathlib's `Mathlib.Analysis.Asymptotics.IsBigO` asymptotic framework under `Filter.atTop`:
 1. 2-SAT linear-time operational complexity $O(|V| + |E|) = O(n + m)$.
@@ -37,10 +40,10 @@ namespace Amort.Complexity
 
 /-! ### 2-SAT Linear-Time Operational Asymptotics -/
 
-/-- 2-SAT SCC decomposition operational step count is asymptotically $O(n + m)$
+/-- **Stub Model**: 2-SAT SCC decomposition operational step count is asymptotically $O(n + m)$
 under `Filter.atTop` on $\mathbb{N} \times \mathbb{N}$. -/
 theorem isBigO_twoSATWork_atTop :
-    (fun (p : ℕ × ℕ) ↦ (((twoSATWork p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
+    (fun (p : ℕ × ℕ) ↦ (((twoSATBound p.1 p.2 : ℕ) : ℝ))) =O[Filter.atTop]
       (fun p ↦ (((p.1 + p.2 : ℕ) : ℝ))) := by
   refine IsBigO.of_bound 6 ?_
   apply Filter.Eventually.of_forall
@@ -57,7 +60,7 @@ theorem isBigO_twoSATWork_atTop :
 
 /-! ### Polynomial Growth Bounds in Mathlib Asymptotics -/
 
-/-- The canonical polynomial bound `polyEval c k n = c * (n + 1) ^ k` is
+/-- **Stub Model**: The canonical polynomial bound `polyEval c k n = c * (n + 1) ^ k` is
 asymptotically $O((n + 1)^k)$ under `Filter.atTop`. -/
 theorem isBigO_polyEval_atTop (c k : ℕ) :
     (fun (n : ℕ) ↦ (((polyEval c k n : ℕ) : ℝ))) =O[Filter.atTop]
@@ -76,7 +79,7 @@ theorem isBigO_polyEval_atTop (c k : ℕ) :
 
 /-! ### 3-SAT to Independent Set Gadget Size Asymptotics -/
 
-/-- The number of vertices in the 3-SAT to Independent Set gadget graph ($3m$)
+/-- **Stub Model**: The number of vertices in the 3-SAT to Independent Set gadget graph ($3m$)
 is asymptotically $O(m)$ under `Filter.atTop`. -/
 theorem isBigO_sat3ToIS_vertices_atTop :
     (fun (m : ℕ) ↦ (((3 * m : ℕ) : ℝ))) =O[Filter.atTop]
@@ -89,7 +92,8 @@ theorem isBigO_sat3ToIS_vertices_atTop :
   ring_nf
   rfl
 
-/-- Concrete upper bound on the number of edges in the 3-SAT to Independent Set gadget graph:
+/-- **Stub Model**:
+Concrete upper bound on the number of edges in the 3-SAT to Independent Set gadget graph:
 $3m$ clause triangle edges plus at most $\binom{3m}{2} \le 5m^2$ conflict edges. -/
 def sat3ToISEdgeBound (m : ℕ) : ℕ := 3 * m + 5 * m ^ 2
 
@@ -117,7 +121,8 @@ theorem isBigO_sat3ToIS_edges_atTop :
 
 /-! ### Complement Graph Edge Complexity Asymptotics -/
 
-/-- Upper bound on the number of edges in the complement graph $\overline{G}$ on $n$ vertices:
+/-- **Stub Model**:
+Upper bound on the number of edges in the complement graph $\overline{G}$ on $n$ vertices:
 at most $n^2$ edges. -/
 def complementEdgeBound (n : ℕ) : ℕ := n ^ 2
 
