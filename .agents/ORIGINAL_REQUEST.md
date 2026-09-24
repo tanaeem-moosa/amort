@@ -676,3 +676,58 @@ Reference: `proof_review.md` (§8, §8.2, §8.3, §7.3, §1, §2)
    - `lake build Amort && lake build` succeeds with 0 errors and 0 warnings.
    - `Amort/Audit.lean` validates `#print axioms` across all headline theorems.
 </USER_REQUEST>
+
+## 2026-09-24T04:09:25Z
+
+<USER_REQUEST>
+Build an interactive, modern, static Verified Algorithms Skill Tree web application hosted via GitHub Pages, driven by a single structured data file (`tutorial/tree.json`), with multi-tier unlock progression, integrated homework/quiz verifiers ("Spot the Fake" & "Predict"), savefile persistence, and pilot tutorial chapters.
+
+Working directory: `/workspace/amort`
+Integrity mode: development
+
+Reference: `SKILL_TREE_TUTORIAL_PLAN.md`, `proof_review.md` (§9), `Amort/Audit.lean`
+
+---
+
+## Requirements
+
+### R1. Single Source of Truth & Validation Tooling (`tutorial/tree.json` & `scripts/tree_tool.py`)
+- Define `tutorial/tree.json` containing the complete DAG of verified and planned algorithm nodes across at least 4 tiers (opening with Binary GCD, branching to Sorting, Strings, Amortization, DP, and Graphs).
+- Each node schema must include: `id`, `name`, `tier`, `category`, `status` (`open`, `ready`, `planned`), `prerequisites`, `unlocks`, `algorithm_skill`, `lean_skill`, `reference_module`, `headline_theorems`, `chapter_path`, and an `exercises` block containing "Spot the Fake" and "Predict" questions with explanations.
+- Provide `scripts/tree_tool.py` that:
+  1. Validates DAG acyclicity and prerequisite completeness.
+  2. Enforces the **"verified only" rule**: cross-checks every node marked `ready` against `Amort/Audit.lean` to verify theorems exist without non-standard axioms.
+  3. Auto-syncs or regenerates the Mermaid diagram in `SKILL_TREE_TUTORIAL_PLAN.md` to prevent doc drift.
+
+### R2. Interactive Skill Tree Web Application (`docs/index.html`)
+- Build a responsive, standalone static web application in `docs/` ready for immediate GitHub Pages hosting without requiring `npm` or build steps.
+- **Visual Tech Tree Canvas**:
+  - Render an interactive DAG across multiple tiers with glowing SVG connector lines highlighting dependency chains.
+  - Visual distinction for node states: Open/Active (pulsing cyan), Ready/Mastered (emerald), and Planned (dashed/locked).
+  - Smooth pan/zoom and layout navigation.
+- **Interactive Node Inspector**:
+  - Slide-out drawer displaying node details: skills, reference module, theorem statements, and prerequisites.
+  - Direct chapter preview reading Markdown content.
+- **Interactive Homework Verifier**:
+  - Interactive in-browser quiz engine for "Spot the Fake" and "Predict" exercises.
+  - Answering correctly marks the node as Mastered and triggers dynamic unlock of downstream nodes.
+- **State Persistence & Savefile Portability**:
+  - Automatically persist user progress in `localStorage`.
+  - Provide **"Download Savefile"** (`amort_save.json`) and **"Load Savefile"** (JSON file upload/drag-and-drop) so progress can be preserved across devices without a backend.
+
+### R3. Pilot Content & Lean Companion Files
+- Write the opening chapter `tutorial/binary_gcd.md` following the 5-step curriculum (Define, Formalize, Understand, State Correctness, State Complexity, Spot the Fake).
+- Provide the companion file `Tutorial/BinaryGCD.lean` (and any necessary `lakefile` / directory configuration) so learners can run `#eval` and test `example` statements against verified `Amort` proofs.
+- Provide at least 2 additional early-level chapters/exercises (e.g. `tutorial/euclid_gcd.md` and `tutorial/insertion_sort.md`).
+
+---
+
+## Adversarial Review & Verification Standard
+
+1. **Automated Mechanical Validation**:
+   - `python3 scripts/tree_tool.py --validate` passes with 0 errors.
+   - `lake build Amort && lake build` succeeds with 0 errors and 0 warnings.
+   - Headless test verifies `docs/index.html` loads valid JSON from `tutorial/tree.json` and renders all nodes.
+2. **Adversarial Audit**:
+   - An independent adversarial reviewer audits the web application, checking that locked nodes cannot be skipped, quiz scoring accurately gates mastery, savefile import/export works round-trip, and no claims diverge from `Amort/Audit.lean`.
+</USER_REQUEST>

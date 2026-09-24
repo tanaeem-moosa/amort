@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verified Algorithms Skill Tree — Lean 4 Curriculum</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation & Stats HUD -->
+  <header class="hud-header" role="banner">
+    <div class="hud-brand">
+      <span class="hud-logo" aria-hidden="true">🌱</span>
+      <div>
+        <h1 class="hud-title">Verified Algorithms Skill Tree</h1>
+        <p class="hud-subtitle">Interactive Formalized Curriculum in Lean 4</p>
+      </div>
+    </div>
+
+    <!-- HUD Stats Tracker -->
+    <div class="hud-stats" role="region" aria-label="Curriculum Progress">
+      <div class="stat-info">
+        <span class="stat-label">Mastery Progress</span>
+        <span id="stat-mastered" class="stat-value">0 / 22</span>
+      </div>
+      <div class="stat-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="22" aria-valuenow="0" aria-label="Progress bar">
+        <div id="stat-progress-fill" class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Savefile & System Controls -->
+    <div class="hud-actions" id="savefile-controls" role="group" aria-label="Progress Management">
+      <button id="btn-export-save" class="btn btn-secondary" title="Export progress to JSON savefile">
+        <span class="btn-icon-prefix" aria-hidden="true">💾</span> Export Save
+      </button>
+      <label class="btn btn-secondary btn-file" title="Load progress from savefile (.json)">
+        <span class="btn-icon-prefix" aria-hidden="true">📂</span> Import Save
+        <input type="file" id="file-import-save" accept=".json,application/json" hidden>
+      </label>
+      <button id="btn-reset-save" class="btn btn-danger-outline" title="Reset all progress">
+        <span class="btn-icon-prefix" aria-hidden="true">↺</span> Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Interactive Visual Tech Tree Canvas Viewport -->
+  <main id="canvas-container" class="canvas-viewport" tabindex="0" role="region" aria-label="Interactive Skill Tree Graph Canvas">
+    <div id="canvas-world" class="canvas-world">
+      <!-- Glowing SVG Wire Overlay -->
+      <svg id="tree-svg" class="tree-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Neon Glow Filters -->
+          <filter id="glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          <!-- SVG Arrow Markers -->
+          <marker id="marker-active" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M 0 1 L 7 4.5 L 0 8 z" fill="#06b6d4" />
+          </marker>
+          <marker id="marker-mastered" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M 0 1 L 7 4.5 L 0 8 z" fill="#10b981" />
+          </marker>
+          <marker id="marker-locked" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M 0 1 L 7 4.5 L 0 8 z" fill="#334155" />
+          </marker>
+          <marker id="marker-planned" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M 0 1 L 7 4.5 L 0 8 z" fill="#475569" />
+          </marker>
+        </defs>
+
+        <!-- Dynamic Edge Wires Layer -->
+        <g id="wires-layer"></g>
+      </svg>
+
+      <!-- HTML Nodes Layer -->
+      <div id="nodes-layer" class="nodes-layer"></div>
+    </div>
+
+    <!-- Floating Canvas Zoom & View Controls -->
+    <aside class="canvas-controls" role="toolbar" aria-label="Canvas navigation controls">
+      <button id="btn-zoom-in" class="ctrl-btn" title="Zoom In (+)" aria-label="Zoom In">+</button>
+      <button id="btn-zoom-out" class="ctrl-btn" title="Zoom Out (−)" aria-label="Zoom Out">−</button>
+      <button id="btn-zoom-fit" class="ctrl-btn" title="Fit Entire Tree View (⛶)" aria-label="Fit View">⛶</button>
+      <button id="btn-zoom-root" class="ctrl-btn" title="Center on Root Node (🌱 Binary GCD)" aria-label="Center on Root">🌱</button>
+    </aside>
+
+    <!-- Canvas Legend HUD -->
+    <div class="canvas-legend" aria-hidden="true">
+      <span class="legend-item"><span class="legend-dot dot-active"></span> Active</span>
+      <span class="legend-item"><span class="legend-dot dot-mastered"></span> Mastered</span>
+      <span class="legend-item"><span class="legend-dot dot-locked"></span> Locked</span>
+      <span class="legend-item"><span class="legend-dot dot-planned"></span> Planned</span>
+    </div>
+
+    <!-- Drag & Drop Savefile Overlay -->
+    <div id="drop-overlay" class="drop-overlay" aria-hidden="true">
+      <div class="drop-card">
+        <span class="drop-icon">📥</span>
+        <h3>Drop Savefile Here</h3>
+        <p>Release to import your progress (.json)</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Interactive Slide-out Node Inspector Drawer -->
+  <dialog id="inspector-drawer" class="inspector-drawer" closedby="any" aria-labelledby="drawer-node-title">
+    <div class="drawer-header">
+      <div class="drawer-meta">
+        <span id="drawer-tier-badge" class="badge badge-tier">Tier 1</span>
+        <span id="drawer-category-badge" class="badge badge-category">Arithmetic</span>
+        <span id="drawer-status-badge" class="badge badge-status">Active</span>
+      </div>
+      <div class="drawer-title-row">
+        <h2 id="drawer-node-title" class="drawer-title">Node Title</h2>
+        <button id="btn-drawer-close" class="btn-icon" aria-label="Close Inspector Drawer">✕</button>
+      </div>
+    </div>
+
+    <!-- Drawer Navigation Tabs -->
+    <nav class="drawer-tabs" role="tablist" aria-label="Inspector tabs">
+      <button class="tab-btn active" data-tab="specs" role="tab" aria-selected="true" aria-controls="tab-specs">Specification & Skills</button>
+      <button class="tab-btn" data-tab="quiz" role="tab" aria-selected="false" aria-controls="tab-quiz">Homework Verifier</button>
+      <button class="tab-btn" data-tab="chapter" role="tab" aria-selected="false" aria-controls="tab-chapter">Tutorial Chapter</button>
+    </nav>
+
+    <!-- Drawer Body Panels -->
+    <div class="drawer-body">
+      <!-- Tab 1: Overview & Specs -->
+      <section id="tab-specs" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-specs">
+        <div class="spec-card">
+          <h3 class="spec-label">⚡ Algorithm Skill</h3>
+          <p id="drawer-algo-skill" class="spec-text"></p>
+        </div>
+
+        <div class="spec-card">
+          <h3 class="spec-label">📘 Lean Reading Skill</h3>
+          <p id="drawer-lean-skill" class="spec-text"></p>
+        </div>
+
+        <div class="spec-card">
+          <h3 class="spec-label">📦 Reference Module</h3>
+          <div class="module-row">
+            <code id="drawer-ref-module" class="code-pill"></code>
+          </div>
+        </div>
+
+        <div class="spec-card">
+          <h3 class="spec-label">📜 Headline Audited Theorems</h3>
+          <div id="drawer-theorems-list" class="theorems-list"></div>
+        </div>
+
+        <div class="spec-card">
+          <h3 class="spec-label">🔗 Dependency Links</h3>
+          <div class="deps-grid">
+            <div class="deps-col">
+              <span class="deps-col-title">Requires (Prerequisites):</span>
+              <div id="drawer-prereqs-list" class="deps-chips"></div>
+            </div>
+            <div class="deps-col">
+              <span class="deps-col-title">Unlocks Downstream:</span>
+              <div id="drawer-unlocks-list" class="deps-chips"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Homework Verifier Engine -->
+      <section id="tab-quiz" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-quiz">
+        <div id="quiz-container" class="quiz-container"></div>
+      </section>
+
+      <!-- Tab 3: Tutorial Chapter Preview & Markdown Viewer -->
+      <section id="tab-chapter" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-chapter">
+        <div id="chapter-container" class="chapter-content markdown-body"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- Confirmation Modal for Progress Reset -->
+  <dialog id="confirm-reset-dialog" class="modal-dialog" closedby="any" aria-labelledby="reset-dialog-title">
+    <div class="modal-card">
+      <h3 id="reset-dialog-title" class="modal-title">Reset Skill Tree Progress?</h3>
+      <p class="modal-text">This will clear your completed exercises, lock downstream unlocked nodes, and return the tree to the fresh starting state. This action cannot be undone unless you export a savefile first.</p>
+      <div class="modal-actions">
+        <button id="btn-cancel-reset" class="btn btn-secondary">Cancel</button>
+        <button id="btn-confirm-reset" class="btn btn-danger">Confirm Reset</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Scripts: Fallback data first, then main application logic -->
+  <script src="tree_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

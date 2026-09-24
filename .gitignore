@@ -11,3 +11,5 @@ lake-packages/
 test_*.lean
 scratch_*.lean
 .pipeline_progress*
+__pycache__/
+*.pyc

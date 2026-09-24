@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-24T01:33:50Z
+# BRIEFING — 2026-09-24T04:10:35Z
 
 ## Mission
-Sentinel monitoring and routing for systematic resolution of proof gaps, vacuous definitions, and verification targets identified in Claude's Round 3 review (§8 of `proof_review.md`) across `Amort/`, with strict mechanical validation and independent adversarial review.
+Sentinel monitoring and routing for building the interactive Verified Algorithms Skill Tree web application (`docs/index.html`), single structured data DAG (`tutorial/tree.json`), validation tooling (`scripts/tree_tool.py`), and pilot tutorial chapters/Lean companion files.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -47,35 +47,34 @@ Sentinel monitoring and routing for systematic resolution of proof gaps, vacuous
 - Victory Auditor (Round 3 §8 Audit 27): 18806576-276a-41f8-ae11-3956406404b9 (teamwork_preview_victory_auditor_27) [completed - VICTORY CONFIRMED]
 - Progress Cron (Round 3 §8): 6f0580bc-01f0-476d-832b-5769f890a8a3/task-26 [cancelled]
 - Liveness Cron (Round 3 §8): 6f0580bc-01f0-476d-832b-5769f890a8a3/task-28 [cancelled]
+- Orchestrator (Skill Tree App): c7c19e8a-01bd-4836-ba55-92860e3aa326 (teamwork_preview_orchestrator_1) [active]
+- Victory Auditor: to be spawned on victory claim
+- Progress Cron: f9eb00ef-cb92-4b48-8cf7-7647615baa95/task-26 [active]
+- Liveness Cron: f9eb00ef-cb92-4b48-8cf7-7647615baa95/task-28 [active]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
 - Victory Audit is MANDATORY before reporting completion
 - Route per Routing Decision Table: Math/Proof -> teamwork_preview_pipeline
+- Route per Routing Decision Table: General -> teamwork_preview_orchestrator
 
 ## User Context
-- **Last user request**: Comprehensively resolve the remaining proof gaps, vacuous definitions, and verification targets identified in Claude's Round 3 review (§8 of `proof_review.md`) across `Amort/`, with strict mechanical validation and independent adversarial review before considering any item complete.
+- **Last user request**: Build an interactive, modern, static Verified Algorithms Skill Tree web application hosted via GitHub Pages (`docs/index.html`), driven by `tutorial/tree.json`, with validation tooling `scripts/tree_tool.py`, savefile persistence, and pilot chapters (`tutorial/binary_gcd.md`, `Tutorial/BinaryGCD.lean`, etc.).
 - **Pending clarifications**: none
-- **Delivered results**:
-  - Full resolution of all 4 Round 3 §8 targets (KMP failure table self-reference, BFS executable equivalence/unclamped counting, Bellman-Ford genuine cycle predicates, and docs/hygiene).
-  - All mechanical acceptance requirements verified by independent Victory Auditor 27.
-  - Complete `lake build Amort && lake build` succeeds across 2,142 jobs with 0 errors and 0 warnings.
-  - `#print axioms` verified via `Amort/Audit.lean` with 0 `sorry`/`admit`/`sorryAx` and standard Lean 4 axioms only.
-  - VICTORY CONFIRMED by independent auditor.
+- **Delivered results**: previous Round 3 §8 items confirmed; skill tree application project initiated.
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
 
 ## Artifact Index
 - /workspace/amort/.agents/ORIGINAL_REQUEST.md — Authoritative record of user requests
 - /workspace/amort/.agents/sentinel/BRIEFING.md — Sentinel state and persistent working memory
-- /workspace/amort/.agents/sentinel/handoff.md — Sentinel handoff report
-- /workspace/amort/proof_review.md — Review guide identifying gaps and anti-patterns across Amort
+- /workspace/amort/.agents/teamwork_preview_orchestrator_1/plan.md — Orchestrator plan
+- /workspace/amort/.agents/teamwork_preview_orchestrator_1/progress.md — Orchestrator progress
+- /workspace/amort/SKILL_TREE_TUTORIAL_PLAN.md — Specification and roadmap for skill tree
 - /workspace/amort/Amort/Audit.lean — Central headline theorem axiom audit suite
-- /workspace/amort/.agents/teamwork_preview_pipeline_25/handoff.md — Conductor 25 handoff report
-- /workspace/amort/.agents/teamwork_preview_victory_auditor_27/handoff.md — Auditor 27 victory confirmation report
