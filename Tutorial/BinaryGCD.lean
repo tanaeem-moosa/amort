@@ -20,15 +20,22 @@ This file allows learners to interact with definitions, evaluate examples,
 and check theorem statements locally.
 -/
 
+set_option linter.hashCommand false
+set_option linter.style.header false
+
 namespace Tutorial.BinaryGCD
 
 /-! ### Step 3: Running the Executable Algorithm -/
 
 -- Run `#eval` to compute greatest common divisors using Stein's algorithm:
-#eval Nat.binaryGcd 48 18     -- 6
-#eval Nat.binaryGcd 105 252   -- 21
-#eval Nat.binaryGcd 0 7       -- 7
-#eval Nat.binaryGcd 0 0       -- 0
+#eval Nat.binaryGcd 48 18
+#guard Nat.binaryGcd 48 18 = 6
+#eval Nat.binaryGcd 105 252
+#guard Nat.binaryGcd 105 252 = 21
+#eval Nat.binaryGcd 0 7
+#guard Nat.binaryGcd 0 7 = 7
+#eval Nat.binaryGcd 0 0
+#guard Nat.binaryGcd 0 0 = 0
 
 /-! ### Step 4: Correctness Claims -/
 
@@ -36,7 +43,7 @@ namespace Tutorial.BinaryGCD
 #check Nat.binaryGcd_eq_gcd
 -- ∀ (a b : ℕ), Nat.binaryGcd a b = Nat.gcd a b
 
-/-- Learner experiment: Verify that binary GCD is commutative. -/
+/-- Commutativity of Binary GCD -/
 example (a b : ℕ) : Nat.binaryGcd a b = Nat.binaryGcd b a := by
   rw [Nat.binaryGcd_eq_gcd, Nat.binaryGcd_eq_gcd, Nat.gcd_comm]
 
@@ -49,8 +56,10 @@ example (a b : ℕ) (ha : a % 2 = 0) (hb : b % 2 = 0) :
 /-! ### Step 5: Step Counting & Complexity Bounds -/
 
 -- Run `#eval` on the instrumented function to see `(gcd, step_count)`:
-#eval Nat.binaryGcdWithSteps 48 18    -- (6, 6)
-#eval Nat.binaryGcdWithSteps 105 252  -- (21, 9)
+#eval Nat.binaryGcdWithSteps 48 18
+#guard Nat.binaryGcdWithSteps 48 18 = (6, 6)
+#eval Nat.binaryGcdWithSteps 105 252
+#guard Nat.binaryGcdWithSteps 105 252 = (21, 5)
 
 -- Coupling theorems:
 #check Nat.binaryGcdWithSteps_fst
@@ -72,12 +81,10 @@ example : (Nat.binaryGcdWithSteps 48 18).2 ≤ Nat.size 48 + Nat.size 18 := by
 
 /-! ### Spot the Fake: Compiling Real vs Fake Claims -/
 
-/-- Fake 1 (Formula stand-in): True and provable, but completely vacuous because
-`fakeCost` has no connection to any execution of `binaryGcd`. -/
-def fakeCost (a b : ℕ) : ℕ := Nat.size a + Nat.size b
+def gcdCost (a b : ℕ) : ℕ := Nat.size a + Nat.size b
 
-/-- Fake 1 bound theorem: Proves a bound on `fakeCost`, not the algorithm. -/
-theorem fakeCost_le (a b : ℕ) : fakeCost a b ≤ Nat.size a + Nat.size b :=
+theorem gcdCost_le (a b : ℕ) :
+    gcdCost a b ≤ Nat.size a + Nat.size b :=
   le_refl _
 
 /-- Auxiliary lemma: Bit size of a natural number is bounded by its value. -/

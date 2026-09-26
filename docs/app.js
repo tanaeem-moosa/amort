@@ -337,6 +337,11 @@ class SkillTreeApp {
 
     this.statMasteredEl = document.getElementById('stat-mastered');
     this.statProgressFillEl = document.getElementById('stat-progress-fill');
+
+    this.readingViewEl = document.getElementById('reading-view');
+    this.readingArticleEl = document.getElementById('reading-article');
+    this.readingBackLinkEl = document.getElementById('reading-back-link');
+    this.drawerOpenChapterBtnEl = document.getElementById('drawer-open-chapter-btn');
   }
 
   async init() {
@@ -352,6 +357,8 @@ class SkillTreeApp {
     this.render();
     this.updateHUD();
     this.centerOnRoot();
+
+    this.setupRouting();
   }
 
   // ----------------------------------------------------------------------------
@@ -710,10 +717,113 @@ class SkillTreeApp {
     });
   }
 
-  selectNode(nodeId) {
+  setupRouting() {
+    window.addEventListener('hashchange', () => this.handleRouting());
+    this.handleRouting();
+  }
+
+  handleRouting() {
+    const hash = window.location.hash || '';
+    const chapterMatch = hash.match(/^#\/node\/([A-Z0-9_]+)\/chapter$/);
+    if (chapterMatch) {
+      const nodeId = chapterMatch[1];
+      this.openReadingView(nodeId);
+      return;
+    }
+
+    const nodeMatch = hash.match(/^#\/node\/([A-Z0-9_]+)$/);
+    if (nodeMatch) {
+      const nodeId = nodeMatch[1];
+      this.closeReadingView();
+      this.selectNode(nodeId, false);
+      return;
+    }
+
+    // Default: tree view
+    this.closeReadingView();
+    if (this.drawerEl?.open) {
+      this.closeDrawer(false);
+    }
+  }
+
+  async openReadingView(nodeId) {
+    const node = this.engine.nodesMap.get(nodeId);
+    if (!node) {
+      window.location.hash = '#/';
+      return;
+    }
+
+    this.selectedNodeId = nodeId;
+    if (this.drawerEl?.open) {
+      this.drawerEl.close();
+    }
+
+    if (this.viewportEl) this.viewportEl.classList.add('hidden');
+    if (this.readingViewEl) this.readingViewEl.classList.remove('hidden');
+
+    const tierBadge = document.getElementById('reading-tier-badge');
+    const catBadge = document.getElementById('reading-category-badge');
+    const statusBadge = document.getElementById('reading-status-badge');
+    const state = this.nodeStates[node.id] || 'locked';
+    const category = this.engine.categories.get(node.category);
+
+    if (tierBadge) tierBadge.textContent = `Tier ${node.tier}`;
+    if (catBadge) {
+      catBadge.textContent = category?.name || node.category;
+      catBadge.style.backgroundColor = category?.color || '#3b82f6';
+    }
+    if (statusBadge) {
+      statusBadge.textContent = state.toUpperCase();
+      statusBadge.className = `badge badge-status ${state}`;
+    }
+
+    if (this.readingBackLinkEl) {
+      this.readingBackLinkEl.href = `#/node/${node.id}`;
+      this.readingBackLinkEl.onclick = (e) => {
+        e.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.hash = `#/node/${node.id}`;
+        }
+      };
+    }
+
+    if (this.readingArticleEl) {
+      this.readingArticleEl.innerHTML = '<div class="spec-text">Loading tutorial chapter...</div>';
+      const chapterData = await this.loadChapter(node);
+      if (chapterData.success) {
+        this.readingArticleEl.innerHTML = this.renderMarkdown(chapterData.markdown);
+      } else if (chapterData.type === 'coming_soon') {
+        this.readingArticleEl.innerHTML = this.renderMarkdown(this.renderComingSoonMarkdown(node));
+      } else {
+        this.readingArticleEl.innerHTML = `
+          <div class="chapter-error">
+            <h2>⚠️ Chapter Load Error</h2>
+            <p>${this.escapeHtml(chapterData.error)}</p>
+          </div>
+        `;
+      }
+    }
+
+    this.readingViewEl?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }
+
+  closeReadingView() {
+    if (this.readingViewEl) this.readingViewEl.classList.add('hidden');
+    if (this.viewportEl) this.viewportEl.classList.remove('hidden');
+  }
+
+  selectNode(nodeId, updateHash = true) {
     this.selectedNodeId = nodeId;
     const node = this.engine.nodesMap.get(nodeId);
     if (!node) return;
+
+    if (updateHash && window.location.hash !== `#/node/${nodeId}`) {
+      window.location.hash = `#/node/${nodeId}`;
+      return;
+    }
 
     // Highlight node on canvas
     this.renderNodes();
@@ -725,12 +835,15 @@ class SkillTreeApp {
     }
   }
 
-  closeDrawer() {
+  closeDrawer(updateHash = true) {
     if (this.drawerEl?.open) {
       this.drawerEl.close();
     }
     this.selectedNodeId = null;
     this.renderNodes();
+    if (updateHash && window.location.hash.startsWith('#/node/') && !window.location.hash.includes('/chapter')) {
+      window.location.hash = '#/';
+    }
   }
 
   populateDrawer(node) {
@@ -754,7 +867,17 @@ class SkillTreeApp {
     }
     if (titleEl) titleEl.textContent = node.name;
 
-    // Tab 1: Specs
+    // CTA Open Chapter
+    const openBtn = document.getElementById('drawer-open-chapter-btn');
+    if (openBtn) {
+      openBtn.href = `#/node/${node.id}/chapter`;
+      openBtn.onclick = (e) => {
+        e.preventDefault();
+        window.location.hash = `#/node/${node.id}/chapter`;
+      };
+    }
+
+    // Tab 1: Chapter Preview & Specs
     const algoSkillEl = document.getElementById('drawer-algo-skill');
     const leanSkillEl = document.getElementById('drawer-lean-skill');
     const refModuleEl = document.getElementById('drawer-ref-module');
@@ -776,7 +899,7 @@ class SkillTreeApp {
         thms.forEach(t => {
           const div = document.createElement('div');
           div.className = 'theorem-item';
-          div.innerHTML = `<span>${t}</span><span class="thm-badge">Audited ✓</span>`;
+          div.innerHTML = `<span>${this.escapeHtml(t)}</span><span class="thm-badge">Audited ✓</span>`;
           thmListEl.appendChild(div);
         });
       }
@@ -818,11 +941,38 @@ class SkillTreeApp {
       }
     }
 
-    // Tab 2: Quiz Engine
-    this.renderQuizTab(node);
+    // Chapter Preview in drawer
+    this.renderChapterPreview(node);
 
-    // Tab 3: Chapter Markdown
-    this.renderChapterTab(node);
+    // Tab 2: Exercises
+    this.renderExercisesTab(node);
+  }
+
+  async renderChapterPreview(node) {
+    const previewEl = document.getElementById('drawer-chapter-preview');
+    if (!previewEl) return;
+    previewEl.innerHTML = '<span class="spec-text">Loading preview...</span>';
+
+    const chapterData = await this.loadChapter(node);
+    if (chapterData.success) {
+      const lines = chapterData.markdown.split('\n');
+      const excerptLines = [];
+      let count = 0;
+      for (const line of lines) {
+        excerptLines.push(line);
+        count += line.length;
+        if (count > 1200) break;
+      }
+      previewEl.innerHTML = this.renderMarkdown(excerptLines.join('\n') + '\n\n*(Click "Open Full Chapter" above to view complete tutorial)*');
+    } else if (chapterData.type === 'coming_soon') {
+      previewEl.innerHTML = this.renderMarkdown(this.renderComingSoonMarkdown(node));
+    } else {
+      previewEl.innerHTML = `<div class="chapter-error"><p>${this.escapeHtml(chapterData.error)}</p></div>`;
+    }
+  }
+
+  renderExercisesTab(node) {
+    this.renderQuizTab(node);
   }
 
   // ----------------------------------------------------------------------------
@@ -1049,81 +1199,80 @@ class SkillTreeApp {
   }
 
   // ----------------------------------------------------------------------------
-  // Tutorial Chapter Markdown Viewer
+  // Tutorial Chapter Loader & Markdown Viewer
   // ----------------------------------------------------------------------------
-  async renderChapterTab(node) {
-    const container = document.getElementById('chapter-container');
-    if (!container) return;
-    container.innerHTML = `<div class="spec-text">Loading tutorial chapter...</div>`;
+  async loadChapter(node) {
+    const filename = node.chapter_path ? node.chapter_path.split('/').pop() : `${node.id.toLowerCase()}.md`;
+    const paths = [
+      `chapters/${filename}`,
+      `chapters/${node.id}.md`,
+      `tutorial/${filename}`,
+      node.chapter_path
+    ];
 
-    let markdown = null;
+    let content = null;
+    let lastError = null;
 
-    // Attempt dynamic fetch from disk
-    if (node.chapter_path) {
-      const paths = [node.chapter_path, `../${node.chapter_path}`, `tutorial/${node.chapter_path.split('/').pop()}`];
-      for (const p of paths) {
-        try {
-          const res = await fetch(p);
-          if (res.ok) {
-            markdown = await res.text();
-            break;
-          }
-        } catch (e) {
-          // continue fallback
+    for (const p of paths) {
+      if (!p) continue;
+      try {
+        const res = await fetch(p);
+        if (res.ok) {
+          content = await res.text();
+          break;
+        } else {
+          lastError = `HTTP ${res.status}: ${res.statusText}`;
         }
+      } catch (err) {
+        lastError = err.message || String(err);
       }
     }
 
-    // Synthesized curriculum fallback
-    if (!markdown) {
-      markdown = this.generateFallbackChapterMarkdown(node);
+    if (content) {
+      return { success: true, markdown: content };
     }
 
-    container.innerHTML = this.renderMarkdown(markdown);
+    const pilotChapters = ['BGCD', 'EUC', 'INS'];
+    const isPilot = pilotChapters.includes(node.id) || Boolean(node.has_chapter);
+
+    if (isPilot) {
+      return {
+        success: false,
+        type: 'error',
+        error: `Failed to load chapter for "${node.name}" from ${paths[0]} (${lastError || 'File not found'}).`
+      };
+    }
+
+    return {
+      success: false,
+      type: 'coming_soon'
+    };
   }
 
-  generateFallbackChapterMarkdown(node) {
-    const thms = (node.headline_theorems || []).map(t => `- \`${t}\``).join('\n') || '- None currently defined';
-    const prereqs = (node.prerequisites || []).map(p => `- Node \`${p}\``).join('\n') || '- None (Entry point)';
-    const unlocks = (node.unlocks || []).map(u => `- Node \`${u}\``).join('\n') || '- Terminal node';
+  renderComingSoonMarkdown(node) {
+    const thms = (node.headline_theorems || []).map(t => `- \`${t}\``).join('\n') || '- None currently defined (Planned module)';
+    const prereqs = (node.prerequisites || []).map(p => `- Node \`${p}\``).join('\n') || '- None (Root entry point)';
+    const unlocks = (node.unlocks || []).map(u => `- Node \`${u}\``).join('\n') || '- Terminal leaf node';
 
     return `
-# ${node.name}
+# Chapter coming soon
 
-> Formalized in Lean 4 — Module \`${node.reference_module || 'Amort'}\`
+A full interactive tutorial chapter for **${node.name}** is currently in development.
 
-## 1. Problem Specification & Algorithmic Core
-**Pedagogical Objective**: ${node.algorithm_skill || 'Foundational algorithm study.'}
+## Curriculum Metadata (from \`tree.json\`)
 
-In this curriculum step, we explore the authentic algorithm without facades or circular shortcuts. The algorithm executes genuinely, providing true answers and instrumented step bounds.
+- **Algorithm Skill**: ${node.algorithm_skill || 'N/A'}
+- **Lean Reading Skill**: ${node.lean_skill || 'N/A'}
+- **Reference Module**: \`${node.reference_module || 'Planned Module'}\`
 
-## 2. Formalization in Lean 4
-**Lean Reading Skill**: ${node.lean_skill || 'Reading and understanding theorem statements.'}
-
-The algorithm is defined with provable termination and structural recursion.
-
-\`\`\`lean
--- Formalized Reference Module
-import ${node.reference_module || 'Amort'}
-
--- Headline Audited Theorems in this Unit:
-${thms}
-\`\`\`
-
-## 3. Invariants & Termination Arguments
-The verification strategy relies on two-sided guarantees:
-- **Soundness & Correctness**: The computed output is proven equal to mathematical specifications.
-- **Instrumented Step Counting**: The cost is bounded by explicit operations rather than uncoupled formulas.
-
-## 4. Dependencies
 ### Prerequisites
 ${prereqs}
 
-### Unlocks
+### Downstream Unlocks
 ${unlocks}
 
-## 5. Homework & Mastery Gate
-Switch to the **Homework Verifier** tab to complete the "Predict" calculation challenge and "Spot the Fake" proof audit to master this node and unlock downstream branches!
+### Headline Theorems
+${thms}
     `.trim();
   }
 

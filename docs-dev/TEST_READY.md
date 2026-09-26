@@ -14,7 +14,7 @@ The following files have been designed, implemented, and verified:
 | File Path | Component | Description |
 |---|---|---|
 | `/workspace/amort/TEST_INFRA.md` | Architecture Doc | Comprehensive test methodology, category partitioning, boundary value analysis, and authoritative oracles across Tiers 1–4. |
-| `/workspace/amort/scripts/test_webapp.py` | Standalone Runner | Headless web application verification script (zero third-party dependencies, standard library only). |
+| `/workspace/amort/tests/test_webapp.py` | Standalone Runner | Headless web application verification script (zero third-party dependencies, standard library only). |
 | `/workspace/amort/tests/test_tree_tool.py` | Unittest Suite | Unit and CLI integration tests for DAG validation, Lean axiom audit cross-check, and Mermaid synchronization. |
 | `/workspace/amort/tests/test_e2e_suite.py` | Unittest Suite | End-to-end integration tests for static HTTP serving, DOM structure, savefile portability, unlock cascade, and learner simulation. |
 | `/workspace/amort/TEST_READY.md` | Handoff Certification | This delivery report and execution guide. |
@@ -31,7 +31,7 @@ python3 -m unittest discover tests
 
 ### 2.2 Standalone Web Application Test Runner
 ```bash
-python3 scripts/test_webapp.py
+python3 tests/test_webapp.py
 ```
 *Current Result*: All 4 Tiers executed and verified. Exits with code `0`.
 
@@ -47,7 +47,7 @@ python3 -m unittest tests/test_e2e_suite.py
 ### 2.4 Strict Mode Execution (Mandatory Gate at Milestone 5)
 ```bash
 # Requires all implementation assets (docs/index.html, tutorial/tree.json) to be present on disk
-python3 scripts/test_webapp.py --strict
+python3 tests/test_webapp.py --strict
 ```
 
 ---
@@ -119,7 +119,7 @@ OK (skipped=2)
 ```
 
 ```
-$ python3 scripts/test_webapp.py
+$ python3 tests/test_webapp.py
 ======================================================================
 RUNNING VERIFIED ALGORITHMS SKILL TREE WEB APPLICATION TEST SUITE
 ======================================================================
@@ -166,4 +166,4 @@ ALL WEB APPLICATION TEST SUITES PASSED (0 ERRORS)
 2. **Milestone 4 (`docs/index.html`, `docs/tree_data.js`)**:
    - When M4 implements the web application shell, DOM assertions in `T1-09` and fallback snapshot assertions in `T2-10` will automatically un-skip and verify static asset rendering.
 3. **Milestone 5 (Final Acceptance Gate)**:
-   - Run `python3 scripts/test_webapp.py --strict` to verify all assets and tests pass without any skips.
+   - Run `python3 tests/test_webapp.py --strict` to verify all assets and tests pass without any skips.

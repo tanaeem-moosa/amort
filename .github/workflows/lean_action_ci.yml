@@ -1,4 +1,4 @@
-name: Lean Action CI
+name: Lean Action CI & GitHub Pages Deploy
 
 on:
   push:
@@ -7,12 +7,26 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Install elan
         run: |
@@ -22,5 +36,37 @@ jobs:
       - name: Fetch mathlib cache
         run: lake exe cache get
 
-      - name: Build project
+      - name: Build Lean project
         run: lake build
+
+      - name: Verify headline theorems with Lean
+        run: python3 scripts/tree_tool.py --check-theorems
+
+      - name: Validate skill tree & sync checks
+        run: |
+          python3 scripts/tree_tool.py --validate
+          python3 scripts/tree_tool.py --sync-mermaid --check
+          python3 scripts/tree_tool.py --check-site
+
+      - name: Run Python test suite
+        run: |
+          python3 -m unittest discover tests
+          python3 tests/test_webapp_adversarial.py
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

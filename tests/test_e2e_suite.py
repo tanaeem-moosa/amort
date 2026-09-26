@@ -25,19 +25,33 @@ TREE_JSON = REPO_ROOT / "tutorial" / "tree.json"
 INDEX_HTML = DOCS_DIR / "index.html"
 FALLBACK_JS = DOCS_DIR / "tree_data.js"
 
-# Import engine simulator and helpers from scripts/test_webapp.py
+# Import engine simulator and helpers from tests/test_webapp.py
 sys.path.insert(0, str(REPO_ROOT))
-from scripts.test_webapp import (
-    SkillTreeSimulator,
-    WebAppDOMValidator,
-    EphemeralServer,
-    clamp_zoom,
-    CANONICAL_NODE_IDS,
-    CANONICAL_TIERS,
-    CANONICAL_PREREQS,
-    CANONICAL_UNLOCKS,
-    PLANNED_NODES
-)
+sys.path.insert(0, str(REPO_ROOT / "tests"))
+try:
+    from tests.test_webapp import (
+        SkillTreeSimulator,
+        WebAppDOMValidator,
+        EphemeralServer,
+        clamp_zoom,
+        CANONICAL_NODE_IDS,
+        CANONICAL_TIERS,
+        CANONICAL_PREREQS,
+        CANONICAL_UNLOCKS,
+        PLANNED_NODES
+    )
+except ImportError:
+    from test_webapp import (
+        SkillTreeSimulator,
+        WebAppDOMValidator,
+        EphemeralServer,
+        clamp_zoom,
+        CANONICAL_NODE_IDS,
+        CANONICAL_TIERS,
+        CANONICAL_PREREQS,
+        CANONICAL_UNLOCKS,
+        PLANNED_NODES
+    )
 
 
 # ==============================================================================
@@ -84,10 +98,9 @@ class TestTier1WebappStaticServingAndDOM(unittest.TestCase):
         self.assertTrue(parser.found_drawer, "Inspector drawer (<dialog>) missing in index.html")
         self.assertTrue(parser.found_quiz_container, "#quiz-container missing in index.html")
 
-        # Tabs
-        self.assertIn("specs", parser.found_tabs, "Tab [data-tab='specs'] missing in inspector drawer")
-        self.assertIn("quiz", parser.found_tabs, "Tab [data-tab='quiz'] missing in inspector drawer")
+        # Tabs per §2.3: Chapter first, Exercises second
         self.assertIn("chapter", parser.found_tabs, "Tab [data-tab='chapter'] missing in inspector drawer")
+        self.assertIn("exercises", parser.found_tabs, "Tab [data-tab='exercises'] missing in inspector drawer")
 
         # Savefile controls
         for ctrl in ("btn-export-save", "file-import-save", "btn-reset-save"):

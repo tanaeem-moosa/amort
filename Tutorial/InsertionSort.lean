@@ -20,6 +20,9 @@ This file allows learners to interact with definitions, evaluate examples,
 and check theorem statements locally.
 -/
 
+set_option linter.hashCommand false
+set_option linter.style.header false
+
 open List
 open scoped List
 
@@ -29,15 +32,15 @@ namespace Tutorial.InsertionSort
 
 -- Run `#eval` to sort lists and count comparisons:
 #eval List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3]
--- Output: ([1, 2, 3, 4, 5, 6], 13)
+#guard List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3] = ([1, 2, 3, 4, 5, 6], 13)
 
 -- Best case: already sorted input (n - 1 comparisons):
 #eval List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4]
--- Output: ([1, 2, 3, 4], 3)
+#guard List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4] = ([1, 2, 3, 4], 3)
 
 -- Worst case: reverse sorted input (n * (n - 1) / 2 comparisons):
 #eval List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1]
--- Output: ([1, 2, 3, 4], 6)
+#guard List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1] = ([1, 2, 3, 4], 6)
 
 /-! ### Step 4: Correctness Claims -/
 
@@ -55,7 +58,7 @@ namespace Tutorial.InsertionSort
 example : ([ ] : List ℕ).Pairwise (· ≤ ·) := by
   simp
 
-/-- Learner experiment: Sorting preserves list length. -/
+/-- Sorting preserves list length -/
 example (l : List ℕ) : (List.insertionSortWithCount (· ≤ ·) l).1.length = l.length := by
   exact (List.insertionSortWithCount_perm (· ≤ ·) l).length_eq
 

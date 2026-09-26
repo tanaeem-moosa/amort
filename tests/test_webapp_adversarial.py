@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/test_webapp_adversarial.py: Adversarial Stress Test & Fuzzing Suite
+tests/test_webapp_adversarial.py: Adversarial Stress Test & Fuzzing Suite
 Empirical verification of:
 1. Savefile Fuzzing & Persistence Robustness (docs/app.js)
 2. Quiz Engine Invariants & Premature Unlock Progression
@@ -532,7 +532,7 @@ def test_serving_and_offline():
         print(f"  [FAIL] Offline loadTreeData failed: {off_res}")
         results["offline"]["failed"] += 1
 
-    # 3. Check fallback chapter markdown generator
+    # 3. Check chapter coming-soon markdown generator
     ch_eval = """
     const fs = require('fs');
     const treeData = JSON.parse(fs.readFileSync('tutorial/tree.json', 'utf8'));
@@ -544,17 +544,17 @@ def test_serving_and_offline():
 
     const app = new window.SkillTreeApp();
     const node = treeData.nodes[0];
-    const md = app.generateFallbackChapterMarkdown(node);
+    const md = app.renderComingSoonMarkdown(node);
     const rendered = app.renderMarkdown(md);
-    console.log(JSON.stringify({ hasTitle: rendered.includes("<h1>"), hasLean: rendered.includes("language-lean") }));
+    console.log(JSON.stringify({ hasTitle: rendered.includes("<h1>"), hasMetadata: rendered.includes("Curriculum Metadata") }));
     """
     stdout, _, _ = run_node_eval(ch_eval)
     ch_res = json.loads(stdout)
-    if ch_res["hasTitle"] and ch_res["hasLean"]:
-        print("  ✓ Fallback chapter generator and Lean syntax tokenizer function offline without network.")
+    if ch_res["hasTitle"] and ch_res["hasMetadata"]:
+        print("  ✓ Coming-soon chapter generator and Lean syntax tokenizer function offline without network.")
         results["offline"]["passed"] += 1
     else:
-        print(f"  [FAIL] Chapter offline fallback rendering failed: {ch_res}")
+        print(f"  [FAIL] Chapter offline coming-soon rendering failed: {ch_res}")
         results["offline"]["failed"] += 1
 
 def main():

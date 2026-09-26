@@ -53,7 +53,7 @@ Each primary feature is partitioned into distinct input categories, ensuring at 
 - **Mermaid Diagram Sync**: Verifies that `--sync-mermaid --check` confirms synchronization with `SKILL_TREE_TUTORIAL_PLAN.md` §4.2, and that `--sync-mermaid` regenerates the diagram in-place without altering non-Mermaid content.
 - **Tree Metrics Statistics**: Verifies that `--stats` accurately reports total nodes (28), status counts (1 open, 21 ready, 6 planned), tier counts (1 to 6), and category distributions.
 
-#### 2. Static Web Application (`docs/index.html` & `scripts/test_webapp.py`):
+#### 2. Static Web Application (`docs/index.html` & `tests/test_webapp.py`):
 - **HTTP Serving**: Verifies clean HTTP 200 responses with correct MIME types for `docs/index.html`, `docs/style.css`, `docs/app.js`, `docs/tree_data.js`, and `tutorial/tree.json` served via Python's standard `http.server`.
 - **Core DOM Structure**: Using an HTML5 DOM parser, asserts the existence of:
   - Canvas viewport container (`#canvas-container` or `#canvas-world`).
@@ -179,7 +179,7 @@ To guarantee genuine testing integrity and eliminate facade tests, all expected 
 
 ### 5.1 Standalone Web Application Test Runner
 ```bash
-python3 scripts/test_webapp.py
+python3 tests/test_webapp.py
 ```
 *Options*:
 - `--strict`: Enforces that all milestone assets (`docs/index.html`, `tutorial/tree.json`) must exist on disk.

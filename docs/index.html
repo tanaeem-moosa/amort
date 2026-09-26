@@ -115,7 +115,26 @@
     </div>
   </main>
 
-  <!-- Interactive Slide-out Node Inspector Drawer -->
+  <!-- Full-Width Chapter Reading View (#/node/:id/chapter) -->
+  <section id="reading-view" class="reading-view hidden" role="region" aria-label="Chapter Reading View">
+    <header class="reading-header">
+      <div class="reading-header-inner">
+        <a href="#/" id="reading-back-link" class="reading-back-btn" title="Back to skill tree">
+          <span aria-hidden="true">←</span> Back to tree
+        </a>
+        <div class="reading-meta">
+          <span id="reading-tier-badge" class="badge badge-tier">Tier 1</span>
+          <span id="reading-category-badge" class="badge badge-category">Arithmetic</span>
+          <span id="reading-status-badge" class="badge badge-status">Active</span>
+        </div>
+      </div>
+    </header>
+    <main class="reading-container">
+      <article id="reading-article" class="reading-article markdown-body"></article>
+    </main>
+  </section>
+
+  <!-- Interactive Slide-out Node Inspector Drawer (Quick Preview) -->
   <dialog id="inspector-drawer" class="inspector-drawer" closedby="any" aria-labelledby="drawer-node-title">
     <div class="drawer-header">
       <div class="drawer-meta">
@@ -129,17 +148,22 @@
       </div>
     </div>
 
-    <!-- Drawer Navigation Tabs -->
+    <!-- Drawer Navigation Tabs: Chapter first, then Exercises -->
     <nav class="drawer-tabs" role="tablist" aria-label="Inspector tabs">
-      <button class="tab-btn active" data-tab="specs" role="tab" aria-selected="true" aria-controls="tab-specs">Specification & Skills</button>
-      <button class="tab-btn" data-tab="quiz" role="tab" aria-selected="false" aria-controls="tab-quiz">Homework Verifier</button>
-      <button class="tab-btn" data-tab="chapter" role="tab" aria-selected="false" aria-controls="tab-chapter">Tutorial Chapter</button>
+      <button class="tab-btn active" data-tab="chapter" role="tab" aria-selected="true" aria-controls="tab-chapter">Chapter</button>
+      <button class="tab-btn" data-tab="exercises" role="tab" aria-selected="false" aria-controls="tab-exercises">Exercises</button>
     </nav>
 
     <!-- Drawer Body Panels -->
     <div class="drawer-body">
-      <!-- Tab 1: Overview & Specs -->
-      <section id="tab-specs" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-specs">
+      <!-- Tab 1: Chapter Preview & Specs -->
+      <section id="tab-chapter" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-chapter">
+        <div class="chapter-cta-card">
+          <a href="#" id="drawer-open-chapter-btn" class="btn btn-primary btn-open-chapter">
+            📖 Open Full Chapter
+          </a>
+        </div>
+
         <div class="spec-card">
           <h3 class="spec-label">⚡ Algorithm Skill</h3>
           <p id="drawer-algo-skill" class="spec-text"></p>
@@ -175,16 +199,16 @@
             </div>
           </div>
         </div>
+
+        <div class="spec-card">
+          <h3 class="spec-label">📄 Chapter Preview</h3>
+          <div id="drawer-chapter-preview" class="chapter-preview markdown-body"></div>
+        </div>
       </section>
 
-      <!-- Tab 2: Homework Verifier Engine -->
-      <section id="tab-quiz" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-quiz">
+      <!-- Tab 2: Exercises Engine (Predict & Spot the Fake) -->
+      <section id="tab-exercises" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-exercises">
         <div id="quiz-container" class="quiz-container"></div>
-      </section>
-
-      <!-- Tab 3: Tutorial Chapter Preview & Markdown Viewer -->
-      <section id="tab-chapter" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-chapter">
-        <div id="chapter-container" class="chapter-content markdown-body"></div>
       </section>
     </div>
   </dialog>

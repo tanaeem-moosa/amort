@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/test_webapp.py: Comprehensive headless test runner for the Verified Algorithms Skill Tree.
+tests/test_webapp.py: Comprehensive headless test runner for the Verified Algorithms Skill Tree.
 
 Validates:
 - Tier 1: Static HTTP serving, DOM structure (#canvas-container, #tree-svg, #inspector-drawer, tabs, #quiz-container, savefile controls),
@@ -395,8 +395,8 @@ def test_tier1_dom_elements(strict=False):
     assert parser.found_drawer, "Missing inspector drawer (<dialog id='inspector-drawer'>) in docs/index.html"
     assert parser.found_quiz_container, "Missing #quiz-container in docs/index.html"
 
-    # Tab anchors
-    for expected_tab in ("specs", "quiz", "chapter"):
+    # Tab anchors per §2.3: Chapter first, Exercises second
+    for expected_tab in ("chapter", "exercises"):
         assert expected_tab in parser.found_tabs, f"Missing inspector tab [data-tab='{expected_tab}'] in docs/index.html"
 
     # Savefile buttons

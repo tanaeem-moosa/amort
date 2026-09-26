@@ -21,15 +21,22 @@ This file allows learners to interact with definitions, evaluate examples,
 and check theorem statements locally.
 -/
 
+set_option linter.hashCommand false
+set_option linter.style.header false
+
 namespace Tutorial.EuclideanGCD
 
 /-! ### Step 3: Running the Executable Algorithm -/
 
 -- Run `#eval` to compute greatest common divisors using repeated remainders:
-#eval Nat.euclidGcd 48 18     -- 6
-#eval Nat.euclidGcd 105 252   -- 21
-#eval Nat.euclidGcd 0 7       -- 7
-#eval Nat.euclidGcd 0 0       -- 0
+#eval Nat.euclidGcd 48 18
+#guard Nat.euclidGcd 48 18 = 6
+#eval Nat.euclidGcd 105 252
+#guard Nat.euclidGcd 105 252 = 21
+#eval Nat.euclidGcd 0 7
+#guard Nat.euclidGcd 0 7 = 7
+#eval Nat.euclidGcd 0 0
+#guard Nat.euclidGcd 0 0 = 0
 
 /-! ### Step 4: Correctness Claims -/
 
@@ -45,11 +52,19 @@ theorem euclid_eq_binary (a b : ℕ) : Nat.euclidGcd a b = Nat.binaryGcd a b := 
 example (b : ℕ) : Nat.euclidGcd 0 b = b := by
   exact Nat.euclidGcd_eq_gcd 0 b ▸ Nat.gcd_zero_left b
 
+/-- When a divides b, (b % a) = 0, so the algorithm returns a immediately. -/
+example (a b : ℕ) (_ha : 0 < a) (hdiv : a ∣ b) :
+    Nat.euclidGcd a b = a := by
+  rw [Nat.euclidGcd_eq_gcd]
+  exact Nat.gcd_eq_left hdiv
+
 /-! ### Step 5: Step Counting & Complexity Bounds -/
 
 -- Compare execution steps between Euclid and Binary GCD:
-#eval Nat.euclidGcdWithSteps 48 18    -- (6, 4): 4 modulo operations
-#eval Nat.binaryGcdWithSteps 48 18   -- (6, 6): 6 binary transitions
+#eval Nat.euclidGcdWithSteps 48 18
+#guard Nat.euclidGcdWithSteps 48 18 = (6, 4)
+#eval Nat.binaryGcdWithSteps 48 18
+#guard Nat.binaryGcdWithSteps 48 18 = (6, 6)
 
 -- Coupling theorems:
 #check Nat.euclidGcdWithSteps_fst
