@@ -280,4 +280,4 @@ Full build executes with 0 warnings and 0 errors across 2142 jobs.
 
 ## Disclaimer
 
-This is a personal side project. The views, opinions, and formalizations expressed here are solely those of the author and do not represent or reflect the views, positions, or endorsements of the author's employer (Google LLC). Any rights or intellectual property may be subject to employer agreements, but this project is not an official Google product.
+This is a personal side project and is not affiliated with the author's employer. The views, opinions, and formalizations expressed here are solely those of the author and do not represent or reflect the views, positions, or endorsements of the author's employer. Any rights or intellectual property may be subject to employer agreements.
