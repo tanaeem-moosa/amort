@@ -1509,3 +1509,42 @@ html, body {
     max-width: 100%;
   }
 }
+
+/* Hidden exercise answers in chapters (<details><summary>Show answer</summary>…) */
+.markdown-body details {
+  margin: 12px 0 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+
+.markdown-body details[open] {
+  border-color: var(--border-focus);
+}
+
+.markdown-body summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--border-focus);
+}
+
+.markdown-body details[open] > summary {
+  margin-bottom: 10px;
+}
+
+/* Wide tables scroll sideways on narrow screens instead of widening the page */
+.reading-article table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* Code in the reading view: close to body size so symbols like → and ∣ stay legible */
+.reading-article code {
+  font-size: 0.9em;
+}
+
+.reading-article pre code {
+  font-size: 14px;
+  line-height: 1.6;
+}

@@ -894,12 +894,12 @@ class SkillTreeApp {
       thmListEl.innerHTML = '';
       const thms = node.headline_theorems || [];
       if (thms.length === 0) {
-        thmListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">No headline theorems defined yet.</span>`;
+        thmListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">No theorems yet.</span>`;
       } else {
         thms.forEach(t => {
           const div = document.createElement('div');
           div.className = 'theorem-item';
-          div.innerHTML = `<span>${this.escapeHtml(t)}</span><span class="thm-badge">Audited ✓</span>`;
+          div.innerHTML = `<span>${this.escapeHtml(t)}</span><span class="thm-badge">Checked by Lean</span>`;
           thmListEl.appendChild(div);
         });
       }
@@ -910,7 +910,7 @@ class SkillTreeApp {
       prereqsListEl.innerHTML = '';
       const prereqs = node.prerequisites || [];
       if (prereqs.length === 0) {
-        prereqsListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">None (Root Entry Point)</span>`;
+        prereqsListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">Nothing. This is the first node.</span>`;
       } else {
         prereqs.forEach(pId => {
           const chip = document.createElement('button');
@@ -928,7 +928,7 @@ class SkillTreeApp {
       unlocksListEl.innerHTML = '';
       const unlocks = node.unlocks || [];
       if (unlocks.length === 0) {
-        unlocksListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">None (Terminal Leaf)</span>`;
+        unlocksListEl.innerHTML = `<span class="spec-text" style="color: var(--text-dim);">Nothing yet.</span>`;
       } else {
         unlocks.forEach(uId => {
           const chip = document.createElement('button');
@@ -963,7 +963,7 @@ class SkillTreeApp {
         count += line.length;
         if (count > 1200) break;
       }
-      previewEl.innerHTML = this.renderMarkdown(excerptLines.join('\n') + '\n\n*(Click "Open Full Chapter" above to view complete tutorial)*');
+      previewEl.innerHTML = this.renderMarkdown(excerptLines.join('\n') + '\n\n*Open the chapter to read the rest.*');
     } else if (chapterData.type === 'coming_soon') {
       previewEl.innerHTML = this.renderMarkdown(this.renderComingSoonMarkdown(node));
     } else {
@@ -1032,7 +1032,7 @@ class SkillTreeApp {
       banner.innerHTML = `
         <span style="font-size: 32px;">🏆</span>
         <div class="mastery-banner-title">Module Mastered!</div>
-        <p class="mastery-banner-desc">You have successfully mastered ${node.name}. Downstream dependencies have unlocked across the skill tree.</p>
+        <p class="mastery-banner-desc">You've finished ${node.name}. The nodes it leads to are now open.</p>
       `;
       quizContainer.appendChild(banner);
     }
@@ -1176,7 +1176,7 @@ class SkillTreeApp {
         msg += `<br><br><em>Takeaway:</em> ${question.summary_explanation}`;
       }
     } else {
-      msg = `<strong>✕ Flawed Statement Selected:</strong> ${chosen?.explanation || 'This formulation contains an anti-pattern or circular definition.'}`;
+      msg = `<strong>✕ Flawed Statement Selected:</strong> ${chosen?.explanation || 'This one doesn\'t prove the claim.'}`;
     }
     return msg;
   }
@@ -1190,7 +1190,7 @@ class SkillTreeApp {
         this.updateHUD();
 
         const node = this.engine.nodesMap.get(nodeId);
-        this.showToast(`🎉 Mastered ${node?.name || nodeId}! Downstream nodes unlocked.`, 'success');
+        this.showToast(`Finished ${node?.name || nodeId}. New nodes are open.`, 'success');
 
         // Re-render quiz tab with celebration banner
         if (node) this.renderQuizTab(node);
@@ -1250,28 +1250,26 @@ class SkillTreeApp {
   }
 
   renderComingSoonMarkdown(node) {
-    const thms = (node.headline_theorems || []).map(t => `- \`${t}\``).join('\n') || '- None currently defined (Planned module)';
-    const prereqs = (node.prerequisites || []).map(p => `- Node \`${p}\``).join('\n') || '- None (Root entry point)';
-    const unlocks = (node.unlocks || []).map(u => `- Node \`${u}\``).join('\n') || '- Terminal leaf node';
+    const thms = (node.headline_theorems || []).map(t => `- \`${t}\``).join('\n') || '- None yet';
+    const prereqs = (node.prerequisites || []).map(p => `- Node \`${p}\``).join('\n') || '- Nothing. This is the first node.';
+    const unlocks = (node.unlocks || []).map(u => `- Node \`${u}\``).join('\n') || '- Nothing yet';
 
     return `
 # Chapter coming soon
 
-A full interactive tutorial chapter for **${node.name}** is currently in development.
+The chapter for **${node.name}** hasn't been written yet. Here is what the node covers, from \`tree.json\`.
 
-## Curriculum Metadata (from \`tree.json\`)
+- **Algorithm skill:** ${node.algorithm_skill || 'N/A'}
+- **Lean skill:** ${node.lean_skill || 'N/A'}
+- **Reference module:** \`${node.reference_module || 'Planned Module'}\`
 
-- **Algorithm Skill**: ${node.algorithm_skill || 'N/A'}
-- **Lean Reading Skill**: ${node.lean_skill || 'N/A'}
-- **Reference Module**: \`${node.reference_module || 'Planned Module'}\`
-
-### Prerequisites
+### Requires
 ${prereqs}
 
-### Downstream Unlocks
+### Unlocks
 ${unlocks}
 
-### Headline Theorems
+### Main theorems
 ${thms}
     `.trim();
   }
@@ -1279,6 +1277,31 @@ ${thms}
   // Lightweight, zero-dependency Markdown parser with Lean syntax token highlighting
   renderMarkdown(text) {
     if (!text) return '';
+
+    // Chapters are trusted files from this repository, so a real Markdown parser
+    // (vendored in docs/vendor/marked.min.js) renders them, including the
+    // <details> blocks that hide exercise answers. The hand-written renderer below
+    // is only a fallback for environments without `marked`, such as the Node tests.
+    const markedLib = (typeof window !== 'undefined' && window.marked) ? window.marked : null;
+    if (markedLib && typeof markedLib.Marked === 'function') {
+      if (!this._marked) {
+        const app = this;
+        this._marked = new markedLib.Marked({
+          gfm: true,
+          renderer: {
+            code(code, infostring) {
+              const lang = (infostring || '').trim().split(/\s+/)[0];
+              let html = app.escapeHtml(code);
+              if (lang === 'lean' || lang === 'lean4') {
+                html = app.highlightLeanSyntax(html);
+              }
+              return `<pre><code class="language-${lang || 'text'}">${html}</code></pre>\n`;
+            }
+          }
+        });
+      }
+      return this._marked.parse(text);
+    }
 
     // Extract code blocks first to protect from inline formatting
     const codeBlocks = [];
@@ -1295,8 +1318,11 @@ ${thms}
     // Escape HTML outside code blocks
     md = this.escapeHtml(md);
 
-    // Blockquotes
-    md = md.replace(/^>\s?(.*)$/gm, '<blockquote>$1</blockquote>');
+    // Blockquotes (the text is already HTML-escaped, so `>` appears as `&gt;`)
+    md = md.replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>');
+
+    // Horizontal rules
+    md = md.replace(/^---+$/gm, '<hr>');
 
     // Headers
     md = md.replace(/^### (.*$)/gm, '<h3>$1</h3>');
@@ -1312,13 +1338,14 @@ ${thms}
 
     // Unordered list items
     md = md.replace(/^- (.*$)/gm, '<li>$1</li>');
-    md = md.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+    // Wrap each run of consecutive list items in a single <ul>
+    md = md.replace(/(?:<li>.*<\/li>\n?)+/g, (run) => `<ul>${run.trim()}</ul>\n`);
 
     // Paragraphs
     md = md.split('\n\n').map(p => {
       p = p.trim();
       if (!p) return '';
-      if (p.startsWith('<h') || p.startsWith('<pre') || p.startsWith('<ul') || p.startsWith('<blockquote') || p.startsWith('%%CODEBLOCK')) {
+      if (p.startsWith('<h') || p.startsWith('<pre') || p.startsWith('<ul') || p.startsWith('<blockquote') || p.startsWith('<hr') || p.startsWith('%%CODEBLOCK')) {
         return p;
       }
       return `<p>${p.replace(/\n/g, '<br>')}</p>`;
@@ -1383,7 +1410,7 @@ ${thms}
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      this.showToast('💾 Savefile exported successfully as amort_save.json', 'success');
+      this.showToast('Progress saved to amort_save.json.', 'success');
     });
 
     // 2. Import savefile via file input
@@ -1443,7 +1470,7 @@ ${thms}
         const node = this.engine.nodesMap.get(this.selectedNodeId);
         if (node) this.populateDrawer(node);
       }
-      this.showToast('↺ Progress reset to baseline.', 'success');
+      this.showToast('Progress reset.', 'success');
     });
   }
 
@@ -1459,7 +1486,7 @@ ${thms}
           const node = this.engine.nodesMap.get(this.selectedNodeId);
           if (node) this.populateDrawer(node);
         }
-        this.showToast(`✓ Savefile imported! ${this.engine.masteredNodes.size} nodes mastered.`, 'success');
+        this.showToast(`Progress loaded: ${this.engine.masteredNodes.size} nodes finished.`, 'success');
       } catch (err) {
         console.error('Import savefile failed:', err);
         this.showToast(`Error: ${err.message || 'Invalid savefile'}`, 'error');

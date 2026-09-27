@@ -7,17 +7,11 @@ import Amort.GCD.BinaryGCD
 import Amort.GCD.StepCount
 
 /-!
-# Tutorial: Binary GCD (Stein's Algorithm)
+# Binary GCD: companion file
 
-Companion file for `tutorial/binary_gcd.md`.
-Introduces:
-- Algorithm formalization (`Nat.binaryGcd`)
-- Verification against canonical specification (`Nat.binaryGcd_eq_gcd`)
-- Instrumented step-counting pattern (`Nat.binaryGcdWithSteps`)
-- Logarithmic bit-length bounds (`Nat.binaryGcdSteps_le_size_add_size`)
-
-This file allows learners to interact with definitions, evaluate examples,
-and check theorem statements locally.
+Companion to `tutorial/binary_gcd.md`. Every Lean snippet the chapter quotes is either here or
+in the reference files (`Amort/GCD/BinaryGCD.lean`, `Amort/GCD/StepCount.lean`), so Lean
+checks all of it on every build.
 -/
 
 set_option linter.hashCommand false
@@ -25,69 +19,55 @@ set_option linter.style.header false
 
 namespace Tutorial.BinaryGCD
 
-/-! ### Step 3: Running the Executable Algorithm -/
+/-! ## Step 2: the specification -/
 
--- Run `#eval` to compute greatest common divisors using Stein's algorithm:
-#eval Nat.binaryGcd 48 18
+example : ∀ a b : ℕ, Nat.gcd a b ∣ a := Nat.gcd_dvd_left
+example : ∀ a b : ℕ, Nat.gcd a b ∣ b := Nat.gcd_dvd_right
+example : ∀ {a b d : ℕ}, d ∣ a → d ∣ b → d ∣ Nat.gcd a b := Nat.dvd_gcd
+
+/-! ## Step 3: running the algorithm -/
+
 #guard Nat.binaryGcd 48 18 = 6
-#eval Nat.binaryGcd 105 252
 #guard Nat.binaryGcd 105 252 = 21
-#eval Nat.binaryGcd 0 7
 #guard Nat.binaryGcd 0 7 = 7
-#eval Nat.binaryGcd 0 0
 #guard Nat.binaryGcd 0 0 = 0
 
-/-! ### Step 4: Correctness Claims -/
+/-! ## Step 5: counting calls -/
 
--- Canonical equivalence to Mathlib's `Nat.gcd`:
-#check Nat.binaryGcd_eq_gcd
--- ∀ (a b : ℕ), Nat.binaryGcd a b = Nat.gcd a b
-
-/-- Commutativity of Binary GCD -/
-example (a b : ℕ) : Nat.binaryGcd a b = Nat.binaryGcd b a := by
-  rw [Nat.binaryGcd_eq_gcd, Nat.binaryGcd_eq_gcd, Nat.gcd_comm]
-
-/-- Learner experiment: Common factor extraction for even inputs. -/
-example (a b : ℕ) (ha : a % 2 = 0) (hb : b % 2 = 0) :
-    Nat.binaryGcd a b = 2 * Nat.binaryGcd (a / 2) (b / 2) := by
-  rw [Nat.binaryGcd_eq_gcd, Nat.binaryGcd_eq_gcd]
-  exact Nat.gcd_even_even ha hb
-
-/-! ### Step 5: Step Counting & Complexity Bounds -/
-
--- Run `#eval` on the instrumented function to see `(gcd, step_count)`:
-#eval Nat.binaryGcdWithSteps 48 18
 #guard Nat.binaryGcdWithSteps 48 18 = (6, 6)
-#eval Nat.binaryGcdWithSteps 105 252
 #guard Nat.binaryGcdWithSteps 105 252 = (21, 5)
 
--- Coupling theorems:
-#check Nat.binaryGcdWithSteps_fst
--- ∀ (a b : ℕ), (Nat.binaryGcdWithSteps a b).1 = Nat.binaryGcd a b
+/-! ## Spot the fake, round 1: "binaryGcd is correct" -/
 
-#check Nat.binaryGcdWithSteps_snd
--- ∀ (a b : ℕ), (Nat.binaryGcdWithSteps a b).2 = Nat.binaryGcdSteps a b
+/-- Option A: true, but only half the specification. -/
+theorem binaryGcd_dvd_both (a b : ℕ) :
+    Nat.binaryGcd a b ∣ a ∧ Nat.binaryGcd a b ∣ b := by
+  rw [Nat.binaryGcd_eq_gcd]
+  exact ⟨Nat.gcd_dvd_left a b, Nat.gcd_dvd_right a b⟩
 
--- Complexity upper bounds in terms of bit lengths (Nat.size):
-#check Nat.binaryGcdSteps_le_size_add_size
--- ∀ (a b : ℕ), Nat.binaryGcdSteps a b ≤ Nat.size a + Nat.size b
+/-- A function that ignores its inputs. -/
+def alwaysOne (_ _ : ℕ) : ℕ := 1
 
-#check Nat.binaryGcdWithSteps_snd_le_two_mul_size_add
--- ∀ (a b : ℕ), (Nat.binaryGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b)
+/-- `alwaysOne` passes option A's specification too. -/
+theorem alwaysOne_dvd_both (a b : ℕ) :
+    alwaysOne a b ∣ a ∧ alwaysOne a b ∣ b :=
+  ⟨one_dvd a, one_dvd b⟩
 
-/-- Learner experiment: At least one step bound check on concrete values. -/
-example : (Nat.binaryGcdWithSteps 48 18).2 ≤ Nat.size 48 + Nat.size 18 := by
-  exact Nat.binaryGcdWithSteps_snd_le_size_add_size 48 18
+/-- Option B: one test case. -/
+theorem binaryGcd_48_18 : Nat.binaryGcd 48 18 = 6 := by
+  rw [Nat.binaryGcd_eq_gcd]
+  rfl
 
-/-! ### Spot the Fake: Compiling Real vs Fake Claims -/
+/-! ## Spot the fake, round 2: "binaryGcd makes at most bits(a) + bits(b) calls" -/
 
+/-- Option A: a cost defined as its own bound. -/
 def gcdCost (a b : ℕ) : ℕ := Nat.size a + Nat.size b
 
 theorem gcdCost_le (a b : ℕ) :
     gcdCost a b ≤ Nat.size a + Nat.size b :=
   le_refl _
 
-/-- Auxiliary lemma: Bit size of a natural number is bounded by its value. -/
+/-- The number of bits of `n` is at most `n`. -/
 lemma size_le_self (n : ℕ) : Nat.size n ≤ n := by
   induction n using Nat.strong_induction_on with
   | h n ih =>
@@ -99,8 +79,7 @@ lemma size_le_self (n : ℕ) : Nat.size n ≤ n := by
       have := ih ((n + 1) / 2) hdiv
       omega
 
-/-- Fake 2 (Value bound): True and tied to the algorithm, but exponentially weak
-compared to logarithmic bit bounds. -/
+/-- Option C: about the real counter, but bounded by the size of the numbers, not their bits. -/
 theorem binaryGcdSteps_le_val_add (a b : ℕ) :
     Nat.binaryGcdSteps a b ≤ a + b := by
   have h := Nat.binaryGcdSteps_le_size_add_size a b
@@ -108,11 +87,12 @@ theorem binaryGcdSteps_le_val_add (a b : ℕ) :
   have hb : Nat.size b ≤ b := size_le_self b
   omega
 
-/-- Genuine complexity result: Ties the actual instrumented execution output to
-a logarithmic bit-length bound. -/
-theorem genuine_complexity (a b : ℕ) :
-    (Nat.binaryGcdWithSteps a b).1 = Nat.gcd a b ∧
-    (Nat.binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b :=
-  ⟨Nat.binaryGcdWithSteps_eq_gcd a b, Nat.binaryGcdWithSteps_snd_le_size_add_size a b⟩
+/-! ## Exercises -/
+
+#guard Nat.binaryGcd 60 24 = 12
+#guard Nat.binaryGcdWithSteps 60 24 = (12, 6)
+
+theorem binaryGcd_comm (a b : ℕ) : Nat.binaryGcd a b = Nat.binaryGcd b a := by
+  rw [Nat.binaryGcd_eq_gcd, Nat.binaryGcd_eq_gcd, Nat.gcd_comm]
 
 end Tutorial.BinaryGCD

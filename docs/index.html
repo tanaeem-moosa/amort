@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verified Algorithms Skill Tree — Lean 4 Curriculum</title>
+  <title>Verified Algorithms Skill Tree</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
 </head>
@@ -14,14 +14,14 @@
       <span class="hud-logo" aria-hidden="true">🌱</span>
       <div>
         <h1 class="hud-title">Verified Algorithms Skill Tree</h1>
-        <p class="hud-subtitle">Interactive Formalized Curriculum in Lean 4</p>
+        <p class="hud-subtitle">Algorithms and their Lean proofs</p>
       </div>
     </div>
 
     <!-- HUD Stats Tracker -->
     <div class="hud-stats" role="region" aria-label="Curriculum Progress">
       <div class="stat-info">
-        <span class="stat-label">Mastery Progress</span>
+        <span class="stat-label">Progress</span>
         <span id="stat-mastered" class="stat-value">0 / 22</span>
       </div>
       <div class="stat-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="22" aria-valuenow="0" aria-label="Progress bar">
@@ -32,10 +32,10 @@
     <!-- Savefile & System Controls -->
     <div class="hud-actions" id="savefile-controls" role="group" aria-label="Progress Management">
       <button id="btn-export-save" class="btn btn-secondary" title="Export progress to JSON savefile">
-        <span class="btn-icon-prefix" aria-hidden="true">💾</span> Export Save
+        <span class="btn-icon-prefix" aria-hidden="true">💾</span> Export progress
       </button>
       <label class="btn btn-secondary btn-file" title="Load progress from savefile (.json)">
-        <span class="btn-icon-prefix" aria-hidden="true">📂</span> Import Save
+        <span class="btn-icon-prefix" aria-hidden="true">📂</span> Import progress
         <input type="file" id="file-import-save" accept=".json,application/json" hidden>
       </label>
       <button id="btn-reset-save" class="btn btn-danger-outline" title="Reset all progress">
@@ -94,7 +94,7 @@
       <button id="btn-zoom-in" class="ctrl-btn" title="Zoom In (+)" aria-label="Zoom In">+</button>
       <button id="btn-zoom-out" class="ctrl-btn" title="Zoom Out (−)" aria-label="Zoom Out">−</button>
       <button id="btn-zoom-fit" class="ctrl-btn" title="Fit Entire Tree View (⛶)" aria-label="Fit View">⛶</button>
-      <button id="btn-zoom-root" class="ctrl-btn" title="Center on Root Node (🌱 Binary GCD)" aria-label="Center on Root">🌱</button>
+      <button id="btn-zoom-root" class="ctrl-btn" title="Center on Binary GCD" aria-label="Center on Root">🌱</button>
     </aside>
 
     <!-- Canvas Legend HUD -->
@@ -109,8 +109,8 @@
     <div id="drop-overlay" class="drop-overlay" aria-hidden="true">
       <div class="drop-card">
         <span class="drop-icon">📥</span>
-        <h3>Drop Savefile Here</h3>
-        <p>Release to import your progress (.json)</p>
+        <h3>Drop a progress file here</h3>
+        <p>Release to load it (.json)</p>
       </div>
     </div>
   </main>
@@ -160,48 +160,48 @@
       <section id="tab-chapter" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-chapter">
         <div class="chapter-cta-card">
           <a href="#" id="drawer-open-chapter-btn" class="btn btn-primary btn-open-chapter">
-            📖 Open Full Chapter
+            Open chapter
           </a>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">⚡ Algorithm Skill</h3>
+          <h3 class="spec-label">Algorithm skill</h3>
           <p id="drawer-algo-skill" class="spec-text"></p>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">📘 Lean Reading Skill</h3>
+          <h3 class="spec-label">Lean skill</h3>
           <p id="drawer-lean-skill" class="spec-text"></p>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">📦 Reference Module</h3>
+          <h3 class="spec-label">Reference module</h3>
           <div class="module-row">
             <code id="drawer-ref-module" class="code-pill"></code>
           </div>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">📜 Headline Audited Theorems</h3>
+          <h3 class="spec-label">Main theorems</h3>
           <div id="drawer-theorems-list" class="theorems-list"></div>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">🔗 Dependency Links</h3>
+          <h3 class="spec-label">Links</h3>
           <div class="deps-grid">
             <div class="deps-col">
-              <span class="deps-col-title">Requires (Prerequisites):</span>
+              <span class="deps-col-title">Requires:</span>
               <div id="drawer-prereqs-list" class="deps-chips"></div>
             </div>
             <div class="deps-col">
-              <span class="deps-col-title">Unlocks Downstream:</span>
+              <span class="deps-col-title">Unlocks:</span>
               <div id="drawer-unlocks-list" class="deps-chips"></div>
             </div>
           </div>
         </div>
 
         <div class="spec-card">
-          <h3 class="spec-label">📄 Chapter Preview</h3>
+          <h3 class="spec-label">Chapter preview</h3>
           <div id="drawer-chapter-preview" class="chapter-preview markdown-body"></div>
         </div>
       </section>
@@ -216,11 +216,11 @@
   <!-- Confirmation Modal for Progress Reset -->
   <dialog id="confirm-reset-dialog" class="modal-dialog" closedby="any" aria-labelledby="reset-dialog-title">
     <div class="modal-card">
-      <h3 id="reset-dialog-title" class="modal-title">Reset Skill Tree Progress?</h3>
-      <p class="modal-text">This will clear your completed exercises, lock downstream unlocked nodes, and return the tree to the fresh starting state. This action cannot be undone unless you export a savefile first.</p>
+      <h3 id="reset-dialog-title" class="modal-title">Reset your progress?</h3>
+      <p class="modal-text">This clears your answers and locks every node except the first. Export your progress first if you want to keep it.</p>
       <div class="modal-actions">
         <button id="btn-cancel-reset" class="btn btn-secondary">Cancel</button>
-        <button id="btn-confirm-reset" class="btn btn-danger">Confirm Reset</button>
+        <button id="btn-confirm-reset" class="btn btn-danger">Reset</button>
       </div>
     </div>
   </dialog>
@@ -229,6 +229,7 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <!-- Scripts: Fallback data first, then main application logic -->
+  <script src="vendor/marked.min.js"></script>
   <script src="tree_data.js"></script>
   <script src="app.js"></script>
 </body>

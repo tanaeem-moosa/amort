@@ -620,31 +620,56 @@ def check_site(repo_root: Path, tree_data: dict) -> bool:
         elif dest.read_text(encoding="utf-8") != md_file.read_text(encoding="utf-8"):
             errors.append(f"docs/chapters/{md_file.name} differs from tutorial/{md_file.name}.")
 
-    # 4. Verbatim snippet check: Every ```lean block in tutorial/*.md either
-    # appears verbatim in the companion .lean file or contains '-- (illustrative)'
-    companions = {
-        "tutorial/binary_gcd.md": "Tutorial/BinaryGCD.lean",
-        "tutorial/euclid_gcd.md": "Tutorial/EuclideanGCD.lean",
-        "tutorial/insertion_sort.md": "Tutorial/InsertionSort.lean"
+    # 4. Verbatim snippet check: every ```lean block in a chapter must appear verbatim in
+    # the chapter's companion file or in one of its reference files, so that everything a
+    # chapter shows is code Lean actually checks. The only exception is an exercise
+    # statement for the reader to prove: its first line is `-- exercise` and it must
+    # contain `sorry`, so it can't be mistaken for a proved theorem.
+    chapter_sources = {
+        "tutorial/binary_gcd.md": [
+            "Tutorial/BinaryGCD.lean",
+            "Amort/GCD/BinaryGCD.lean",
+            "Amort/GCD/StepCount.lean",
+        ],
+        "tutorial/euclid_gcd.md": [
+            "Tutorial/EuclideanGCD.lean",
+            "Amort/GCD/EuclideanGCD.lean",
+        ],
+        "tutorial/insertion_sort.md": [
+            "Tutorial/InsertionSort.lean",
+            "Amort/Sorting/InsertionSort.lean",
+        ],
     }
 
-    for md_rel, lean_rel in companions.items():
+    for md_rel, source_rels in chapter_sources.items():
         md_path = repo_root / md_rel
-        lean_path = repo_root / lean_rel
-        if not md_path.is_file() or not lean_path.is_file():
+        if not md_path.is_file():
+            errors.append(f"{md_rel} is missing.")
             continue
+        sources = []
+        for rel in source_rels:
+            path = repo_root / rel
+            if not path.is_file():
+                errors.append(f"Source file {rel} for {md_rel} is missing.")
+                continue
+            sources.append(path.read_text(encoding="utf-8"))
         md_text = md_path.read_text(encoding="utf-8")
-        lean_text = lean_path.read_text(encoding="utf-8")
         parts = md_text.split("```lean")
         for i, part in enumerate(parts[1:], 1):
             if "```" not in part:
+                errors.append(f"Lean block #{i} in {md_rel} is not closed.")
                 continue
             block = part.split("```")[0].strip()
-            if "-- (illustrative)" in block:
+            if block.splitlines() and block.splitlines()[0].strip() == "-- exercise":
+                if "sorry" not in block:
+                    errors.append(
+                        f"Exercise block #{i} in {md_rel} must contain `sorry`."
+                    )
                 continue
-            if block not in lean_text:
+            if not any(block in src for src in sources):
                 errors.append(
-                    f"Quoted Lean snippet #{i} in {md_rel} does not match {lean_rel} verbatim and is not marked '-- (illustrative)'."
+                    f"Lean block #{i} in {md_rel} does not appear verbatim in any of: "
+                    + ", ".join(source_rels)
                 )
 
     if errors:

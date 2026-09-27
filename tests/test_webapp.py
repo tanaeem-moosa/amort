@@ -695,7 +695,7 @@ def test_tier3_savefile_roundtrip():
     sim.mark_mastered("BS")
     sim.mark_mastered("MERGE")
     sim.submit_quiz_answer("BGCD", "predict", "bgcd_pred_1", "6", "6")
-    sim.submit_quiz_answer("BGCD", "spot_the_fake", "bgcd_fake_1", "b", "b")
+    sim.submit_quiz_answer("BGCD", "spot_the_fake", "bgcd_fake_1", "c", "c")
 
     original_states = sim.compute_node_states()
     original_mastered = set(sim.mastered_nodes)
@@ -746,7 +746,7 @@ def test_tier4_learner_simulation():
     assert corr, f"Predict answer submission failed: {msg}"
 
     # Answering Spot the Fake question
-    corr, msg = sim.submit_quiz_answer("BGCD", "spot_the_fake", "bgcd_fake_1", "b", "b")
+    corr, msg = sim.submit_quiz_answer("BGCD", "spot_the_fake", "bgcd_fake_1", "c", "c")
     assert corr, f"Spot the Fake answer submission failed: {msg}"
 
     # Both exercises complete -> Node marked mastered

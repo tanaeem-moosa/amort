@@ -1,275 +1,258 @@
-# 🗂️ Insertion Sort
+# Insertion Sort
 
-> **Skill Tree Tier 2 | Sorting & Searching**  
-> **Prerequisites:** Binary GCD (`BGCD`)  
-> **Unlocks:** Merge Sort (`MERGE`), Naive String Matching (`NAIVE`)  
-> **Companion Lean File:** `Tutorial/InsertionSort.lean`  
-> **Reference Module:** `Amort.Sorting.InsertionSort`  
-> **Headline Theorems:** `List.insertionSortWithCount_fst`, `List.insertionSortWithCount_perm`, `List.insertionSortWithCount_fst_sorted`, `List.insertionSortWithCount_snd_le_triangular`, `List.insertionSortWithCount_snd_le_sq`, `List.isBigO_insertionSortWithCount_snd_atTop`
+*Needs Binary GCD. Unlocks Merge Sort and Naive String Matching.*
 
----
+This is the first chapter with lists, and the first one where writing the specification is the hard part. "The output is sorted" sounds like a complete description of sorting. It isn't, and seeing why is most of this chapter.
 
-## The Big Idea
+The companion file is `Tutorial/InsertionSort.lean`.
 
-Sorting is the quintessential problem in computer science. Yet in formal verification, it holds a famous trap:
+## 1. The problem
 
-> **It is surprisingly easy to prove that a completely broken sorting algorithm is "correct".**
+Given a list, return the same elements in non-decreasing order.
 
-If your specification merely says: *"no adjacent element in the output is out of order"*, then a function that discards the input and returns the empty list `[]` is **provably correct**!
+- `[5, 2, 4, 6, 1, 3]` becomes `[1, 2, 3, 4, 5, 6]`.
+- Duplicates are kept: `[3, 1, 3]` becomes `[1, 3, 3]`.
+- The empty list stays empty.
 
-In this chapter, we master the **two-part sorting specification**:
-1. **Conservation:** The output is a permutation of the input ($\sim$).
-2. **Orderedness:** The output satisfies pairwise ordering (`List.Pairwise`).
+The examples use numbers compared with `≤`, but the repository sorts with any comparison you give it, as long as the comparison behaves like an ordering. Step 4 says exactly what that means.
 
-We also formalize the classic quadratic comparison recurrence ($T(n) \le T(n-1) + (n-1)$) and prove the concrete triangular bound $\frac{n(n-1)}{2} \le n^2$.
+## 2. What "correct" means in Lean
 
----
+A correct output has to meet two conditions.
 
-## Step 1: Define the Problem
+**It's sorted.** In Lean this is `List.Pairwise r out`: for every two elements of `out`, the earlier one and the later one satisfy `r`. For `[1, 2, 3]` with `≤`, that means 1 ≤ 2, 1 ≤ 3 and 2 ≤ 3.
 
-Given a list $l$ of elements of type $\alpha$ and a total ordering relation $r$ (such as $\le$), rearrange the elements into non-decreasing order according to $r$.
+**It's a rearrangement of the input.** In Lean this is `out ~ l`, which is short for `List.Perm out l`. It means the two lists contain the same elements, the same number of times each, possibly in a different order.
 
-### Concrete Examples
-- Sorting `[5, 2, 4, 6, 1, 3]` with respect to $\le$ yields `[1, 2, 3, 4, 5, 6]`.
-- Sorting `[4, 3, 2, 1]` yields `[1, 2, 3, 4]`.
-- Sorting an already sorted list `[1, 2, 3, 4]` returns `[1, 2, 3, 4]`.
+Each condition on its own is a broken specification:
 
-### Edge Cases
-1. **Empty list `[]`:** Vacuously sorted.
-2. **Single-element list `[x]`:** Trivial base case.
-3. **Duplicates `[3, 1, 3]`:** Must preserve multiplicities (output `[1, 3, 3]`).
+- "Sorted" alone: a function that returns `[]` for every input passes, because an empty list is sorted.
+- "Rearrangement" alone: a function that returns its input unchanged passes.
+- "Sorted, and the same length as the input": a function that returns a list of zeros of the right length passes.
 
----
+The companion file defines each of these broken functions and proves it passes its broken specification. We'll use them in "Spot the fake" below.
 
-## Step 2: Formalize the Definition
+Some Lean for lists:
 
-What does it mean for a list `out` to be a valid sort of `inp`? A genuine specification requires **two independent conditions**:
+- `List α` is a list whose elements have type `α`. `α` is a type variable, like `T` in `List<T>`.
+- `[]` is the empty list, and `a :: l` is the list with `a` in front of `l`. So `[1, 2]` is `1 :: 2 :: []`.
+- `(· ≤ ·)` is shorthand for the function that takes `x` and `y` and returns `x ≤ y`.
 
-### 1. Conservation (`List.Perm` / `~`)
-The output must contain the exact same elements as the input, with the exact same multiplicities:
-$$\text{out} \sim \text{inp} \quad (\text{written in Lean as } \text{out.Perm inp})$$
+## 3. The algorithm
 
-### 2. Orderedness (`List.Pairwise`)
-Every pair of elements in the output must respect the ordering relation $r$:
-$$\text{List.Pairwise } r \text{ out}$$
-For example, `List.Pairwise (· ≤ ·) [1, 2, 3]` means:
-$$1 \le 2 \quad \land \quad 1 \le 3 \quad \land \quad 2 \le 3$$
+Insertion sort builds the sorted output one element at a time, inserting each element into its place among the ones already sorted.
 
-### Why One Condition Alone Is a Fake Specification
-- **Sortedness alone:** A function `def emptySort (_ : List ℕ) := []` provably satisfies `(emptySort l).Pairwise (· ≤ ·)`. It is sorted, but drops all data!
-- **Permutation alone:** A function `def identitySort (l : List ℕ) := l` provably satisfies `identitySort l ~ l`. It preserves all elements, but performs zero sorting!
-- **Length + Sortedness:** A function returning `[0, 0, 0, 0]` for any 4-element list preserves length and is sorted, but destroys the values.
+In Python:
 
-A genuine sorting specification must enforce both:
-```lean
--- (illustrative)
-(sort l) ~ l ∧ (sort l).Pairwise r
+```python
+def ordered_insert(a, xs):
+    if not xs: return [a]
+    if a <= xs[0]: return [a] + xs
+    return [xs[0]] + ordered_insert(a, xs[1:])
+
+def insertion_sort(xs):
+    if not xs: return []
+    return ordered_insert(xs[0], insertion_sort(xs[1:]))
 ```
 
----
+Notice the order: `insertion_sort` sorts the rest of the list first, then inserts the first element into it. So elements are inserted starting from the *end* of the input. That matters when we count comparisons.
 
-## Step 3: Understand the Algorithm
-
-Insertion sort processes elements one by one, inserting each new element into its proper position within the already sorted prefix.
-
-### Lean 4 Implementation
-In Lean 4, insertion sort is defined via two structurally recursive functions:
+The Lean versions are `List.orderedInsert` and `List.insertionSort`. They live in Mathlib rather than in this repository, so instead of sending you to Mathlib's source, the companion file states what they do and has Lean check each statement:
 
 ```lean
--- (illustrative)
--- Insert element `a` into an already-sorted list:
-def orderedInsert (a : α) : List α → List α
-  | [] => [a]
-  | b :: l => if r a b then a :: b :: l else b :: orderedInsert a l
+example (r : α → α → Prop) [DecidableRel r] (a : α) :
+    List.orderedInsert r a [] = [a] := rfl
 
--- Sort the list by recursively sorting the tail, then inserting the head:
-def insertionSort : List α → List α
-  | [] => []
-  | a :: l => orderedInsert a (insertionSort l)
+example (r : α → α → Prop) [DecidableRel r] (a b : α) (l : List α) :
+    List.orderedInsert r a (b :: l) =
+      if r a b then a :: b :: l else b :: List.orderedInsert r a l := rfl
+
+example (r : α → α → Prop) [DecidableRel r] (a : α) (l : List α) :
+    List.insertionSort r (a :: l) = List.orderedInsert r a (List.insertionSort r l) := rfl
 ```
 
-### Running the Algorithm in Lean
+These are the same three rules as the Python. The new pieces:
 
-Open `Tutorial/InsertionSort.lean` and execute `#eval`:
+- `r : α → α → Prop` is the comparison: it takes two elements and returns a statement, such as `x ≤ y`. `Prop` is Lean's type of statements.
+- `[DecidableRel r]` says the computer can actually work out whether `r a b` is true or false, which the `if` needs in order to run.
+- `:= rfl` means the claim holds just by unfolding the definitions. Lean checks this, so these three lines are an accurate description of Mathlib's code, not a paraphrase.
+
+Lean can see these functions stop without being told: every recursive call is on a shorter list.
+
+## 4. The correctness theorems
+
+The repository proves both halves of the specification, as two theorems. The file declares `α` and `r` once at the top:
 
 ```lean
-#eval List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3]
-#guard List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3] = ([1, 2, 3, 4, 5, 6], 13)
-
--- Best case: already sorted input (n - 1 comparisons):
-#eval List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4]
-#guard List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4] = ([1, 2, 3, 4], 3)
-
--- Worst case: reverse sorted input (n * (n - 1) / 2 comparisons):
-#eval List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1]
-#guard List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1] = ([1, 2, 3, 4], 6)
+variable {α : Type*} (r : α → α → Prop) [DecidableRel r]
 ```
 
-### Termination Proof
-Lean proves termination automatically by **structural induction on lists**:
-- `orderedInsert a l` recurses on the tail `l`.
-- `insertionSort (a :: l)` recurses on `l`.
-Both calls strictly shrink the list length.
+so the theorems use them without listing them again.
 
----
-
-## Step 4: State Correctness
-
-In `Amort/Sorting/InsertionSort.lean`, both halves of the specification are formally proven:
-
-### Theorem 1: Permutation Preservation
 ```lean
--- (illustrative)
-theorem insertionSortWithCount_perm (r : α → α → Prop) [DecidableRel r] (l : List α) :
+theorem insertionSortWithCount_perm (l : List α) :
     (insertionSortWithCount r l).1 ~ l
 ```
 
-### Theorem 2: Pairwise Sortedness
 ```lean
--- (illustrative)
-theorem insertionSortWithCount_fst_sorted (r : α → α → Prop) [DecidableRel r] [Std.Total r] [IsTrans α r] (l : List α) :
-    (insertionSortWithCount r l).1.Pairwise r
+theorem insertionSortWithCount_fst_sorted [Std.Total r] [IsTrans α r]
+    (l : List α) : (insertionSortWithCount r l).1.Pairwise r
 ```
 
-### Mathematical Hypotheses Explained
-Notice the typeclasses required for sortedness:
-- `[DecidableRel r]`: The relation $r(a, b)$ can be evaluated by a computer (returns `true` or `false`).
-- `[Std.Total r]`: The relation is total: for any two elements $a$ and $b$, either $r(a, b)$ or $r(b, a)$ holds.
-- `[IsTrans α r]`: The relation is transitive: $r(a, b) \land r(b, c) \implies r(a, c)$.
+Both are about `(insertionSortWithCount r l).1`. That's the output of the step-counting version of insertion sort, which step 5 shows is exactly `List.insertionSort r l`.
 
-Without transitivity and totality, sorting is mathematically undefined!
+The first theorem says the output is a rearrangement of the input. The second says it's sorted, and it has two extra conditions, both about the comparison `r`:
 
----
+- `[Std.Total r]`: any two elements can be compared. For any `a` and `b`, either `r a b` or `r b a`.
+- `[IsTrans α r]`: `r` is transitive. If `r a b` and `r b c`, then `r a c`.
 
-## Step 5: State Time Complexity
+These are fine conditions to have. They say `r` really is an ordering, and without them a sorted order might not even exist. What would *not* be fine is a condition about the output, such as assuming it's already sorted. The rearrangement theorem doesn't need either condition: moving elements around keeps them the same, however you compare them.
 
-What are we counting in Insertion Sort? We count **element comparisons** (`r a b`).
+## 5. How many comparisons
 
-### The Instrumented Function and Coupling
+We count comparisons: each time the code evaluates `r a b`. Here are the counting versions from `Amort/Sorting/InsertionSort.lean`:
+
 ```lean
--- (illustrative)
-def insertionSortWithCount : List α → List α × ℕ := ...
+def orderedInsertWithCount (a : α) : List α → List α × ℕ
+  | [] => ([a], 0)
+  | b :: l =>
+    if r a b then
+      (a :: b :: l, 1)
+    else
+      let res := orderedInsertWithCount a l
+      (b :: res.1, 1 + res.2)
 ```
-Returns `(sorted_list, comparison_count)`. The coupling theorems verify:
+
 ```lean
--- (illustrative)
+def insertionSortWithCount : List α → List α × ℕ
+  | [] => ([], 0)
+  | a :: l =>
+    let res := insertionSortWithCount l
+    let ins := orderedInsertWithCount r a res.1
+    (ins.1, res.2 + ins.2)
+```
+
+The lines starting with `|` are *pattern matching*: one case for the empty list `[]` and one for a list `b :: l` with a first element `b`. It's Lean's version of `if not xs … else …`. Inserting into an empty list costs nothing. Otherwise, each comparison adds 1.
+
+As before, one theorem says the counting version computes the real algorithm, and another bounds the count:
+
+```lean
 theorem insertionSortWithCount_fst (l : List α) :
     (insertionSortWithCount r l).1 = List.insertionSort r l
-
-theorem insertionSortWithCount_snd (l : List α) :
-    (insertionSortWithCount r l).2 = List.insertionSortCount r l
 ```
 
-### The Triangular Comparison Upper Bound
-When inserting element $k$ into a sorted list of length $k - 1$, we make at most $k - 1$ comparisons (`orderedInsertCount_le`). Summing over all $n$ elements yields the classic triangular recurrence:
-$$T(n) \le T(n - 1) + (n - 1) \implies T(n) \le \sum_{i=0}^{n-1} i = \frac{n(n - 1)}{2}$$
-
-The headline theorem proves this exact inequality in Lean:
-
 ```lean
--- (illustrative)
 theorem insertionSortWithCount_snd_le_triangular (l : List α) :
     (insertionSortWithCount r l).2 ≤ l.length * (l.length - 1) / 2
 ```
 
-And its quadratic relaxation:
+For a list of length n, that's at most n(n − 1)/2 comparisons: 6 for four elements, 45 for ten. The worst case is when every insertion has to walk the whole sorted part. The best case is when every insertion stops at the first comparison, n − 1 in total:
+
 ```lean
--- (illustrative)
-theorem insertionSortWithCount_snd_le_sq (l : List α) :
-    (insertionSortWithCount r l).2 ≤ l.length ^ 2
+#guard List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3] = ([1, 2, 3, 4, 5, 6], 13)
+#guard List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4] = ([1, 2, 3, 4], 3)
+#guard List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1] = ([1, 2, 3, 4], 6)
 ```
 
-### Asymptotic Complexity in Mathlib
-In `Amort/Sorting/Asymptotics.lean`, this bound is connected to Mathlib's `Asymptotics.IsBigO`:
+Why is `[1, 2, 3, 4]` the cheap one? Elements are inserted starting from the end, so each new element is smaller than everything sorted so far, and the first comparison already puts it in front. With `[4, 3, 2, 1]`, each new element is larger than everything sorted so far and has to walk past all of it.
+
+## Spot the fake
+
+### "sort is correct"
+
+All three options compile; they're in the companion file.
+
+**Option A**
+
 ```lean
--- (illustrative)
-theorem isBigO_insertionSortWithCount_snd_atTop :
-    (fun l : List α ↦ ((insertionSortWithCount r l).2 : ℝ)) =O[Filter.atTop]
-    (fun l : List α ↦ ((l.length : ℝ) ^ 2))
+def emptySort (_ : List ℕ) : List ℕ := []
 ```
 
----
-
-## 🎯 Spot the Fake
-
-An AI agent claims to have formalized a verified sorting algorithm. Which specification genuinely proves that the algorithm sorts the input list?
-
-### Statement A (Sortedness Only / Empty-List Fake)
 ```lean
--- (illustrative)
-theorem sort_correct (xs : List ℕ) :
-    (sort xs).Pairwise (· ≤ ·)
+theorem emptySort_sorted (l : List ℕ) : (emptySort l).Pairwise (· ≤ ·) := by
+  simp [emptySort]
 ```
+
+**Option B**
+
+```lean
+def zeroSort (l : List ℕ) : List ℕ := List.replicate l.length 0
+```
+
+```lean
+theorem zeroSort_length_sorted (l : List ℕ) :
+    (zeroSort l).length = l.length ∧ (zeroSort l).Pairwise (· ≤ ·) :=
+```
+
+**Option C**
+
+```lean
+theorem insertionSort_correct (l : List ℕ) :
+    (List.insertionSortWithCount (· ≤ ·) l).1 ~ l ∧
+    (List.insertionSortWithCount (· ≤ ·) l).1.Pairwise (· ≤ ·) :=
+```
+
 <details>
 <summary>Show answer</summary>
 
-> **Verdict: FAKE.**  
-> An algorithm defined as `def sort (_ : List ℕ) := []` provably satisfies this statement! Dropping all elements trivially eliminates all out-of-order pairs.
+C.
+
+A and B are the broken specifications from step 2, applied to functions that obviously don't sort. `emptySort` throws the input away, and the output is sorted. `zeroSort` (`List.replicate n 0` is a list of `n` zeros) keeps the length and outputs zeros, which are sorted. Both theorems are true. They just don't say "this function sorts".
+
+The only condition that rules out both is `~ l`, the output is a rearrangement of the input. When you read a claim that something "sorts", look for it.
 
 </details>
 
-### Statement B (Sortedness + Length / Value-Erasing Fake)
-```lean
--- (illustrative)
-theorem sort_correct (xs : List ℕ) :
-    (sort xs).length = xs.length ∧ (sort xs).Pairwise (· ≤ ·)
-```
+## Exercises
+
+**1. Predict.** What does `#eval List.insertionSortWithCount (· ≤ ·) [2, 1, 3]` print?
+
 <details>
 <summary>Show answer</summary>
 
-> **Verdict: FAKE.**  
-> An algorithm defined as `def sort xs := List.replicate xs.length 0` preserves length and is sorted (`[0, 0, 0, 0]` is sorted), but destroys all original input values!
+`([1, 2, 3], 3)`. Working from the end: inserting 3 into `[]` costs nothing; inserting 1 into `[3]` takes one comparison (1 ≤ 3, so it goes in front); inserting 2 into `[1, 3]` takes two (2 ≤ 1 is false, then 2 ≤ 3 is true). That's 0 + 1 + 2 = 3.
 
 </details>
 
-### Statement C (Permutation + Sortedness)
-```lean
--- (illustrative)
-theorem sort_correct (xs : List ℕ) :
-    (sort xs).Perm xs ∧ (sort xs).Pairwise (· ≤ ·)
-```
-<details>
-<summary>Show answer</summary>
-
-> **Verdict: GENUINE.**  
-> Demanding both `Perm xs` (multiset conservation) and `Pairwise (· ≤ ·)` (sortedness) completely characterizes a correct sorting algorithm.
-
-</details>
-
----
-
-## 🧪 Interactive Exercises
-
-### 1. Predict
-1. **Question 1:** Given input `[4, 2, 7, 1]`, what does `#eval (insertionSortWithCount (· ≤ ·) [4, 2, 7, 1]).1` evaluate to?
-   - *Expected Answer:* `[1, 2, 4, 7]`
-2. **Question 2:** How many comparisons are performed when sorting the reverse-ordered list `[4, 3, 2, 1]`?
-   - *Expected Answer:* `6`
-   - *Formula:* $\frac{4 \cdot (4 - 1)}{2} = \frac{12}{2} = 6$.
-3. **Question 3:** How many comparisons are performed on the already-sorted list `[1, 2, 3, 4]`?
-   - *Expected Answer:* `3` (each insertion checks the first element and stops immediately: $n - 1$).
-
-### 2. State It Yourself
-Can you formalize that sorting preserves the length of any input list?
-Try writing this in `Tutorial/InsertionSort.lean`:
-> *"For all lists $l$ of natural numbers, the length of the sorted output equals the length of $l$."*
+**2. State it yourself.** Write a statement saying that sorting a list of natural numbers doesn't change its length.
 
 <details>
 <summary>Show answer</summary>
 
 ```lean
-/-- Sorting preserves list length -/
-example (l : List ℕ) : (List.insertionSortWithCount (· ≤ ·) l).1.length = l.length := by
-  exact (List.insertionSortWithCount_perm (· ≤ ·) l).length_eq
+theorem insertionSort_length (l : List ℕ) :
+    (List.insertionSortWithCount (· ≤ ·) l).1.length = l.length :=
 ```
+
+The proof in the companion file is one line: a rearrangement always has the same length, so this follows from `insertionSortWithCount_perm`.
 
 </details>
 
-### 3. Prove It with AI
-Copy this theorem into an AI chat:
+**3. Prove it with AI.** Sorting a list that's already sorted should give back the same list.
+
 ```lean
--- (illustrative)
-theorem empty_list_is_sorted : ([ ] : List ℕ).Pairwise (· ≤ ·)
+-- exercise
+theorem insertionSort_of_sorted (l : List ℕ) (h : l.Pairwise (· ≤ ·)) :
+    List.insertionSort (· ≤ ·) l = l := by
+  sorry
 ```
-Ask: *"Prove that the empty list is pairwise sorted in Lean 4."*  
-Notice that the proof is simply `by simp`. This illustrates why the sortedness condition alone is never sufficient!
+
+Ask an assistant for a proof, then build. The condition `h` says the input is sorted. That's a condition on the input, and it's the whole point of the statement, so it belongs there. Mathlib may already contain this fact under another name; if the assistant finds it, that's a perfectly good proof.
+
+## Lean introduced in this chapter
+
+| You'll see | It means |
+| :--- | :--- |
+| `List α` | a list of elements of type `α` |
+| `[]`, `a :: l` | the empty list; `a` in front of `l` |
+| `\| [] => … \| b :: l => …` | pattern matching: one case per shape of list |
+| `(· ≤ ·)` | the function `fun x y => x ≤ y` |
+| `Prop` | the type of statements |
+| `r : α → α → Prop` | a comparison between two elements |
+| `[DecidableRel r]` | the computer can decide `r a b` |
+| `[Std.Total r]`, `[IsTrans α r]` | `r` compares any two elements; `r` is transitive |
+| `variable …` | declare names once for the rest of the file |
+| `l.Pairwise r` | every earlier element relates to every later one by `r` |
+| `l₁ ~ l₂` | `l₁` is a rearrangement of `l₂` (`List.Perm`) |
+| `List.replicate n x` | a list of `n` copies of `x` |
+| `l.length` | the number of elements in `l` |

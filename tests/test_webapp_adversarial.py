@@ -546,7 +546,7 @@ def test_serving_and_offline():
     const node = treeData.nodes[0];
     const md = app.renderComingSoonMarkdown(node);
     const rendered = app.renderMarkdown(md);
-    console.log(JSON.stringify({ hasTitle: rendered.includes("<h1>"), hasMetadata: rendered.includes("Curriculum Metadata") }));
+    console.log(JSON.stringify({ hasTitle: rendered.includes("<h1>"), hasMetadata: rendered.includes("from <code>tree.json</code>") }));
     """
     stdout, _, _ = run_node_eval(ch_eval)
     ch_res = json.loads(stdout)

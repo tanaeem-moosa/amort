@@ -1,67 +1,34 @@
-# 🏛️ Euclid's GCD
+# Euclid's GCD
 
-> **Skill Tree Tier 2 | Arithmetic & Number Theory**  
-> **Prerequisites:** Binary GCD (`BGCD`)  
-> **Unlocks:** Extended Euclid & Bézout (`EXT`)  
-> **Companion Lean File:** `Tutorial/EuclideanGCD.lean`  
-> **Reference Module:** `Amort.GCD.EuclideanGCD`  
-> **Headline Theorems:** `Nat.euclidGcd_eq_gcd`, `Nat.euclidGcdWithSteps_fst`, `Nat.euclidGcdWithSteps_snd`, `Nat.euclidGcdWithSteps_snd_le_two_mul_size_min`, `Nat.euclidGcdWithSteps_snd_le_two_mul_size_add`, `Nat.isBigO_euclidGcdWithSteps_snd_atTop`
+*Needs Binary GCD. Unlocks Extended Euclid.*
 
----
+This chapter solves the same problem as the last one with a different algorithm. The specification doesn't change at all, and that turns out to be useful: once two algorithms are each proved equal to `Nat.gcd`, they are automatically equal to each other.
 
-## The Big Idea
+The companion file is `Tutorial/EuclideanGCD.lean`.
 
-In the previous node ([Binary GCD](binary_gcd.md)), we formalized Stein's bitwise algorithm. Now, we explore the classical **Euclidean Algorithm** (c. 300 BCE).
+## 1. The problem
 
-This chapter introduces one of the most profound principles in formal software verification:
-> **One Specification, Multiple Algorithms.**
+The same as in [Binary GCD](binary_gcd.md): given natural numbers `a` and `b`, find their greatest common divisor, with gcd(a, 0) = a and gcd(0, 0) = 0.
 
-Two algorithms can have completely different execution strategies, recurrences, and cost profiles, yet be proven **mathematically identical** because they both satisfy the exact same canonical specification (`Nat.gcd a b`). Furthermore, we will prove **cross-algorithm equivalence**:
-$$\text{euclidGcd}(a, b) = \text{binaryGcd}(a, b)$$
+## 2. What "correct" means in Lean
 
----
+Also the same: the algorithm must return `Nat.gcd a b`. If you've done the Binary GCD chapter, there's nothing new here.
 
-## Step 1: Define the Problem
+## 3. The algorithm
 
-Given two natural numbers $a, b \in \mathbb{N}$, find the greatest common divisor $\gcd(a, b)$ using repeated Euclidean division (remainders).
+Euclid's algorithm is over two thousand years old and rests on one fact: when `a` is positive, gcd(a, b) = gcd(b mod a, a). The reason is that b mod a = b − q × a for some whole number `q`, so any number that divides both `a` and `b` also divides `b mod a`, and the other way round. The pairs (a, b) and (b mod a, a) have exactly the same common divisors.
 
-### The Euclidean Reduction Rule
-If $a > 0$, any common divisor of $a$ and $b$ must also divide the remainder $b \bmod a$, because:
-$$b = q \cdot a + (b \bmod a) \implies (b \bmod a) = b - q \cdot a$$
-If $d \mid a$ and $d \mid b$, then $d$ divides any linear combination of $a$ and $b$. Therefore:
-$$\gcd(a, b) = \gcd(b \bmod a, a)$$
+In Python:
 
-When $a$ reaches $0$, the reduction stops and returns $b$:
-$$\gcd(0, b) = b$$
-
-### Contrast: Euclid vs. Stein
-- **Euclidean GCD:** Shrinks arguments dramatically in each step using integer division and modulo (`%`).
-- **Binary GCD:** Avoids multi-word division by using single-bit shifts (`>> 1`) and subtractions.
-
----
-
-## Step 2: Formalize the Definition
-
-Euclidean GCD targets the exact same specification as Binary GCD: Mathlib's `Nat.gcd a b`.
-
-### The Modulo Halving Invariant
-Why is Euclidean GCD fast? Because taking the remainder with respect to a smaller number at least **halves** the argument every two steps! In `Amort/GCD/EuclideanGCD.lean`, this fundamental geometric contraction is proved as:
-
-```lean
--- (illustrative)
-lemma mod_two_mul_lt {a b : ℕ} (hb : 0 < b) (hba : b ≤ a) : 2 * (a % b) < a
+```python
+def euclid_gcd(a, b):
+    if a == 0: return b
+    return euclid_gcd(b % a, a)
 ```
 
-In plain language: whenever $0 < b \le a$, the remainder $a \bmod b$ is strictly less than half of $a$ ($a \bmod b < a / 2$).
-
----
-
-## Step 3: Understand the Algorithm
-
-Here is the executable definition from `Amort/GCD/EuclideanGCD.lean`:
+In Lean, from `Amort/GCD/EuclideanGCD.lean`:
 
 ```lean
--- (illustrative)
 def euclidGcd (a b : ℕ) : ℕ :=
   if a = 0 then b
   else euclidGcd (b % a) a
@@ -70,67 +37,49 @@ decreasing_by
   exact Nat.mod_lt b (by omega)
 ```
 
-### Running the Algorithm in Lean
+If `a` starts out larger than `b`, the first call just swaps them, because `b % a = b` when `b < a`. Here is the trace for (48, 18):
 
-Open `Tutorial/EuclideanGCD.lean` and execute `#eval`:
+| Call | `b % a` | Next call |
+| :--- | :--- | :--- |
+| `euclidGcd 48 18` | 18 % 48 = 18 | `euclidGcd 18 48` (the swap) |
+| `euclidGcd 18 48` | 48 % 18 = 12 | `euclidGcd 12 18` |
+| `euclidGcd 12 18` | 18 % 12 = 6 | `euclidGcd 6 12` |
+| `euclidGcd 6 12` | 12 % 6 = 0 | `euclidGcd 0 6` |
+| `euclidGcd 0 6` | | returns 6 |
+
+### Why it stops
+
+This time the termination measure is just `a`, the first argument. The recursive call replaces `a` with `b % a`, and a remainder is always smaller than the number you divided by: `b % a < a` whenever `a > 0`. Mathlib calls that fact `Nat.mod_lt`, and the proof after `decreasing_by` uses it by name. `exact` means "this is the proof". The `(by omega)` supplies the condition `0 < a`, which `omega` works out from the fact that we're in the `else` branch, where `a ≠ 0`.
+
+### Running it
 
 ```lean
-#eval Nat.euclidGcd 48 18
 #guard Nat.euclidGcd 48 18 = 6
-#eval Nat.euclidGcd 105 252
 #guard Nat.euclidGcd 105 252 = 21
-#eval Nat.euclidGcd 0 7
 #guard Nat.euclidGcd 0 7 = 7
-#eval Nat.euclidGcd 0 0
 #guard Nat.euclidGcd 0 0 = 0
 ```
 
-### Step-by-Step Execution Trace on `48` and `18`
-1. Call `euclidGcd 48 18`: $a = 48 \ne 0$. Next is `(18 % 48, 48) = (18, 48)`.
-2. Call `euclidGcd 18 48`: $a = 18 \ne 0$. Next is `(48 % 18, 18) = (12, 18)`.
-3. Call `euclidGcd 12 18`: $a = 12 \ne 0$. Next is `(18 % 12, 12) = (6, 12)`.
-4. Call `euclidGcd 6 12`: $a = 6 \ne 0$. Next is `(12 % 6, 6) = (0, 6)`.
-5. Call `euclidGcd 0 6`: $a = 0 \implies$ returns `6`.
-
-Notice that if the first argument is larger than the second ($48 > 18$), step 1 acts as an automatic swap via $18 \bmod 48 = 18$.
-
-### Termination Proof (`termination_by a`)
-The recursion parameter is `a`. Whenever $a > 0$, the standard mathematical property of modulo (`Nat.mod_lt`) guarantees that:
-$$b \bmod a < a$$
-Since the next recursive call passes $b \bmod a$ as its first argument, the termination measure strictly decreases at every step.
-
----
-
-## Step 4: State Correctness
-
-The headline theorem proves that `euclidGcd` computes the exact greatest common divisor for all inputs:
+## 4. The correctness theorem
 
 ```lean
--- (illustrative)
 theorem euclidGcd_eq_gcd (a b : ℕ) : euclidGcd a b = Nat.gcd a b
 ```
 
-### Cross-Algorithm Equivalence
-Because both `euclidGcd` and `binaryGcd` are proven equal to `Nat.gcd`, we can immediately prove that they produce identical results on all inputs:
+It has the same shape as `binaryGcd_eq_gcd`: no conditions, and the right-hand side is the specification. Because both algorithms are proved equal to `Nat.gcd`, proving they agree with each other takes one line:
 
 ```lean
 theorem euclid_eq_binary (a b : ℕ) : Nat.euclidGcd a b = Nat.binaryGcd a b := by
   rw [Nat.euclidGcd_eq_gcd, Nat.binaryGcd_eq_gcd]
 ```
 
-This is the power of formal specification: you do not need to construct a complex inductive bisimulation between the bit-shifting logic of Stein and the division logic of Euclid. You simply verify both against `Nat.gcd`, and transitivity gives equivalence for free!
+`rw` means "rewrite": it replaces the left side of an equation with its right side. The proof rewrites `Nat.euclidGcd a b` to `Nat.gcd a b`, then does the same to `Nat.binaryGcd a b`, and both sides are now identical. Comparing the two algorithms directly, step by step, would be a long and fiddly proof. Going through a shared specification avoids it.
 
----
+## 5. How many steps
 
-## Step 5: State Time Complexity
-
-What are we counting in Euclidean GCD? We count **recursive calls** (each call performs one division/modulo operation `%`). The count is at most twice the bit length of the smaller input: $2 \cdot \text{size}(\min(a, b)) + 1$. Measured in bit operations, division of $n$-bit numbers costs $O(n^2)$, giving $O(n^3)$ in total.
-
-### The Instrumented Function and Coupling
-In `Amort/GCD/EuclideanGCD.lean`, we instrument the algorithm to return `(result_gcd, modulo_count)`:
+We count recursive calls. Each call does one `%`.
 
 ```lean
--- (illustrative)
 def euclidGcdWithSteps (a b : ℕ) : ℕ × ℕ :=
   if a = 0 then (b, 0)
   else
@@ -138,119 +87,127 @@ def euclidGcdWithSteps (a b : ℕ) : ℕ × ℕ :=
     (g, 1 + s)
 ```
 
-The coupling theorems ensure that the instrumented function is faithful:
+`let (g, s) := …` takes the pair returned by the recursive call apart: `g` is the gcd and `s` is the count so far. As in the last chapter, one theorem ties the counting version to the real algorithm, and another bounds the count:
 
 ```lean
--- (illustrative)
 theorem euclidGcdWithSteps_fst (a b : ℕ) : (euclidGcdWithSteps a b).1 = euclidGcd a b
-theorem euclidGcdWithSteps_snd (a b : ℕ) : (euclidGcdWithSteps a b).2 = euclideanGcdSteps a b
 ```
 
-### Logarithmic Upper Bound in the Minimum Input (`min a b`)
-Because `2 * (a % b) < a`, the bit length of the remainder decreases by at least 1 every two steps (`Nat.size_mod_add_one_le`). This yields the famous Lamé-style logarithmic upper bound:
-
 ```lean
--- (illustrative)
 theorem euclidGcdWithSteps_snd_le_two_mul_size_min (a b : ℕ) :
     (euclidGcdWithSteps a b).2 ≤ 2 * Nat.size (min a b) + 1
 ```
 
-### Why `min a b`?
-Notice the elegance of this bound: the number of steps depends **only on the smaller number**! Even if $b$ is a 10,000-bit number, if $a = 6$, the algorithm will finish in at most $2 \cdot \text{size}(6) + 1 = 2 \cdot 3 + 1 = 7$ steps.
+The bound depends only on the *smaller* input. If one number has a million digits and the other is 6, which has 3 bits, Euclid's algorithm finishes in at most 2 × 3 + 1 = 7 calls. After the first call or two, the big number is gone.
 
-### Comparing Operational Step Counts
-Let us compare the concrete step counts between Euclid and Binary GCD on `(48, 18)`:
+The reason is this lemma, also in the reference file:
+
 ```lean
-#eval Nat.euclidGcdWithSteps 48 18
+lemma mod_two_mul_lt {a b : ℕ} (hb : 0 < b) (hba : b ≤ a) : 2 * (a % b) < a
+```
+
+Two new things to read here:
+
+- **Curly braces.** `{a b : ℕ}` makes `a` and `b` *implicit*. When you use the lemma, you don't pass them; Lean works them out from the other arguments.
+- **Hypotheses.** `(hb : 0 < b)` and `(hba : b ≤ a)` are conditions: to use the lemma you have to supply proofs that `0 < b` and `b ≤ a`. Conditions like these, which describe the inputs, are normal. What you have to watch for is a condition that quietly assumes the thing the theorem is supposed to prove.
+
+The lemma says that when `b ≤ a`, the remainder `a % b` is less than half of `a`. Every two calls, the numbers shrink by at least half, which means they lose at least one bit. That's where "2 × bits + 1" comes from.
+
+### Fewer calls isn't the same as faster
+
+```lean
 #guard Nat.euclidGcdWithSteps 48 18 = (6, 4)
-#eval Nat.binaryGcdWithSteps 48 18
 #guard Nat.binaryGcdWithSteps 48 18 = (6, 6)
 ```
-Euclid takes fewer steps (4 vs. 6), but each Euclidean step is a full division (`%`), whereas each Binary GCD step is a fast bit shift or subtraction.
 
----
+On (48, 18), Euclid makes 4 calls and binary GCD makes 6. That doesn't make Euclid faster, because its calls cost more. A `%` on large numbers is a full division, while binary GCD's calls only halve and subtract. Which one wins depends on the numbers and the hardware. The theorems count calls and say so; they don't claim anything about running time. When you read a complexity theorem, the first question is always "what exactly is being counted?"
 
-## 🎯 Spot the Fake
+## Spot the fake
 
-An AI assistant submits three candidate theorem statements to "prove" the correctness of Euclidean GCD. Which one is genuine?
+### "euclidGcd is correct"
 
-### Statement A (Reflexive Identity / Tautology Anti-Pattern A4)
+**Option A**
+
 ```lean
--- (illustrative)
-theorem euclidGcd_self (a b : ℕ) : euclidGcd a b = euclidGcd a b := by
-  rfl
+def fakeEuclidAlgo (a b : ℕ) : ℕ := Nat.gcd a b
+
+theorem fakeEuclidAlgo_eq (a b : ℕ) : fakeEuclidAlgo a b = Nat.gcd a b := rfl
 ```
-<details>
-<summary>Show answer</summary>
 
-> **Verdict: FAKE.**  
-> A reflexive identity $f(x) = f(x)$ proves nothing about whether $f$ computes the GCD. Even a completely broken function that returns `42` on all inputs satisfies this statement!
+**Option B**
 
-</details>
-
-### Statement B (Genuine Full Specification)
 ```lean
--- (illustrative)
+theorem euclidGcd_dvd_left (a b : ℕ) : Nat.euclidGcd a b ∣ a
+```
+
+**Option C**
+
+```lean
 theorem euclidGcd_eq_gcd (a b : ℕ) : euclidGcd a b = Nat.gcd a b
 ```
+
 <details>
 <summary>Show answer</summary>
 
-> **Verdict: GENUINE.**  
-> Equates the algorithm output directly to Mathlib's independently verified `Nat.gcd` specification for all $a, b \in \mathbb{N}$.
+C.
+
+A's "algorithm" is the specification under another name, so the theorem is true by definition (`rfl` means "both sides are the same by definition") and says nothing about Euclid's algorithm. This isn't a made-up example. While this repository was being built, an AI agent defined a function named `bfs` as the shortest-path specification, then proved "`bfs` is correct" in exactly this way. The real BFS code sat next to it, unproved. The giveaway is to look at the definition: is it an algorithm, or is it the answer?
+
+B is a third of the specification: it only says the result divides `a`. A function that always returns 1 passes it.
 
 </details>
 
-### Statement C (One-Sided / Incomplete Specification Anti-Pattern A5)
+## Exercises
+
+**1. Predict.** What does `#eval Nat.euclidGcdWithSteps 105 252` print? What about `#eval Nat.euclidGcdWithSteps 252 105`?
+
+<details>
+<summary>Show answer</summary>
+
+`(21, 3)` and `(21, 4)`. With (105, 252) the calls go (105, 252) → (42, 105) → (21, 42) → (0, 21), which is three calls. With (252, 105), the first call only swaps the arguments, so it makes one extra call.
+
+</details>
+
+**2. State it yourself.** Write a statement saying: if `a` divides `b`, then Euclid's algorithm returns `a`.
+
+<details>
+<summary>Show answer</summary>
+
 ```lean
--- (illustrative)
-theorem euclidGcd_divides (a b : ℕ) : euclidGcd a b ∣ a
+theorem euclidGcd_eq_left_of_dvd (a b : ℕ) (h : a ∣ b) : Nat.euclidGcd a b = a := by
 ```
-<details>
-<summary>Show answer</summary>
 
-> **Verdict: INCOMPLETE / FAKE.**  
-> Proves only that the output divides $a$. It fails to prove that the output divides $b$, and fails to prove that it is the *greatest* common divisor. A dummy function returning `1` for all inputs satisfies this theorem!
-
-</details>
-
----
-
-## 🧪 Interactive Exercises
-
-### 1. Predict
-1. **Question:** What does `#eval euclidGcd 105 252` evaluate to?
-   - *Expected Answer:* `21`
-   - *Trace:*
-     - $252 \bmod 105 = 42$
-     - $105 \bmod 42 = 21$
-     - $42 \bmod 21 = 0 \implies$ returns `21`.
-2. **Predicting Steps:** What does `#eval (euclidGcdWithSteps 105 252).2` evaluate to?
-   - *Expected Answer:* `5` (including the initial swap).
-
-### 2. State It Yourself
-Can you formalize that when $a$ divides $b$ ($a > 0$), Euclidean GCD finishes in a single step?
-Try writing this in `Tutorial/EuclideanGCD.lean`:
-> *"For $0 < a$ and $a \mid b$, $\text{euclidGcd}(a, b) = a$."*
-
-<details>
-<summary>Show answer</summary>
+Did you add a condition that `a` is positive? Many people do, and the companion file has that version too:
 
 ```lean
-/-- When a divides b, (b % a) = 0, so the algorithm returns a immediately. -/
-example (a b : ℕ) (_ha : 0 < a) (hdiv : a ∣ b) :
+theorem euclidGcd_eq_left_of_pos_of_dvd (a b : ℕ) (_ha : 0 < a) (h : a ∣ b) :
     Nat.euclidGcd a b = a := by
-  rw [Nat.euclidGcd_eq_gcd]
-  exact Nat.gcd_eq_left hdiv
 ```
+
+Both are true, but the second is weaker: it says nothing when `a = 0`. The condition isn't needed, because if 0 divides `b` then `b` is 0, and gcd(0, 0) = 0. There's a clue in the name `_ha`. A leading underscore is Lean's convention for a hypothesis the proof never uses; without it, Lean's linter would warn that `ha` is unused. When a condition goes unused, you can usually drop it and get a stronger theorem.
 
 </details>
 
-### 3. Prove It with AI
-Give this theorem to an AI assistant:
+**3. Prove it with AI.**
+
 ```lean
--- (illustrative)
-theorem euclidGcd_zero_left (b : ℕ) : Nat.euclidGcd 0 b = b
+-- exercise
+theorem euclidGcd_zero_left (b : ℕ) : Nat.euclidGcd 0 b = b := by
+  sorry
 ```
-Ask: *"Prove `euclidGcd_zero_left` in Lean 4 by unfolding `Nat.euclidGcd`."*  
-Paste the result into `Tutorial/EuclideanGCD.lean` and confirm that Lean accepts it without warnings!
+
+Paste it at the end of the companion file, ask an assistant for a proof, and build. Then compare its statement with yours, symbol by symbol, before accepting it.
+
+## Lean introduced in this chapter
+
+| You'll see | It means |
+| :--- | :--- |
+| `{a b : ℕ}` | implicit arguments: Lean fills them in |
+| `(hb : 0 < b)` | a hypothesis: you must supply a proof of `0 < b` |
+| `_ha` | a hypothesis the proof never uses |
+| `min a b` | the smaller of `a` and `b` |
+| `let (g, s) := e` | take the pair `e` apart into `g` and `s` |
+| `exact p` | "`p` is the proof" |
+| `rw [h]` | rewrite using the equation `h` |
+| `rfl` | "both sides are the same by definition" |
+| `Nat.euclidGcd` vs `euclidGcd` | the same function; the long name is used outside `namespace Nat` |

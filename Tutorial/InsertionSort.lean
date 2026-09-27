@@ -6,18 +6,11 @@ Authors: Amort Authors
 import Amort.Sorting.InsertionSort
 
 /-!
-# Tutorial: Insertion Sort
+# Insertion sort: companion file
 
-Companion file for `tutorial/insertion_sort.md`.
-Introduces:
-- The two-part sorting specification: sortedness (`List.Pairwise`) and
-  permutation preservation (`List.Perm` / `~`)
-- Why "sorted" alone is a fake spec (the empty list is sorted)
-- Instrumented comparison counting (`List.insertionSortWithCount`)
-- Concrete triangular (`n * (n - 1) / 2`) and quadratic (`n ^ 2`) upper bounds
-
-This file allows learners to interact with definitions, evaluate examples,
-and check theorem statements locally.
+Companion to `tutorial/insertion_sort.md`. Every Lean snippet the chapter quotes is either here
+or in the reference file `Amort/Sorting/InsertionSort.lean`, so Lean checks all of it on every
+build.
 -/
 
 set_option linter.hashCommand false
@@ -28,83 +21,56 @@ open scoped List
 
 namespace Tutorial.InsertionSort
 
-/-! ### Step 3: Running the Executable Algorithm -/
+variable {α : Type*}
 
--- Run `#eval` to sort lists and count comparisons:
-#eval List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3]
+/-! ## Step 3: what Mathlib's definitions do -/
+
+example (r : α → α → Prop) [DecidableRel r] (a : α) :
+    List.orderedInsert r a [] = [a] := rfl
+
+example (r : α → α → Prop) [DecidableRel r] (a b : α) (l : List α) :
+    List.orderedInsert r a (b :: l) =
+      if r a b then a :: b :: l else b :: List.orderedInsert r a l := rfl
+
+example (r : α → α → Prop) [DecidableRel r] (a : α) (l : List α) :
+    List.insertionSort r (a :: l) = List.orderedInsert r a (List.insertionSort r l) := rfl
+
+/-! ## Step 5: counting comparisons -/
+
 #guard List.insertionSortWithCount (· ≤ ·) [5, 2, 4, 6, 1, 3] = ([1, 2, 3, 4, 5, 6], 13)
-
--- Best case: already sorted input (n - 1 comparisons):
-#eval List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4]
 #guard List.insertionSortWithCount (· ≤ ·) [1, 2, 3, 4] = ([1, 2, 3, 4], 3)
-
--- Worst case: reverse sorted input (n * (n - 1) / 2 comparisons):
-#eval List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1]
 #guard List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1] = ([1, 2, 3, 4], 6)
 
-/-! ### Step 4: Correctness Claims -/
+/-! ## Spot the fake: "sort is correct" -/
 
--- Specification Part 1: Permutation (all original elements preserved):
-#check List.insertionSortWithCount_perm
--- ∀ {α : Type*} (r : α → α → Prop) [DecidableRel r] (l : List α),
---   (List.insertionSortWithCount r l).1 ~ l
-
--- Specification Part 2: Sortedness (adjacent elements satisfy relation):
-#check List.insertionSortWithCount_fst_sorted
--- ∀ {α : Type*} (r : α → α → Prop) [DecidableRel r] [Std.Total r] [IsTrans α r] (l : List α),
---   (List.insertionSortWithCount r l).1.Pairwise r
-
-/-- Learner experiment: Demonstrating that empty list is trivially sorted. -/
-example : ([ ] : List ℕ).Pairwise (· ≤ ·) := by
-  simp
-
-/-- Sorting preserves list length -/
-example (l : List ℕ) : (List.insertionSortWithCount (· ≤ ·) l).1.length = l.length := by
-  exact (List.insertionSortWithCount_perm (· ≤ ·) l).length_eq
-
-/-! ### Step 5: Comparison Counting & Complexity Bounds -/
-
--- Coupling theorems:
-#check List.insertionSortWithCount_fst
-#check List.insertionSortWithCount_snd
-
--- Triangular comparison bound:
-#check List.insertionSortWithCount_snd_le_triangular
--- ∀ (l : List α), (List.insertionSortWithCount r l).2 ≤ l.length * (l.length - 1) / 2
-
--- Quadratic comparison bound:
-#check List.insertionSortWithCount_snd_le_sq
--- ∀ (l : List α), (List.insertionSortWithCount r l).2 ≤ l.length ^ 2
-
-/-- Learner experiment: Concrete verification of the triangular bound on 4 elements. -/
-example : (List.insertionSortWithCount (· ≤ ·) [4, 3, 2, 1]).2 ≤ 4 * (4 - 1) / 2 := by
-  exact List.insertionSortWithCount_snd_le_triangular (· ≤ ·) [4, 3, 2, 1]
-
-/-! ### Spot the Fake: Compiling Real vs Fake Claims -/
-
-/-- Fake 1 (Empty list fake): Output is provably sorted, but completely drops
-the input data. -/
+/-- Throws the input away. -/
 def emptySort (_ : List ℕ) : List ℕ := []
 
-/-- Fake 1 passes a "sorted-only" specification. -/
+/-- Option A: sortedness alone. `emptySort` passes it. -/
 theorem emptySort_sorted (l : List ℕ) : (emptySort l).Pairwise (· ≤ ·) := by
   simp [emptySort]
 
-/-- Fake 2 (Identity fake): Output is provably a permutation, but fails to sort. -/
-def identitySort (l : List ℕ) : List ℕ := l
+/-- Replaces every element with 0. -/
+def zeroSort (l : List ℕ) : List ℕ := List.replicate l.length 0
 
-/-- Fake 2 passes a "permutation-only" specification. -/
-theorem identitySort_perm (l : List ℕ) : identitySort l ~ l :=
-  List.Perm.refl l
+/-- Option B: sortedness and the right length. `zeroSort` passes it. -/
+theorem zeroSort_length_sorted (l : List ℕ) :
+    (zeroSort l).length = l.length ∧ (zeroSort l).Pairwise (· ≤ ·) :=
+  ⟨List.length_replicate, List.pairwise_replicate.2 (Or.inr le_rfl)⟩
 
-/-- Genuine sorting specification: Requires BOTH permutation and sortedness,
-alongside an honest operational comparison upper bound. -/
-theorem genuine_sort_result (l : List ℕ) :
+/-- Option C: a rearrangement of the input, and sorted. -/
+theorem insertionSort_correct (l : List ℕ) :
     (List.insertionSortWithCount (· ≤ ·) l).1 ~ l ∧
-    (List.insertionSortWithCount (· ≤ ·) l).1.Pairwise (· ≤ ·) ∧
-    (List.insertionSortWithCount (· ≤ ·) l).2 ≤ l.length * (l.length - 1) / 2 :=
+    (List.insertionSortWithCount (· ≤ ·) l).1.Pairwise (· ≤ ·) :=
   ⟨List.insertionSortWithCount_perm (· ≤ ·) l,
-   List.insertionSortWithCount_fst_sorted (· ≤ ·) l,
-   List.insertionSortWithCount_snd_le_triangular (· ≤ ·) l⟩
+   List.insertionSortWithCount_fst_sorted (· ≤ ·) l⟩
+
+/-! ## Exercises -/
+
+#guard List.insertionSortWithCount (· ≤ ·) [2, 1, 3] = ([1, 2, 3], 3)
+
+theorem insertionSort_length (l : List ℕ) :
+    (List.insertionSortWithCount (· ≤ ·) l).1.length = l.length :=
+  (List.insertionSortWithCount_perm (· ≤ ·) l).length_eq
 
 end Tutorial.InsertionSort

@@ -135,3 +135,56 @@ out of date, and passes now.
      `tests/README.md`), and put all tests in `tests/` (`scripts/test_webapp*.py` too).
 5. **Next chapters.** After §2 lands, write the remaining pilot chapters from the plan's roadmap:
    Binary Search, Dynamic Array and Modular Exponentiation, in the same format as `binary_gcd.md`.
+
+---
+
+## 4. Round 2 (2026-09-27): review of `9c441da`, plus a rewrite of the pilot chapters
+
+### 4.1 What agy's pass got right
+- §2.1: `docs/` is self-contained, and the real chapters load (confirmed with headless Chrome at 1440 px and 390 px).
+- §2.2, §2.3, §2.5, §2.6, §2.8: filler removed, a full-width reading view, `#guard`s instead of result comments, the official
+  Apache 2.0 text, and CI covering the build, theorem check, site check, tests and Pages deploy.
+
+### 4.2 What was still wrong, and has now been fixed (by Claude, in this round)
+- **The verbatim check was satisfied by tagging.** 34 chapter code blocks, including the real definitions and every
+  headline theorem, carried `-- (illustrative)`, which exempted them from the check. Two of those blocks were wrong:
+  `euclid_gcd.md` said `(euclidGcdWithSteps 105 252).2` is 5 (it is 3), and `insertion_sort.md` misquoted
+  `isBigO_insertionSortWithCount_snd_atTop` (`Filter.atTop` instead of `Filter.comap List.length Filter.atTop`).
+  *Fix:* the `(illustrative)` exemption is gone. `tree_tool.py --check-site` now requires every ```` ```lean ```` block to
+  appear verbatim in the chapter's companion file **or** its reference files in `Amort/`. The only exemption is an
+  exercise block whose first line is `-- exercise` and which contains `sorry`. The check was tested: it catches a
+  quote with an extra hypothesis added.
+- **The Markdown renderer was broken.** It escaped HTML before matching `>`, which left literal `>` on every quote line,
+  and it had no rules, numbered lists or links. It put each list item in its own list, and it escaped `<details>`, so
+  every hidden answer was visible as raw tags. *Fix:* chapters render with `marked` v12, vendored at
+  `docs/vendor/marked.min.js` (no CDN), with the app's Lean highlighter kept for code blocks. The old renderer remains
+  as a fallback for Node-based tests, with its blockquote, rule and list bugs fixed. The code font was enlarged, and
+  styles were added for answer boxes and wide tables.
+- **The chapters were rewritten** (`tutorial/binary_gcd.md`, `euclid_gcd.md`, `insertion_sort.md`) in a plain voice.
+  No emoji headings, no LaTeX (the app has no math renderer), and no "Spot the fake" headings that give away the
+  answer. Each chapter explains the Lean notation it introduces, gives a Python version of the algorithm, and ends
+  with a notation table. The companion files now contain every quoted snippet, and every "Spot the fake" option is
+  compiled.
+- **The quiz data** (`tutorial/tree.json`): the three pilot nodes' quizzes are copied from their chapters. The other
+  20 nodes had pseudo-Lean with invented names (`Graph`, `CNF2`, `Alignment`), and their "genuine" options misquoted
+  real theorems. For example, KMP's dropped the `P ≠ []` hypothesis. These are now plain-English descriptions of each
+  claim, with explanations checked (e.g. `modExp` with modulus 0 really does differ from the specification). The
+  edit-distance explanation had an impossible step and was corrected.
+- **Interface text** (`docs/index.html`, `docs/app.js`) was reworded plainly. "Audited ✓" is now "Checked by Lean",
+  which is the accurate claim.
+- The tests that hard-coded the old emoji headings and the old quiz answer were updated.
+
+### 4.3 Remaining for the fixer
+1. `tests/test_webapp.py` hangs when run on its own (it never gets past Tier 1.1). Fix it, or delete it if
+   `test_e2e_suite.py` already covers it.
+2. `--build-site` writes every chapter twice (`docs/chapters/` and `docs/tutorial/`). The app only needs one; drop
+   `docs/tutorial/`.
+3. `highlightLeanSyntax` runs after HTML escaping, so its number rule rewrites the digits inside `&#039;` (Lean names
+   like `h'` break), and it highlights keywords inside comments. Tokenize before escaping, or skip entities and comments.
+4. `--check-site` should also type-check the `-- exercise` blocks with Lean, so an exercise can't ask readers to
+   prove a statement that doesn't parse.
+5. **New chapters** should follow the three pilot chapters exactly:
+   - a companion file containing every quoted snippet and every compiled fake;
+   - the node's `tree.json` quizzes copied from the chapter;
+   - `--check-site` passing with no exemptions.
+   Replace each node's plain-English quiz only when its chapter lands.

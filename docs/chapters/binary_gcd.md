@@ -1,84 +1,70 @@
-# 🌱 Binary GCD (Stein's Algorithm)
+# Binary GCD
 
-> **Skill Tree Tier 1 | Opening Node**  
-> **Prerequisites:** None (Root Node)  
-> **Unlocks:** Euclid's GCD (`EUC`), Insertion Sort (`INS`), Binary Search (`BS`), Dynamic Array (`DYN`), Fast Modular Exponentiation (`MODEXP`)  
-> **Companion Lean File:** `Tutorial/BinaryGCD.lean`  
-> **Reference Modules:** `Amort.GCD.BinaryGCD`, `Amort.GCD.StepCount`  
-> **Headline Theorems:** `Nat.binaryGcd_eq_gcd`, `Nat.binaryGcdWithSteps_fst`, `Nat.binaryGcdWithSteps_snd_le_size_add_size`, `Nat.binaryGcdWithSteps_snd_le_two_mul_size_add`, `Nat.isBigO_binaryGcdSteps_atTop`
+*The first node in the tree. It unlocks Euclid's GCD, Insertion Sort, Binary Search, Dynamic Array and Modular Exponentiation.*
 
----
+## How these chapters work
 
-## The Big Idea
+Each chapter takes one algorithm through the same five steps. First we say what the problem is. Then we write down, in Lean, what a correct answer means. Then we look at the algorithm. Last come the two theorems that matter: one says the algorithm is correct, and one says how many steps it takes.
 
-When AI writes the code, **understanding becomes the job**.
+You won't be writing proofs. Every proof in this repository has already been checked by Lean. If you want a proof of something new, you can ask an AI assistant for one and let Lean check it. What Lean can't tell you is whether a theorem says what you think it says. A proof that compiles only means *some* statement is true. Reading the statement and deciding whether it's the right one is your job, and it's what these chapters practise.
 
-An AI code assistant can produce a 50-line algorithm, attach a docstring saying *"formally verified in Lean 4"*, and return a green compilation check in seconds. But does the theorem actually guarantee what you think it guarantees? Or does it secretly prove a trivial tautology?
+To run the examples you need Lean installed and this repository built. The companion file for this chapter is `Tutorial/BinaryGCD.lean`. You can read everything here without it.
 
-In this curriculum, the division of labour is absolute:
-- **You own the statement.**
-- **The AI writes the proof.**
-- **Lean referees.**
+## 1. The problem
 
-We begin with **Stein's Binary GCD Algorithm** (1967). It is the perfect opening node: it operates directly on natural numbers (`ℕ`), requires no advanced data structures, replaces expensive multi-word division with elementary bit shifts and subtractions, and highlights the foundational distinction between **numeric value** ($n$) and **bit length** ($\approx \log_2 n$).
+The greatest common divisor of two natural numbers `a` and `b` is the largest number that divides both of them. For gcd(48, 18), the divisors of 48 are 1, 2, 3, 4, 6, 8, 12, 16, 24 and 48, the divisors of 18 are 1, 2, 3, 6, 9 and 18, and the largest number on both lists is 6.
 
----
+Zero needs a decision:
 
-## Step 1: Define the Problem
+- gcd(a, 0) = a. Every number divides 0, so the common divisors of `a` and 0 are just the divisors of `a`.
+- gcd(0, 0) = 0. Every number divides 0, so there is no largest common divisor, and "largest" has to be read differently. The next step explains how.
 
-The Greatest Common Divisor (GCD) of two natural numbers $a$ and $b$ is the largest natural number $d$ that divides both $a$ and $b$ without a remainder ($d \mid a$ and $d \mid b$).
+## 2. What "correct" means in Lean
 
-### Concrete Examples
-- $\gcd(48, 18) = 6$, because the divisors of 48 are $\{1, 2, 3, 4, 6, 8, 12, 16, 24, 48\}$, the divisors of 18 are $\{1, 2, 3, 6, 9, 18\}$, and their common divisors are $\{1, 2, 3, 6\}$.
-- $\gcd(105, 252) = 21$.
-- $\gcd(7, 13) = 1$ (coprime numbers).
-
-### Edge Cases
-1. **Zero as one argument:**
-   $$\gcd(a, 0) = a \quad \text{and} \quad \gcd(0, b) = b$$
-   Every natural number divides 0 ($d \cdot 0 = 0$), so the greatest divisor shared by $a$ and 0 is simply $a$ itself.
-2. **Both arguments zero:**
-   $$\gcd(0, 0) = 0$$
-   By standard mathematical convention in $\mathbb{N}$ (and in Mathlib's divisibility lattice), 0 is the universal multiple. Defining $\gcd(0, 0) = 0$ preserves the algebraic law that $d \mid 0$ for all $d$.
-
----
-
-## Step 2: Formalize the Definition
-
-Before examining any algorithmic implementation, how do we write down what a "correct GCD" is in Lean 4?
-
-We specify the problem using Mathlib's canonical definition `Nat.gcd a b`. In Lean's number theory library, `Nat.gcd` is characterized by three fundamental properties:
+We don't have to define gcd ourselves. Mathlib, the standard maths library for Lean, has `Nat.gcd`, and three facts about it pin it down:
 
 ```lean
--- (illustrative)
--- 1. It is a common divisor:
-Nat.gcd_dvd_left  : ∀ (a b : ℕ), Nat.gcd a b ∣ a
-Nat.gcd_dvd_right : ∀ (a b : ℕ), Nat.gcd a b ∣ b
-
--- 2. It is the greatest common divisor in the divisibility order:
-Nat.dvd_gcd : ∀ {a b k : ℕ}, k ∣ a → k ∣ b → k ∣ Nat.gcd a b
+example : ∀ a b : ℕ, Nat.gcd a b ∣ a := Nat.gcd_dvd_left
+example : ∀ a b : ℕ, Nat.gcd a b ∣ b := Nat.gcd_dvd_right
+example : ∀ {a b d : ℕ}, d ∣ a → d ∣ b → d ∣ Nat.gcd a b := Nat.dvd_gcd
 ```
 
-Notice what is **not** here: there is no mention of loops, bit shifts, divisions, or execution counters. This is an **independent specification**. Any valid GCD algorithm—whether Stein's binary algorithm, Euclid's remainder algorithm, or a brute-force search—must produce an output identical to `Nat.gcd a b`.
+This is the first Lean in the tutorial, so here it is piece by piece:
 
----
+- `ℕ` is the natural numbers: 0, 1, 2 and so on.
+- `∀ a b : ℕ,` means "for all natural numbers `a` and `b`".
+- `x ∣ y` means "`x` divides `y`". The symbol is a special vertical bar (typed `\mid` in the editor), not the `|` key.
+- `→` means "implies". The third line reads: if `d` divides `a`, and `d` divides `b`, then `d` divides `Nat.gcd a b`.
+- `example : claim := proof` asks Lean to check that the claim holds. The part after `:=` is the proof, here just the name of a theorem already in Mathlib. These three lines are in the companion file, so Lean confirms on every build that the claims are exactly what Mathlib proves.
 
-## Step 3: Understand the Algorithm
+The first two lines say that `Nat.gcd a b` is a common divisor. The third says it is the greatest one, in a specific sense: every other common divisor divides it. That sense settles gcd(0, 0). Every number is a common divisor of 0 and 0, and the only number they all divide is 0.
 
-Classical Euclidean division computes $a \bmod b$, which requires hardware or multi-word division. Josef Stein (1967) observed that on binary computers, division by 2 is a single-cycle bit shift (`>> 1`) and parity testing is a bitwise AND (`a & 1 == 0`).
+None of this mentions an algorithm, and that's deliberate. Binary GCD, Euclid's algorithm and a brute-force search are all correct exactly when they return `Nat.gcd a b`.
 
-Stein's algorithm relies on three arithmetic identities:
-1. **Both Even:** If $a$ and $b$ are even, $\gcd(a, b) = 2 \cdot \gcd(a / 2, b / 2)$.
-2. **One Even, One Odd:** If $a$ is even and $b$ is odd, $\gcd(a, b) = \gcd(a / 2, b)$ (since 2 cannot divide an odd number $b$).
-3. **Both Odd:** If both $a$ and $b$ are odd and $b \le a$, then their difference $a - b$ is **even**! Therefore:
-   $$\gcd(a, b) = \gcd(a - b, b) = \gcd((a - b) / 2, b)$$
+## 3. The algorithm
 
-### Lean 4 Implementation
+Binary GCD is due to Josef Stein (1967). It never divides except by 2: it only checks whether numbers are even, halves them, and subtracts. It rests on three facts:
 
-Here is the verified implementation from `Amort/GCD/BinaryGCD.lean`:
+1. If `a` and `b` are both even, gcd(a, b) = 2 × gcd(a/2, b/2).
+2. If `a` is even and `b` is odd, gcd(a, b) = gcd(a/2, b). Since `b` is odd, 2 can't be a common factor, so it's safe to drop it from `a`. The same works with the roles swapped.
+3. If both are odd and b ≤ a, then a − b is even, and gcd(a, b) = gcd((a − b)/2, b).
+
+In Python:
+
+```python
+def binary_gcd(a, b):
+    if a == 0: return b
+    if b == 0: return a
+    if a % 2 == 0 and b % 2 == 0: return 2 * binary_gcd(a // 2, b // 2)
+    if a % 2 == 0: return binary_gcd(a // 2, b)
+    if b % 2 == 0: return binary_gcd(a, b // 2)
+    if b <= a: return binary_gcd((a - b) // 2, b)
+    return binary_gcd(a, (b - a) // 2)
+```
+
+And here is the Lean definition from `Amort/GCD/BinaryGCD.lean`:
 
 ```lean
--- (illustrative)
 def binaryGcd (a b : ℕ) : ℕ :=
   if ha : a = 0 then b
   else if hb : b = 0 then a
@@ -99,120 +85,136 @@ decreasing_by
   all_goals omega
 ```
 
-### Running the Algorithm in Lean
+Most of it reads like the Python. The differences:
 
-Open `Tutorial/BinaryGCD.lean` and execute `#eval`:
+- `(a b : ℕ) : ℕ` says both inputs and the output are natural numbers.
+- `/` and `%` on natural numbers round down, like Python's `//` and `%`.
+- `if ha : a = 0 then` is an ordinary `if` that also gives the condition a name, `ha`. The code never uses these names. The termination proof does, because it needs to know which branch it is in.
+- The last three lines have no Python equivalent. They are about why the function stops.
+
+### Why it stops
+
+Lean won't accept a recursive function until it's convinced the function stops on every input. `termination_by a + b` promises that `a + b` gets smaller with every recursive call. `decreasing_by all_goals omega` proves that promise. `omega` is a built-in tactic that proves facts about addition, subtraction and comparison of numbers on its own, and `all_goals` runs it once for each recursive call.
+
+You can check the promise by hand. A recursive call only happens when `a` and `b` are both at least 1:
+
+- Both even: a/2 + b/2 is less than a + b.
+- `a` even, `b` odd: a/2 + b is less than a + b, because a ≥ 2.
+- Both odd, b ≤ a: (a − b)/2 + b is at most (a + b)/2, which is less than a + b.
+
+A natural number can't get smaller forever, so the recursion always reaches `a = 0` or `b = 0`.
+
+### Running it
 
 ```lean
-#eval Nat.binaryGcd 48 18
 #guard Nat.binaryGcd 48 18 = 6
-#eval Nat.binaryGcd 105 252
 #guard Nat.binaryGcd 105 252 = 21
-#eval Nat.binaryGcd 0 7
 #guard Nat.binaryGcd 0 7 = 7
-#eval Nat.binaryGcd 0 0
 #guard Nat.binaryGcd 0 0 = 0
 ```
 
-### Why Does It Terminate? (`termination_by a + b`)
-In Lean 4, all functions must be proven total. The clause `termination_by a + b` specifies the **well-founded termination measure**: the sum of the inputs strictly decreases across every recursive branch:
-- If both are even: $(a / 2) + (b / 2) \le (a + b) / 2 < a + b$ (since $a, b > 0$).
-- If one is even: $(a / 2) + b < a + b$ (since $a \ge 2$).
-- If both are odd and $b \le a$: $((a - b) / 2) + b = (a + b) / 2 < a + b$ (since $b \ge 1$).
+`#guard` evaluates a true-or-false expression and stops the build if it's false. These chapters use `#guard` rather than a comment like `-- prints 6`, because nothing checks a comment. You can also type `#eval Nat.binaryGcd 48 18` in the companion file and Lean will print the result.
 
-Because a natural number cannot decrease infinitely, the algorithm is guaranteed to terminate.
+The name is `Nat.binaryGcd` here because the reference file defines it inside `namespace Nat`. Inside that file it's just `binaryGcd`.
 
----
-
-## Step 4: State Correctness
-
-We must verify that `binaryGcd` computes the exact greatest common divisor for **all** inputs:
+## 4. The correctness theorem
 
 ```lean
--- (illustrative)
-@[simp]
 theorem binaryGcd_eq_gcd (a b : ℕ) : binaryGcd a b = Nat.gcd a b
 ```
 
-### How to Read This Statement
-- **Universality:** `∀ (a b : ℕ)` means there are **no preconditions**. No assumptions that $a > 0$, that $a \ne b$, or that inputs are already reduced.
-- **Equality to Canonical Spec:** The right-hand side is `Nat.gcd a b`, tying the algorithm directly to Mathlib's verified number theory specification.
+This reads: there is a theorem called `binaryGcd_eq_gcd`, and for any natural numbers `a` and `b`, `binaryGcd a b` equals `Nat.gcd a b`. (In the source file it's followed by `:= by` and the proof, which we skip.)
 
-### Proof Idea: The Lemma Invariant DAG
-The proof proceeds by induction on `a, b using binaryGcd.induct`. At each branch, Lean verifies an invariant lemma:
-1. `coprime_two_of_odd`: If $b \% 2 = 1$, then $\gcd(2, b) = 1$.
-2. `gcd_even_odd`: If $a$ is even and $b$ is odd, $\gcd(a, b) = \gcd(a / 2, b)$.
-3. `gcd_even_even`: If both are even, $\gcd(a, b) = 2 \cdot \gcd(a / 2, b / 2)$.
-4. `gcd_odd_odd_sub_div_two_left`: If both are odd and $b \le a$, $\gcd(a, b) = \gcd((a - b) / 2, b)$.
+Two things make this the right statement:
 
-Because each recursive branch preserves the GCD, the returned base value is the true GCD.
+- **It has no conditions.** The only inputs are `(a b : ℕ)`, so it covers every pair of numbers, zeros included. A version with an extra input such as `(ha : 0 < a)` would say nothing about `a = 0`.
+- **The right-hand side is the specification from step 2.** It isn't something built out of `binaryGcd` itself.
 
----
+The proof goes through the branches of `binaryGcd` one by one. In each branch it uses the matching fact from step 3 to show the recursive call has the same gcd as the original pair. You can read it at the bottom of `Amort/GCD/BinaryGCD.lean`, but you don't need to.
 
-## Step 5: State Time Complexity
+## 5. How many steps
 
-How many operations does Stein's algorithm perform?
-We count **recursive calls**. Each call does one parity test plus a halving and/or one subtraction, so the count is at most the number of input bits. Measured in bit operations, each call costs $O(n)$, giving $O(n^2)$ in total.
+We count recursive calls. Each call does up to two evenness checks and then one of three things: halve one number, halve both, or subtract and halve.
 
-### The Instrument Coupling Pattern
-To prove an honest complexity bound, we must not bound an arbitrary mathematical formula. We must bound the **actual execution** of the algorithm. We use the instrumented function `binaryGcdWithSteps`:
+To count the calls, the repository has a second version of the function that returns a pair: the answer, and the number of calls made. Here are its first lines, from `Amort/GCD/StepCount.lean`:
 
 ```lean
--- (illustrative)
-def binaryGcdWithSteps (a b : ℕ) : ℕ × ℕ := ...
+def binaryGcdWithSteps (a b : ℕ) : ℕ × ℕ :=
+  if _ha : a = 0 then (b, 0)
+  else if _hb : b = 0 then (a, 0)
+  else if ha_even : a % 2 = 0 then
+    if hb_even : b % 2 = 0 then
+      let r := binaryGcdWithSteps (a / 2) (b / 2)
+      (2 * r.1, r.2 + 1)
 ```
 
-This returns `(result_gcd, step_count)`. To prove the count is genuine, we enforce two **coupling theorems**:
+`ℕ × ℕ` is a pair of natural numbers. `let r := …` names the result of the recursive call, and `r.1` and `r.2` are the two parts of the pair. Every branch returns the answer from the recursive call and adds 1 to its count.
+
+A counter only means something if it counts the real algorithm. A second function could easily drift from the first, so the repository proves they agree:
 
 ```lean
--- (illustrative)
--- 1. The result component matches the verified algorithm:
 theorem binaryGcdWithSteps_fst (a b : ℕ) :
     (binaryGcdWithSteps a b).1 = binaryGcd a b
-
--- 2. The count component matches the recursive step counter:
-theorem binaryGcdWithSteps_snd (a b : ℕ) :
-    (binaryGcdWithSteps a b).2 = binaryGcdSteps a b
 ```
 
-### Logarithmic Upper Bound in Bit Length (`Nat.size`)
-How fast does it terminate? The headline complexity theorem in `Amort/GCD/StepCount.lean` proves:
+The first part of the pair is exactly `binaryGcd a b`, on every input. So the counting version runs the same algorithm, and the bound below is about `binaryGcd`:
 
 ```lean
--- (illustrative)
-theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
-    binaryGcdSteps a b ≤ Nat.size a + Nat.size b
+theorem binaryGcdWithSteps_snd_le_size_add_size (a b : ℕ) :
+    (binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b
 ```
 
-And in combined form:
+`Nat.size n` is the number of bits in `n`. For example, `Nat.size 6 = 3` because 6 is `110` in binary, and `Nat.size 0 = 0`. So the theorem says the number of calls is at most the total number of bits in the two inputs. That makes sense: every call removes at least one bit from at least one of the numbers. Two 64-bit inputs need at most 128 calls, even though the numbers themselves can be as large as 2⁶⁴.
+
+What this doesn't count is the work inside a call. For numbers too big for one machine word, halving and subtracting take time proportional to the number of bits. So for two n-bit inputs, the total work is on the order of n² bit operations. That part isn't formalized in this repository; the theorem is only about calls.
+
+The repository also states this bound with Mathlib's big-O notation (`Amort/GCD/Asymptotics.lean`). We'll learn to read big-O statements at the sorting lower bound node.
+
 ```lean
--- (illustrative)
-theorem binaryGcdWithSteps_snd_le_two_mul_size_add (a b : ℕ) :
-    (binaryGcdWithSteps a b).2 ≤ 2 * Nat.size (a + b)
+#guard Nat.binaryGcdWithSteps 48 18 = (6, 6)
+#guard Nat.binaryGcdWithSteps 105 252 = (21, 5)
 ```
 
-### What is `Nat.size`?
-In Lean 4, `Nat.size n` is the number of binary bits needed to represent $n$:
-$$\text{Nat.size}(n) = \begin{cases} 0 & \text{if } n = 0 \\ \lfloor \log_2 n \rfloor + 1 & \text{if } n > 0 \end{cases}$$
+## Spot the fake
 
-Therefore, `binaryGcdSteps a b ≤ Nat.size a + Nat.size b` proves that the step count is **linear in the number of input bits**, which is **logarithmic in numeric value**:
-$$\text{Steps} \le \log_2(a) + \log_2(b) + 2$$
+Every option below is a real Lean theorem that compiles; they're all in the companion file. The question is which one actually proves the claim. (`∧` means "and".)
 
-Mathlib's asymptotic notation in `Amort/GCD/Asymptotics.lean` formalizes this:
+### Round 1: "binaryGcd is correct"
+
+**Option A**
+
 ```lean
--- (illustrative)
-theorem isBigO_binaryGcdSteps_atTop :
-    (fun p : ℕ × ℕ ↦ (binaryGcdSteps p.1 p.2 : ℝ)) =O[Filter.atTop]
-    (fun p : ℕ × ℕ ↦ (Nat.size (p.1 + p.2) : ℝ))
+theorem binaryGcd_dvd_both (a b : ℕ) :
+    Nat.binaryGcd a b ∣ a ∧ Nat.binaryGcd a b ∣ b
 ```
 
----
+**Option B**
 
-## 🎯 Spot the Fake
+```lean
+theorem binaryGcd_48_18 : Nat.binaryGcd 48 18 = 6
+```
 
-A code assistant presents you with three theorem statements claiming to establish the time complexity of Binary GCD. Which one is genuine?
+**Option C**
 
-### Statement A (Circular Formula / Stand-in Anti-Pattern A1)
+```lean
+theorem binaryGcd_eq_gcd (a b : ℕ) : binaryGcd a b = Nat.gcd a b
+```
+
+<details>
+<summary>Show answer</summary>
+
+Only C.
+
+A is true, but it's half of the specification from step 2. It says the result divides both inputs, not that it's the greatest number that does. A function that always returns 1 passes it too. The companion file defines such a function, `alwaysOne`, and proves `alwaysOne_dvd_both`.
+
+B is a single test case. Tests are useful, but this one says nothing about any other input.
+
+</details>
+
+### Round 2: "binaryGcd makes at most bits(a) + bits(b) calls"
+
+**Option A**
+
 ```lean
 def gcdCost (a b : ℕ) : ℕ := Nat.size a + Nat.size b
 
@@ -220,80 +222,89 @@ theorem gcdCost_le (a b : ℕ) :
     gcdCost a b ≤ Nat.size a + Nat.size b :=
   le_refl _
 ```
-<details>
-<summary>Show answer</summary>
 
-> **Verdict: FAKE.**  
-> This theorem compiles with 0 errors! But it is a circular tautology. It defines `gcdCost` as its own bound and proves `X ≤ X`. It has zero connection to `binaryGcd` or any algorithm execution.
+**Option B**
 
-</details>
-
-### Statement B (Genuine Coupled Bit Complexity)
 ```lean
--- (illustrative)
 theorem binaryGcdWithSteps_fst (a b : ℕ) :
     (binaryGcdWithSteps a b).1 = binaryGcd a b
-
-theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
-    binaryGcdSteps a b ≤ Nat.size a + Nat.size b
 ```
-<details>
-<summary>Show answer</summary>
 
-> **Verdict: GENUINE.**  
-> The first theorem couples the instrumented tuple to the actual executable function. The second proves that the instrumented step count is bounded by the sum of the input bit lengths.
-
-</details>
-
-### Statement C (Value-Linear Weak Bound)
 ```lean
--- (illustrative)
+theorem binaryGcdWithSteps_snd_le_size_add_size (a b : ℕ) :
+    (binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b
+```
+
+**Option C**
+
+```lean
 theorem binaryGcdSteps_le_val_add (a b : ℕ) :
-    binaryGcdSteps a b ≤ a + b
+    Nat.binaryGcdSteps a b ≤ a + b
 ```
+
 <details>
 <summary>Show answer</summary>
 
-> **Verdict: WEAK / MISLEADING.**  
-> This theorem is true and coupled to `binaryGcdSteps`. However, bounding by $a + b$ is **linear in numeric value**, which is **exponential** in input bit length ($2^k$). It completely misses the logarithmic efficiency of Stein's algorithm.
+B.
+
+A defines the cost as the bound and then proves the cost is at most itself. Nothing connects `gcdCost` to `binaryGcd`. You could put any formula on the right and the proof would still work. When an AI agent first wrote this repository's complexity proofs, about fifty of them had exactly this shape. It looks convincing because the name says "cost".
+
+C is about the real step counter and it's true, but it's a much weaker claim. `a + b` is the size of the numbers, not the number of bits. For two 64-bit inputs it allows about 2⁶⁵ calls instead of 128.
 
 </details>
 
----
+## Exercises
 
-## 🧪 Interactive Exercises
+**1. Predict.** What does `#eval Nat.binaryGcd 60 24` print? And `#eval Nat.binaryGcdWithSteps 60 24`?
 
-### 1. Predict
-Test your mental execution of Stein's algorithm:
+<details>
+<summary>Show answer</summary>
 
-1. **Question 1:** What does `#eval binaryGcd 48 18` evaluate to?
-   - *Expected Answer:* `6`
-   - *Trace:* $\gcd(48, 18) = 2 \cdot \gcd(24, 9) = 2 \cdot \gcd(12, 9) = 2 \cdot \gcd(6, 9) = 2 \cdot \gcd(3, 9) = 2 \cdot \gcd(3, (9-3)/2) = 2 \cdot \gcd(3, 3) = 2 \cdot 3 = 6$.
-2. **Question 2:** What does `#eval binaryGcd 0 7` evaluate to?
-   - *Expected Answer:* `7`
-   - *Explanation:* When $a = 0$, the algorithm immediately returns $b$.
+`12` and `(12, 6)`. The calls go (60, 24) → (30, 12) → (15, 6) → (15, 3) → (6, 3) → (3, 3) → (0, 3). That's six recursive calls, and the last pair returns 3. The first two calls each doubled the result, so the answer is 2 × 2 × 3 = 12. The companion file checks both answers with `#guard`.
 
-### 2. State It Yourself
-Can you formalize that Stein's binary GCD algorithm is commutative?
-Try writing the theorem in `Tutorial/BinaryGCD.lean`:
-> *"For all natural numbers $a$ and $b$, $\text{binaryGcd}(a, b) = \text{binaryGcd}(b, a)$."*
+</details>
+
+**2. State it yourself.** Write a Lean statement saying that binary GCD gives the same answer if you swap the inputs. Don't worry about the proof; just the statement.
 
 <details>
 <summary>Show answer</summary>
 
 ```lean
-/-- Commutativity of Binary GCD -/
-example (a b : ℕ) : Nat.binaryGcd a b = Nat.binaryGcd b a := by
+theorem binaryGcd_comm (a b : ℕ) : Nat.binaryGcd a b = Nat.binaryGcd b a := by
   rw [Nat.binaryGcd_eq_gcd, Nat.binaryGcd_eq_gcd, Nat.gcd_comm]
 ```
 
+The statement is everything before `:=`. The proof, in case you're curious, rewrites both sides to `Nat.gcd` using the correctness theorem, then uses Mathlib's fact that `Nat.gcd` doesn't care about order. This is the payoff of having a specification that doesn't mention the algorithm.
+
 </details>
 
-### 3. Prove It with AI
-Copy this theorem statement into an AI chat:
+**3. Prove it with AI.** Here is a statement with no proof yet (`sorry` is Lean's placeholder for a missing proof):
+
 ```lean
--- (illustrative)
-theorem binaryGcd_zero_right (a : ℕ) : Nat.binaryGcd a 0 = a
+-- exercise
+theorem binaryGcd_zero_right (a : ℕ) : Nat.binaryGcd a 0 = a := by
+  sorry
 ```
-Ask the AI: *"Provide a Lean 4 proof for this theorem using `Nat.binaryGcd_eq_gcd`."*  
-Then paste the proof into `Tutorial/BinaryGCD.lean` and let Lean verify it. Notice how easy verification is once the statement is crystal clear!
+
+Paste it at the end of the companion file, ask an AI assistant to replace `sorry` with a proof, and build. If Lean accepts the proof, you're done; you don't need to understand it. Do check that the assistant didn't change the statement. If it came back with, say, an extra `(ha : 0 < a)`, that's a different and weaker theorem, and you should say no.
+
+## Lean introduced in this chapter
+
+| You'll see | It means |
+| :--- | :--- |
+| `ℕ` | the natural numbers 0, 1, 2, … |
+| `∀ a b : ℕ, …` | for all natural numbers `a` and `b` |
+| `x ∣ y` | `x` divides `y` |
+| `P → Q` | if `P` then `Q` |
+| `P ∧ Q` | `P` and `Q` |
+| `def f (a b : ℕ) : ℕ := …` | a function from two naturals to a natural |
+| `if h : c then … else …` | an `if` that names the condition `h` |
+| `a / b`, `a % b` on `ℕ` | division rounding down, remainder |
+| `termination_by m` | "the value `m` gets smaller in every recursive call" |
+| `theorem name (a b : ℕ) : claim` | a named, proved claim |
+| `example : claim := proof` | an unnamed claim for Lean to check |
+| `#guard e` | fail the build unless `e` is true |
+| `ℕ × ℕ`, `p.1`, `p.2` | a pair and its two parts |
+| `let r := e` | give the value `e` the name `r` |
+| `Nat.size n` | the number of bits in `n` |
+| `sorry` | a missing proof |

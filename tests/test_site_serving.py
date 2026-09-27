@@ -65,7 +65,7 @@ class TestSiteServing(unittest.TestCase):
         original_first_heading = original_content.strip().splitlines()[0]
 
         self.assertEqual(served_first_heading, original_first_heading)
-        self.assertTrue(served_first_heading.startswith("# 🌱 Binary GCD"))
+        self.assertTrue(served_first_heading.startswith("# Binary GCD"))
         self.assertNotIn("facades or circular shortcuts", served_content)
 
     def test_euclid_gcd_chapter_heading(self):
@@ -76,7 +76,7 @@ class TestSiteServing(unittest.TestCase):
         original_first_heading = original_content.strip().splitlines()[0]
 
         self.assertEqual(served_first_heading, original_first_heading)
-        self.assertTrue(served_first_heading.startswith("# 🏛️ Euclid's GCD"))
+        self.assertTrue(served_first_heading.startswith("# Euclid's GCD"))
         self.assertNotIn("facades or circular shortcuts", served_content)
 
     def test_insertion_sort_chapter_heading(self):
@@ -87,7 +87,7 @@ class TestSiteServing(unittest.TestCase):
         original_first_heading = original_content.strip().splitlines()[0]
 
         self.assertEqual(served_first_heading, original_first_heading)
-        self.assertTrue(served_first_heading.startswith("# 🗂️ Insertion Sort"))
+        self.assertTrue(served_first_heading.startswith("# Insertion Sort"))
         self.assertNotIn("facades or circular shortcuts", served_content)
 
 

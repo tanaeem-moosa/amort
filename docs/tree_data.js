@@ -76,45 +76,71 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "bgcd_pred_1",
-            "prompt": "What does `#eval binaryGcd 48 18` evaluate to in Lean 4?",
+            "prompt": "What does `#eval Nat.binaryGcd 48 18` print?",
             "input_type": "number",
             "expected_answer": "6",
-            "explanation": "48 and 18 share common factor 2. Halving: 2 * binaryGcd 24 9 = 2 * binaryGcd 12 9 = 2 * binaryGcd 6 9 = 2 * binaryGcd 3 9 = 2 * binaryGcd 3 3 = 2 * 3 = 6."
+            "explanation": "The calls go (48, 18) \u2192 (24, 9) \u2192 (12, 9) \u2192 (6, 9) \u2192 (3, 9) \u2192 (3, 3) \u2192 (0, 3). The first call halved both numbers, so the answer is 2 \u00d7 3 = 6."
           },
           {
             "id": "bgcd_pred_2",
-            "prompt": "What does `#eval binaryGcd 0 7` evaluate to according to the base case of Stein's algorithm?",
+            "prompt": "What does `#eval Nat.binaryGcd 60 24` print?",
             "input_type": "number",
-            "expected_answer": "7",
-            "explanation": "If a = 0, the algorithm immediately returns b (here 7), matching Mathlib's Nat.gcd convention."
+            "expected_answer": "12",
+            "explanation": "(60, 24) \u2192 (30, 12) \u2192 (15, 6) \u2192 (15, 3) \u2192 (6, 3) \u2192 (3, 3) \u2192 (0, 3). The first two calls each doubled the result, so it's 2 \u00d7 2 \u00d7 3 = 12."
           }
         ],
         "spot_the_fake": [
           {
             "id": "bgcd_fake_1",
-            "prompt": "Which of the following theorem formulations genuinely establishes the logarithmic bit complexity of Binary GCD without circular definitions?",
+            "prompt": "Which theorem proves that binaryGcd is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "def gcdCost (a b : \u2115) := Nat.size a + Nat.size b\ntheorem gcdCost_le (a b : \u2115) : gcdCost a b \u2264 Nat.size a + Nat.size b",
+                "text": "theorem binaryGcd_dvd_both (a b : \u2115) :\n    Nat.binaryGcd a b \u2223 a \u2227 Nat.binaryGcd a b \u2223 b",
                 "is_fake": true,
-                "explanation": "Fake: Defines cost as its own answer. This theorem is a tautology about gcdCost, decoupled from the execution of binaryGcd."
+                "explanation": "True, but it's half the specification: it says the result divides both inputs, not that it's the greatest such number. A function that always returns 1 passes it."
               },
               {
                 "id": "b",
-                "text": "theorem binaryGcdWithSteps_fst (a b : \u2115) : (binaryGcdWithSteps a b).1 = binaryGcd a b\ntheorem binaryGcdSteps_le_size_add_size (a b : \u2115) : binaryGcdSteps a b \u2264 Nat.size a + Nat.size b",
-                "is_fake": false,
-                "explanation": "Genuine: The first theorem couples the instrumented counter to the authentic executable algorithm, and the second bounds actual recursion steps by the bit lengths of the inputs."
+                "text": "theorem binaryGcd_48_18 : Nat.binaryGcd 48 18 = 6",
+                "is_fake": true,
+                "explanation": "One test case. It says nothing about any other input."
               },
               {
                 "id": "c",
-                "text": "theorem binaryGcdSteps_le_add (a b : \u2115) : binaryGcdSteps a b \u2264 a + b",
+                "text": "theorem binaryGcd_eq_gcd (a b : \u2115) : binaryGcd a b = Nat.gcd a b",
+                "is_fake": false,
+                "explanation": "This is the one: every input, no conditions, and the right-hand side is the specification."
+              }
+            ],
+            "correct_option_id": "c",
+            "summary_explanation": "A correctness theorem has to cover every input and compare against the whole specification."
+          },
+          {
+            "id": "bgcd_fake_2",
+            "prompt": "Which proves that binaryGcd makes at most bits(a) + bits(b) calls?",
+            "options": [
+              {
+                "id": "a",
+                "text": "def gcdCost (a b : \u2115) : \u2115 := Nat.size a + Nat.size b\n\ntheorem gcdCost_le (a b : \u2115) :\n    gcdCost a b \u2264 Nat.size a + Nat.size b :=\n  le_refl _",
                 "is_fake": true,
-                "explanation": "Weak/Misleading: While true and coupled, bounding by a + b is linear in numeric values, which is exponential in input bit lengths."
+                "explanation": "The cost is defined as the bound, and then shown to be at most itself. Nothing connects gcdCost to binaryGcd."
+              },
+              {
+                "id": "b",
+                "text": "theorem binaryGcdWithSteps_fst (a b : \u2115) :\n    (binaryGcdWithSteps a b).1 = binaryGcd a b\n\ntheorem binaryGcdWithSteps_snd_le_size_add_size (a b : \u2115) :\n    (binaryGcdWithSteps a b).2 \u2264 Nat.size a + Nat.size b",
+                "is_fake": false,
+                "explanation": "This is the one. The first theorem says the counting version runs the real algorithm; the second bounds its count."
+              },
+              {
+                "id": "c",
+                "text": "theorem binaryGcdSteps_le_val_add (a b : \u2115) :\n    Nat.binaryGcdSteps a b \u2264 a + b",
+                "is_fake": true,
+                "explanation": "True and about the real counter, but much weaker: a + b is the size of the numbers, not their number of bits."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "A genuine complexity proof must tie an instrumented counter to the executable algorithm (.1 = algo x) and bound the count by input bit lengths rather than circular definitions."
+            "summary_explanation": "A step bound only means something if the counter is tied to the real algorithm."
           }
         ]
       }
@@ -147,38 +173,45 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "euc_pred_1",
-            "prompt": "What does `#eval euclidGcd 105 252` evaluate to?",
+            "prompt": "What does `#eval Nat.euclidGcdWithSteps 105 252` print? Give the step count (the second number).",
             "input_type": "number",
-            "expected_answer": "21",
-            "explanation": "252 % 105 = 42; 105 % 42 = 21; 42 % 21 = 0. The remainder becomes 0, so the GCD is 21."
+            "expected_answer": "3",
+            "explanation": "(105, 252) \u2192 (42, 105) \u2192 (21, 42) \u2192 (0, 21). Three calls, and the result is (21, 3)."
+          },
+          {
+            "id": "euc_pred_2",
+            "prompt": "And `#eval Nat.euclidGcdWithSteps 252 105`? Give the step count.",
+            "input_type": "number",
+            "expected_answer": "4",
+            "explanation": "The first call only swaps the arguments, because 105 % 252 = 105. Then it's the same three calls as before, so the result is (21, 4)."
           }
         ],
         "spot_the_fake": [
           {
             "id": "euc_fake_1",
-            "prompt": "Which theorem statement guarantees that Euclidean GCD satisfies the exact mathematical specification of greatest common divisor?",
+            "prompt": "Which theorem proves that euclidGcd is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem euclidGcd_self (a b : \u2115) : euclidGcd a b = euclidGcd a b",
+                "text": "def fakeEuclidAlgo (a b : \u2115) : \u2115 := Nat.gcd a b\n\ntheorem fakeEuclidAlgo_eq (a b : \u2115) : fakeEuclidAlgo a b = Nat.gcd a b := rfl",
                 "is_fake": true,
-                "explanation": "Fake: A reflexive identity proves nothing about correctness; any buggy function satisfies f x = f x."
+                "explanation": "The \"algorithm\" is the specification under another name, so the theorem is true by definition and says nothing about Euclid's algorithm."
               },
               {
                 "id": "b",
-                "text": "theorem euclidGcd_eq_gcd (a b : \u2115) : euclidGcd a b = Nat.gcd a b",
-                "is_fake": false,
-                "explanation": "Genuine: Proves exact equality to Mathlib's canonical Nat.gcd specification for all natural inputs."
+                "text": "theorem euclidGcd_dvd_left (a b : \u2115) : Nat.euclidGcd a b \u2223 a",
+                "is_fake": true,
+                "explanation": "A third of the specification. A function that always returns 1 passes it."
               },
               {
                 "id": "c",
-                "text": "theorem euclidGcd_divides (a b : \u2115) : euclidGcd a b \u2223 a",
-                "is_fake": true,
-                "explanation": "Incomplete: Proves only that the result divides a, not that it divides b or that it is the greatest such divisor (e.g. returning 1 satisfies this)."
+                "text": "theorem euclidGcd_eq_gcd (a b : \u2115) : euclidGcd a b = Nat.gcd a b",
+                "is_fake": false,
+                "explanation": "This is the one."
               }
             ],
-            "correct_option_id": "b",
-            "summary_explanation": "Correctness requires establishing that the algorithm output coincides with the independent specification Nat.gcd, rather than partial divisibility or tautologies."
+            "correct_option_id": "c",
+            "summary_explanation": "Check the definition as well as the theorem: is it an algorithm, or the answer renamed?"
           }
         ]
       }
@@ -207,38 +240,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "modexp_pred_1",
-            "prompt": "What does `#eval modExp 3 13 100` evaluate to?",
+            "prompt": "What does `#eval modExp 3 13 100` print?",
             "input_type": "number",
             "expected_answer": "23",
-            "explanation": "3^13 mod 100: 3^1=3, 3^2=9, 3^4=81, 3^8=6561 \u2261 61. 3^13 = 3^8 * 3^4 * 3^1 \u2261 61 * 81 * 3 \u2261 41 * 3 = 123 \u2261 23 (mod 100)."
+            "explanation": "3^13 = 1594323, and 1594323 mod 100 = 23. The algorithm gets there by squaring: 3, 9, 81, then 6561 \u2261 61, and 13 = 8 + 4 + 1, so the answer is 61 \u00d7 81 \u00d7 3 mod 100 = 23."
           }
         ],
         "spot_the_fake": [
           {
             "id": "modexp_fake_1",
-            "prompt": "Which theorem statement correctly formulates the correctness of modular exponentiation with necessary modulus hypotheses?",
+            "prompt": "Which claim shows that modExp is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem modExp_correct (b e m : \u2115) (h : 1 < m) : modExp b e m = (b ^ e) % m",
+                "text": "For all b, e and m with 1 < m, modExp b e m equals b^e mod m.",
                 "is_fake": false,
-                "explanation": "Genuine: Correctly requires 1 < m to rule out modulus 0 and modulus 1 edge cases, establishing exact equality to (b ^ e) % m."
+                "explanation": "This is the one. The condition 1 < m is about the input, which is fine: it rules out m = 0, where \"mod 0\" doesn't mean what you want."
               },
               {
                 "id": "b",
-                "text": "theorem modExp_correct_unbounded (b e m : \u2115) : modExp b e m = (b ^ e) % m",
+                "text": "For all b, e and m, modExp b e m equals b^e mod m.",
                 "is_fake": true,
-                "explanation": "Fake: Without 1 < m, if m = 0 then (b ^ e) % 0 = b ^ e in Lean while modular reduction fails, or m = 1 gives non-conforming edge behavior."
+                "explanation": "No conditions sounds stronger, but it's false: with m = 0, modExp returns 0 while b^e mod 0 is b^e."
               },
               {
                 "id": "c",
-                "text": "theorem modExp_sound (b e m : \u2115) : modExp b e m \u2264 m",
+                "text": "For all b, e and m, modExp b e m \u2264 m.",
                 "is_fake": true,
-                "explanation": "Weak: Only bounds the value magnitude, proving nothing about whether the computed exponentiation is correct."
+                "explanation": "True of any function that returns a remainder. It says nothing about which remainder."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "Modular arithmetic correctness requires explicit non-trivial modulus hypotheses (1 < m) to prevent division/modulo by zero or trivial equivalence."
+            "summary_explanation": "More conditions isn't automatically worse. A condition that rules out a genuinely bad input is fine."
           }
         ]
       }
@@ -272,38 +305,45 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "ins_pred_1",
-            "prompt": "Given input list `[4, 2, 7, 1]`, what does `#eval (insertionSortWithCount [4, 2, 7, 1]).1` evaluate to?",
-            "input_type": "text",
-            "expected_answer": "[1, 2, 4, 7]",
-            "explanation": "Insertion sort sorts elements in ascending order, returning the sorted permutation [1, 2, 4, 7]."
+            "prompt": "What does `#eval List.insertionSortWithCount (\u00b7 \u2264 \u00b7) [2, 1, 3]` print? Give the number of comparisons (the second part).",
+            "input_type": "number",
+            "expected_answer": "3",
+            "explanation": "Working from the end: inserting 3 into [] costs 0, inserting 1 into [3] costs 1, and inserting 2 into [1, 3] costs 2. The result is ([1, 2, 3], 3)."
+          },
+          {
+            "id": "ins_pred_2",
+            "prompt": "How many comparisons does it make on the reversed list [4, 3, 2, 1]?",
+            "input_type": "number",
+            "expected_answer": "6",
+            "explanation": "Every insertion walks the whole sorted part: 0 + 1 + 2 + 3 = 6, which is 4 \u00d7 3 / 2."
           }
         ],
         "spot_the_fake": [
           {
             "id": "ins_fake_1",
-            "prompt": "Which specification genuinely proves that a sorting function sorts the input list rather than producing a trivial output?",
+            "prompt": "Which theorem proves that a function sorts its input?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem sort_correct (xs : List \u2115) : (sort xs).Pairwise (\u00b7 \u2264 \u00b7)",
+                "text": "def emptySort (_ : List \u2115) : List \u2115 := []\n\ntheorem emptySort_sorted (l : List \u2115) : (emptySort l).Pairwise (\u00b7 \u2264 \u00b7) := by\n  simp [emptySort]",
                 "is_fake": true,
-                "explanation": "Fake: A function returning [] or [0, 0, 0] satisfies Pairwise (\u00b7 \u2264 \u00b7), completely losing the input elements."
+                "explanation": "Sortedness alone. emptySort throws the input away, and an empty list is sorted."
               },
               {
                 "id": "b",
-                "text": "theorem sort_correct (xs : List \u2115) : (sort xs).length = xs.length \u2227 (sort xs).Pairwise (\u00b7 \u2264 \u00b7)",
+                "text": "def zeroSort (l : List \u2115) : List \u2115 := List.replicate l.length 0\n\ntheorem zeroSort_length_sorted (l : List \u2115) :\n    (zeroSort l).length = l.length \u2227 (zeroSort l).Pairwise (\u00b7 \u2264 \u00b7) :=",
                 "is_fake": true,
-                "explanation": "Fake: A function returning [0, 0, 0, 0] for any 4-element list satisfies length equality and sortedness, but destroys input values."
+                "explanation": "Sorted and the right length. zeroSort replaces everything with zeros and passes."
               },
               {
                 "id": "c",
-                "text": "theorem sort_correct (xs : List \u2115) : (sort xs).Perm xs \u2227 (sort xs).Pairwise (\u00b7 \u2264 \u00b7)",
+                "text": "theorem insertionSort_correct (l : List \u2115) :\n    (List.insertionSortWithCount (\u00b7 \u2264 \u00b7) l).1 ~ l \u2227\n    (List.insertionSortWithCount (\u00b7 \u2264 \u00b7) l).1.Pairwise (\u00b7 \u2264 \u00b7) :=",
                 "is_fake": false,
-                "explanation": "Genuine: Both conditions are required: Perm xs guarantees conservation of elements and multiplicities, and Pairwise (\u00b7 \u2264 \u00b7) guarantees ordering."
+                "explanation": "This is the one: the output is a rearrangement of the input, and it's sorted."
               }
             ],
             "correct_option_id": "c",
-            "summary_explanation": "A genuine sorting spec must demand BOTH sortedness (Pairwise (\u00b7 \u2264 \u00b7)) and element conservation via multiset permutation (Perm xs)."
+            "summary_explanation": "Look for `~ l`: it's the only condition that rules out throwing the input away."
           }
         ]
       }
@@ -339,38 +379,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "bs_pred_1",
-            "prompt": "Searching for element 7 in sorted array `#[1, 3, 5, 7, 9, 11]`, what 0-based index does `binarySearch` return?",
+            "prompt": "In the sorted list [1, 3, 5, 7, 9, 11], at which index does binary search find 7?",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "7 is located at index 3 in #[1, 3, 5, 7, 9, 11] (0-indexed: 0->1, 1->3, 2->5, 3->7)."
+            "explanation": "Indices start at 0: 1 is at 0, 3 at 1, 5 at 2, and 7 at 3."
           }
         ],
         "spot_the_fake": [
           {
             "id": "bs_fake_1",
-            "prompt": "Which theorem statement genuinely specifies binary search without introducing invalid assumptions?",
+            "prompt": "Which claim shows that binary search is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem binarySearch_spec (xs : List \u2115) (target : \u2115) (h : xs.Pairwise (\u00b7 \u2264 \u00b7)) : (binarySearch xs target).isSome \u2194 target \u2208 xs",
+                "text": "If the list is sorted, binary search finds the target exactly when the target is in the list.",
                 "is_fake": false,
-                "explanation": "Genuine: Requires the essential sorted precondition xs.Pairwise (\u00b7 \u2264 \u00b7) and provides a two-way (\u2194) equivalence between finding an index and element membership."
+                "explanation": "This is the one. Sortedness is a condition on the input, and binary search really does need it."
               },
               {
                 "id": "b",
-                "text": "theorem binarySearch_unsorted (xs : List \u2115) (target : \u2115) : (binarySearch xs target).isSome \u2194 target \u2208 xs",
+                "text": "For any list, sorted or not, binary search finds the target exactly when it is in the list.",
                 "is_fake": true,
-                "explanation": "Fake: Binary search fails on unsorted lists; claiming equivalence without the sorted precondition is mathematically false."
+                "explanation": "False. On an unsorted list, binary search can miss an element that is there."
               },
               {
                 "id": "c",
-                "text": "theorem binarySearch_sound (xs : List \u2115) (target : \u2115) : (binarySearch xs target).isSome \u2192 True",
+                "text": "Whenever binary search returns a result, True holds.",
                 "is_fake": true,
-                "explanation": "Tautological: P \u2192 True provides zero guarantees about search results."
+                "explanation": "True of everything. It says nothing at all."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "Binary search correctness critically relies on the input being sorted (xs.Pairwise (\u00b7 \u2264 \u00b7)); omitting this precondition is unsound."
+            "summary_explanation": "A precondition that the algorithm genuinely needs belongs in the theorem."
           }
         ]
       }
@@ -400,38 +440,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "dyn_pred_1",
-            "prompt": "Under the potential function \u03a6 = 2 * size - capacity (with initial capacity 1, initial size 0), what is the amortized cost bound per push operation?",
+            "prompt": "A dynamic array doubles its capacity when it's full. Using the potential \u03a6 = 2 \u00d7 size \u2212 capacity, what is the amortized cost of one push?",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "Each push has amortized cost 3: 1 for the actual write, and 2 saved into the potential to pay for the future doubling reallocation."
+            "explanation": "3: one for writing the element, and two saved in the potential to pay for copying it during a future doubling."
           }
         ],
         "spot_the_fake": [
           {
             "id": "dyn_fake_1",
-            "prompt": "Which formulation correctly establishes an amortized time bound over a sequence of operations?",
+            "prompt": "Which claim shows that pushes cost O(1) amortized?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem push_worst_case_constant (arr : DynamicArray) (x : \u2115) : actualCost (push arr x) \u2264 3",
+                "text": "Every single push costs at most 3.",
                 "is_fake": true,
-                "explanation": "Fake: A single push triggering reallocation takes O(n) actual time to copy elements, so worst-case single operation cost is not bounded by 3."
+                "explanation": "False. A push that triggers a doubling copies every element, which costs far more than 3."
               },
               {
                 "id": "b",
-                "text": "theorem pushSeqCost_initOne_le (k : \u2115) : totalActualCost (pushSequence k) \u2264 3 * k",
+                "text": "Starting from an empty array, any k pushes cost at most 3k in total.",
                 "is_fake": false,
-                "explanation": "Genuine: Amortization bounds the aggregate actual cost over all k operations by 3k, accounting for occasional expensive reallocation bursts."
+                "explanation": "This is the one. Amortized cost is a statement about sequences of operations, not single ones."
               },
               {
                 "id": "c",
-                "text": "def amortizedBound (k : \u2115) := 3 * k\ntheorem amortized_bound_le (k : \u2115) : amortizedBound k \u2264 3 * k",
+                "text": "A function defined as 3k is at most 3k.",
                 "is_fake": true,
-                "explanation": "Fake: Tautological definition of bound without coupling to the sequence of array operations."
+                "explanation": "The cost is defined as the bound. Nothing connects it to the array."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Amortized complexity does not mean every individual operation is cheap; it proves that the sum of actual costs over any sequence of k operations is bounded linearly (total \u2264 3k)."
+            "summary_explanation": "Amortized bounds are about totals over a sequence."
           }
         ]
       }
@@ -458,38 +498,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "ext_pred_1",
-            "prompt": "For integers a = 35 and b = 15, Nat.gcd 35 15 = 5. What value of x satisfies 35 * x + 15 * y = 5 when y = -2?",
+            "prompt": "gcd(35, 15) = 5. If 35x + 15y = 5 and y = \u22122, what is x?",
             "input_type": "number",
             "expected_answer": "1",
-            "explanation": "35*(1) + 15*(-2) = 35 - 30 = 5 = Nat.gcd 35 15."
+            "explanation": "35 \u00d7 1 + 15 \u00d7 (\u22122) = 35 \u2212 30 = 5, so x = 1."
           }
         ],
         "spot_the_fake": [
           {
             "id": "ext_fake_1",
-            "prompt": "Which type signature correctly captures B\u00e9zout's identity for Extended GCD?",
+            "prompt": "Which claim captures what the extended Euclidean algorithm computes?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem extGCD_bezout (a b : \u2115) : \u2203 x y : \u2115, (a : \u2124) * x + (b : \u2124) * y = Nat.gcd a b",
+                "text": "There exist natural numbers x and y with a\u00b7x + b\u00b7y = gcd(a, b).",
                 "is_fake": true,
-                "explanation": "Fake: Natural coefficients cannot solve a*x + b*y = gcd(a, b) when a, b > gcd(a, b) since both terms would be strictly positive."
+                "explanation": "False in general: x and y usually have to be integers, with one of them negative."
               },
               {
                 "id": "b",
-                "text": "theorem extGCD_bezout (a b : \u2115) : let (g, x, y) := extGCD a b; (a : \u2124) * x + (b : \u2124) * y = g \u2227 g = Nat.gcd a b",
+                "text": "The algorithm returns g, x and y with a\u00b7x + b\u00b7y = g, and g = gcd(a, b).",
                 "is_fake": false,
-                "explanation": "Genuine: Coefficients x and y must be signed integers (\u2124), and the certificate explicitly verifies that the linear combination equals the gcd."
+                "explanation": "This is the one: it's about the algorithm's actual output, and both parts are needed."
               },
               {
                 "id": "c",
-                "text": "theorem extGCD_spec (a b : \u2115) : (extGCD a b).1 \u2223 a \u2227 (extGCD a b).1 \u2223 b",
+                "text": "The g it returns divides both a and b.",
                 "is_fake": true,
-                "explanation": "Incomplete: Common divisor property does not prove B\u00e9zout certificate identity."
+                "explanation": "Half the job, and it ignores x and y entirely."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "B\u00e9zout coefficients must be signed integers (\u2124) because one coefficient is necessarily non-positive when both inputs are positive."
+            "summary_explanation": "The claim should be about what the algorithm returns, not just that some answer exists."
           }
         ]
       }
@@ -524,38 +564,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "merge_pred_1",
-            "prompt": "What is the maximum number of comparisons needed to merge two sorted lists of lengths 4 and 4 in the worst case?",
+            "prompt": "In the worst case, how many comparisons does it take to merge two sorted lists of length 4?",
             "input_type": "number",
             "expected_answer": "7",
-            "explanation": "Merging two sorted lists of length m and n takes at most m + n - 1 comparisons. For 4 and 4: 4 + 4 - 1 = 7."
+            "explanation": "At most 4 + 4 \u2212 1 = 7. Each comparison places one element, and the last element never needs one."
           }
         ],
         "spot_the_fake": [
           {
             "id": "merge_fake_1",
-            "prompt": "Which recurrence bound correctly captures the asymptotic complexity of Merge Sort in Lean?",
+            "prompt": "Which claim gives merge sort's comparison bound?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem mergeSort_snd_le_linear (xs : List \u03b1) : (mergeSortWithCount xs).2 \u2264 xs.length",
+                "text": "The counted comparisons are at most the length of the list.",
                 "is_fake": true,
-                "explanation": "Fake: Comparison sorting cannot run in O(n) worst case; merge sort performs n log n comparisons."
+                "explanation": "False. Merge sort needs about n log n comparisons in the worst case, not n."
               },
               {
                 "id": "b",
-                "text": "theorem mergeSortWithCount_snd_le_mul_size (xs : List \u03b1) : (mergeSortWithCount xs).2 \u2264 xs.length * Nat.size xs.length",
+                "text": "The counting version returns the same list as merge sort, and its count is at most n \u00d7 bits(n).",
                 "is_fake": false,
-                "explanation": "Genuine: Correctly bounds comparison count by n * Nat.size n, where Nat.size n represents \u2308log\u2082(n+1)\u2309 (bit length)."
+                "explanation": "This is the one: the count is tied to the real algorithm, and n \u00d7 bits(n) is n log n up to a constant."
               },
               {
                 "id": "c",
-                "text": "def sortTime (n : \u2115) := n * Nat.size n\ntheorem sortTime_bound (n : \u2115) : sortTime n \u2264 n * Nat.size n",
+                "text": "A function defined as n \u00d7 bits(n) is at most n \u00d7 bits(n).",
                 "is_fake": true,
-                "explanation": "Fake: Decoupled tautology about a helper function rather than the execution of mergeSortWithCount."
+                "explanation": "The cost is defined as the bound."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "In Lean, n log n comparison bounds are formalized via n * Nat.size n directly coupled to the second component of the instrumented algorithm tuple."
+            "summary_explanation": "Tie the counter to the algorithm, then bound the counter."
           }
         ]
       }
@@ -587,38 +627,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "tsq_pred_1",
-            "prompt": "After enqueuing elements 10, 20, 30 into an empty TwoStackQueue and calling pop, what element is dequeued?",
+            "prompt": "You push 10, 20 and 30 onto an empty two-stack queue, then pop once. What comes out?",
             "input_type": "number",
             "expected_answer": "10",
-            "explanation": "A queue maintains First-In-First-Out (FIFO) semantics, so the first enqueued element (10) is the first dequeued."
+            "explanation": "10. It's a queue, so the first element in is the first out."
           }
         ],
         "spot_the_fake": [
           {
             "id": "tsq_fake_1",
-            "prompt": "Which specification correctly defines FIFO correctness for a Two-Stack Queue?",
+            "prompt": "Which claim says the two-stack queue behaves like a queue?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem pop_spec (q : TwoStackQueue \u03b1) : (q.pop).1.isSome \u2194 q.toList \u2260 []",
+                "text": "pop returns something exactly when the queue is non-empty.",
                 "is_fake": true,
-                "explanation": "Incomplete: Only checks if an element can be popped, not which element is returned or what state remains."
+                "explanation": "True, but a stack passes it too. It doesn't say which element comes out."
               },
               {
                 "id": "b",
-                "text": "theorem pop_spec (q : TwoStackQueue \u03b1) : match q.pop with | (none, q') => q.toList = [] \u2227 q'.toList = [] | (some x, q') => q.toList = x :: q'.toList",
+                "text": "pop returns the first element of the queue's contents, and the rest of the contents stay in order.",
                 "is_fake": false,
-                "explanation": "Genuine: Ties the queue state to an abstract List model (q.toList), asserting that popping removes precisely the head element in FIFO order."
+                "explanation": "This is the one: it pins down exactly what pop does."
               },
               {
                 "id": "c",
-                "text": "theorem pop_size_decrease (q : TwoStackQueue \u03b1) : (q.pop).2.size = q.size - 1",
+                "text": "After a pop, the size goes down by one.",
                 "is_fake": true,
-                "explanation": "Incomplete: Size reduction does not guarantee FIFO ordering (a stack also decreases in size)."
+                "explanation": "A stack passes this too. It doesn't say which element comes out."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Data structure correctness is best proved against an abstract model: mapping queue states to List \u03b1 via toList and showing pop extracts the head element."
+            "summary_explanation": "A behaviour spec should rule out the wrong data structure, not just broken code."
           }
         ]
       }
@@ -648,38 +688,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "naive_pred_1",
-            "prompt": "How many matches does naive string search find for pattern 'ab' in text 'abacaba'?",
+            "prompt": "How many times does the pattern 'ab' occur in the text 'abacaba'?",
             "input_type": "number",
             "expected_answer": "2",
-            "explanation": "'ab' occurs at index 0 ('ab'acaba) and index 4 (abac'ab'a)."
+            "explanation": "Twice: at index 0 ('ab'acaba) and at index 4 (abac'ab'a)."
           }
         ],
         "spot_the_fake": [
           {
             "id": "naive_fake_1",
-            "prompt": "Which theorem statement specifies exact correctness (soundness and completeness) for string pattern matching?",
+            "prompt": "Which claim shows the matcher finds exactly the right positions?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem match_sound (pat text : List Char) (i : \u2115) : i \u2208 naiveMatch pat text \u2192 IsSubstringAt pat text i",
+                "text": "Every position it reports is a real occurrence.",
                 "is_fake": true,
-                "explanation": "Incomplete: Soundness alone allows an algorithm that always returns [] (finding nothing) without ever being wrong."
+                "explanation": "Only half: a matcher that reports nothing passes it."
               },
               {
                 "id": "b",
-                "text": "theorem mem_naiveMatch_iff (pat text : List Char) (i : \u2115) : i \u2208 naiveMatch pat text \u2194 IsSubstringAt pat text i",
+                "text": "A position is reported exactly when the pattern occurs there.",
                 "is_fake": false,
-                "explanation": "Genuine: An if-and-only-if (\u2194) specification guarantees both soundness (no false positives) and completeness (no missed matches)."
+                "explanation": "This is the one: nothing wrong is reported, and nothing is missed."
               },
               {
                 "id": "c",
-                "text": "theorem match_count_bound (pat text : List Char) : (naiveMatch pat text).length \u2264 text.length",
+                "text": "It reports at most as many positions as the text is long.",
                 "is_fake": true,
-                "explanation": "Weak: Only bounds the number of matches without ensuring that matches correspond to actual occurrences."
+                "explanation": "True of almost any function. It says nothing about which positions."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "A search algorithm specification must be bidirectional (\u2194) so that it guarantees finding all true matches and nothing else."
+            "summary_explanation": "Search problems need both directions: sound and complete."
           }
         ]
       }
@@ -731,38 +771,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "lb_pred_1",
-            "prompt": "For 3 distinct items, there are 3! = 6 permutations. What is the minimum depth of a binary decision tree that can distinguish all 6 permutations?",
+            "prompt": "There are 6 ways to order 3 distinct items. What is the smallest depth of a yes/no decision tree that can tell all 6 apart?",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "A tree of depth d has at most 2^d leaves. 2^2 = 4 < 6, so depth 2 cannot distinguish 6 outcomes. 2^3 = 8 \u2265 6, so depth at least 3 is required."
+            "explanation": "3. A tree of depth d has at most 2^d leaves, and 2^2 = 4 is less than 6, while 2^3 = 8 is enough."
           }
         ],
         "spot_the_fake": [
           {
             "id": "lb_fake_1",
-            "prompt": "Which mathematical chain establishes the comparison-based sorting lower bound \u03a9(n log n)?",
+            "prompt": "Which claim is the comparison-sorting lower bound?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem sorting_lower_bound : leafCount \u2264 2^depth \u2227 factorial n \u2264 leafCount \u2192 n * Nat.size n \u2264 depth",
+                "text": "Any decision tree that tells all n! orderings apart has depth at least about n log n.",
                 "is_fake": false,
-                "explanation": "Genuine: Connects the binary decision tree leaf bound (leafCount \u2264 2^depth) to input permutations (n! \u2264 leafCount), deducing depth \u2265 log\u2082(n!) = \u03a9(n log n)."
+                "explanation": "This is the one. It's about every possible comparison-based algorithm, not a particular one."
               },
               {
                 "id": "b",
-                "text": "theorem linear_sorting_exists : \u2203 (algo : List \u2115 \u2192 List \u2115), (algo xs).Perm xs \u2227 (algo xs).Pairwise (\u00b7 \u2264 \u00b7) \u2227 cost \u2264 xs.length",
+                "text": "There is a comparison-based sort that uses at most n comparisons.",
                 "is_fake": true,
-                "explanation": "Fake: Violates the information-theoretic lower bound for comparison sorting."
+                "explanation": "False for comparison sorting. It's exactly what the lower bound rules out."
               },
               {
                 "id": "c",
-                "text": "theorem lower_bound_tautology (n : \u2115) : n * Nat.size n = n * Nat.size n",
+                "text": "n log n equals n log n.",
                 "is_fake": true,
-                "explanation": "Fake: Meaningless tautology."
+                "explanation": "True and meaningless."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "Lower bounds are established by proving that every comparison decision tree for n items must have at least n! leaves, forcing depth \u2265 \u2308log\u2082(n!)\u2309 = \u03a9(n log n)."
+            "summary_explanation": "A lower bound has to hold for every algorithm, which is why it's stated about decision trees."
           }
         ]
       }
@@ -793,38 +833,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "qs_pred_1",
-            "prompt": "When Quicksort with first-element pivot is run on an already sorted 4-element list [1, 2, 3, 4], how many element comparisons are performed?",
+            "prompt": "Quicksort always picks the first element as the pivot. How many comparisons does it make on the sorted list [1, 2, 3, 4]?",
             "input_type": "number",
             "expected_answer": "6",
-            "explanation": "Unbalanced partitions yield comparisons (4-1) + (3-1) + (2-1) = 3 + 2 + 1 = 6 = n*(n-1)/2."
+            "explanation": "6. Each partition splits off only the pivot: 3 + 2 + 1 = 6, which is 4 \u00d7 3 / 2."
           }
         ],
         "spot_the_fake": [
           {
             "id": "qs_fake_1",
-            "prompt": "Which theorem proves that the O(n\u00b2) worst-case bound for Quicksort is mathematically tight?",
+            "prompt": "Which claim shows that quicksort's O(n\u00b2) worst case is tight?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem quicksort_worst_case_upper (xs : List \u2115) : (quicksortWithCount xs).2 \u2264 xs.length * xs.length",
+                "text": "Quicksort makes at most n\u00b2 comparisons on every input.",
                 "is_fake": true,
-                "explanation": "Incomplete: Upper bound proves cost is at most n\u00b2, but does not prove n\u00b2 is ever attained (tightness)."
+                "explanation": "An upper bound only. It doesn't show that any input actually needs that many."
               },
               {
                 "id": "b",
-                "text": "theorem quicksortWithCount_replicate_eq_mul (n : \u2115) (x : \u2115) : (quicksortWithCount (List.replicate n x)).2 = n * (n - 1) / 2",
+                "text": "On a list of n equal elements, quicksort makes exactly n(n \u2212 1)/2 comparisons.",
                 "is_fake": false,
-                "explanation": "Genuine: Attainment theorem proving that on an identical/sorted list of length n, the comparison count equals exactly n(n-1)/2, establishing tightness."
+                "explanation": "This is the one: an input where the worst case really happens."
               },
               {
                 "id": "c",
-                "text": "theorem quicksort_always_n_log_n (xs : List \u2115) : (quicksortWithCount xs).2 \u2264 xs.length * Nat.size xs.length",
+                "text": "Quicksort makes at most n log n comparisons on every input.",
                 "is_fake": true,
-                "explanation": "Fake: Deterministic Quicksort is not O(n log n) in the worst case."
+                "explanation": "False. Sorted and all-equal inputs need about n\u00b2/2."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "A worst-case bound is tight only when accompanied by an attainment theorem demonstrating a concrete input family achieving the quadratic bound."
+            "summary_explanation": "\"Tight\" means showing an input that reaches the bound."
           }
         ]
       }
@@ -855,38 +895,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "intv_pred_1",
-            "prompt": "Given non-overlapping choices among intervals [1, 3], [2, 5], [3, 6], [5, 7], what is the maximum number of mutually compatible intervals?",
+            "prompt": "From the intervals [1, 3], [2, 5], [3, 6] and [5, 7], what is the largest number you can pick with no two overlapping?",
             "input_type": "number",
             "expected_answer": "2",
-            "explanation": "Selecting [1, 3] and [5, 7] yields 2 compatible intervals, which is maximal for this set."
+            "explanation": "2, for example [1, 3] and [5, 7]. Any three of them include two that overlap."
           }
         ],
         "spot_the_fake": [
           {
             "id": "intv_fake_1",
-            "prompt": "Which theorem statement establishes that greedy interval scheduling produces a globally optimal solution?",
+            "prompt": "Which claim shows the greedy schedule is optimal?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem greedy_valid (intervals : List Interval) : isValidSchedule (greedySchedule intervals)",
+                "text": "The greedy schedule has no overlapping intervals.",
                 "is_fake": true,
-                "explanation": "Incomplete: Proves only that the greedy schedule is valid (no overlaps), not that it selects the maximum number of intervals."
+                "explanation": "Necessary but not enough: picking nothing also has no overlaps."
               },
               {
                 "id": "b",
-                "text": "theorem greedyIntervalSchedule_optimal (intervals : List Interval) (other : List Interval) (h : isValidSchedule other) (h_sub : other \u2286 intervals) : other.length \u2264 (greedySchedule intervals).length",
+                "text": "Every set of non-overlapping intervals chosen from the input is at most as large as the greedy schedule.",
                 "is_fake": false,
-                "explanation": "Genuine: Universal optimality: for ANY valid schedule subset 'other', its length is at most the greedy schedule length."
+                "explanation": "This is the one: it compares the greedy answer against every alternative."
               },
               {
                 "id": "c",
-                "text": "theorem greedy_heuristics (intervals : List Interval) : (greedySchedule intervals).length \u2265 1",
+                "text": "The greedy schedule picks at least one interval.",
                 "is_fake": true,
-                "explanation": "Weak: Only guarantees at least one interval (and fails on empty input)."
+                "explanation": "Says almost nothing, and it's false for an empty input."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Optimality theorems must be universally quantified over all possible valid alternative solutions S, proving |S| \u2264 |S_greedy|."
+            "summary_explanation": "Optimality means \"nothing better exists\", which is a statement about all alternatives."
           }
         ]
       }
@@ -924,38 +964,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "kmp_pred_1",
-            "prompt": "For the pattern 'ABACABA', what is the length of the longest proper prefix that is also a suffix (i.e. the final entry of the pi table)?",
+            "prompt": "For the pattern ABACABA, what is the length of the longest proper prefix that is also a suffix? (This is the last entry of KMP's failure table.)",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "'ABA' is both a prefix and a suffix of 'ABACABA' (length 3)."
+            "explanation": "3: ABA is both how the pattern starts and how it ends."
           }
         ],
         "spot_the_fake": [
           {
             "id": "kmp_fake_1",
-            "prompt": "Which formulation represents the genuine verified KMP theorem from proof_review.md rather than the auditing review fake?",
+            "prompt": "Which claim shows the KMP matcher is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "def kmpMatch (pat text : List Char) := naiveMatch pat text\ntheorem kmp_correct : kmpMatch pat text = naiveMatch pat text",
+                "text": "The KMP matcher is defined to be the naive matcher, and is proved to equal the naive matcher.",
                 "is_fake": true,
-                "explanation": "The infamous review fake: Defines kmpMatch as an alias for naiveMatch! This compiles with 0 errors but proves nothing about KMP."
+                "explanation": "Circular. This is a real fake from this repository's history: it proves nothing about KMP."
               },
               {
                 "id": "b",
-                "text": "theorem mem_kmpMatch_iff (pat text : List Char) (i : \u2115) : i \u2208 kmpMatch pat text \u2194 IsSubstringAt pat text i\ntheorem kmpScan_le_two_mul (pat text : List Char) : (kmpWithCount pat text).2 \u2264 2 * text.length",
+                "text": "For a non-empty pattern, a position is in KMP's output exactly when the pattern occurs there.",
                 "is_fake": false,
-                "explanation": "Genuine: Defines the authentic KMP state machine, proves equivalence to the substring spec, and bounds comparisons by 2 * text.length."
+                "explanation": "This is the one. The non-empty condition is real: the empty pattern is a special case."
               },
               {
                 "id": "c",
-                "text": "theorem kmp_linear_steps : 4 * text.length \u2264 4 * text.length",
+                "text": "The number of steps is at most 4n \u2264 4n.",
                 "is_fake": true,
-                "explanation": "The infamous review fake: A reflexive inequality on text length proving nothing about the algorithm."
+                "explanation": "A true inequality that doesn't mention the algorithm at all. Also a real fake from this repository."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Beware of definitions that secretly alias a simpler algorithm or bounds that reduce to trivialities (4n \u2264 4n); verified algorithms must prove authentic logic."
+            "summary_explanation": "Check what the definitions are, not only what the theorems say."
           }
         ]
       }
@@ -988,38 +1028,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "lcs_pred_1",
-            "prompt": "What is the length of the Longest Common Subsequence of strings 'ABCBDAB' and 'BDCABA'?",
+            "prompt": "What is the length of the longest common subsequence of ABCBDAB and BDCABA?",
             "input_type": "number",
             "expected_answer": "4",
-            "explanation": "Common subsequences of length 4 include 'BCBA', 'BDAB', 'BCAB'."
+            "explanation": "4. For example, BCBA is a subsequence of both, and no common subsequence is longer."
           }
         ],
         "spot_the_fake": [
           {
             "id": "lcs_fake_1",
-            "prompt": "Which specification characterizes an optimal solution in dynamic programming for LCS?",
+            "prompt": "Which claim shows the LCS algorithm returns the longest common subsequence?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem lcs_achievable (xs ys : List \u03b1) : IsSubsequence (lcs xs ys) xs \u2227 IsSubsequence (lcs xs ys) ys",
+                "text": "What it returns is a subsequence of both inputs.",
                 "is_fake": true,
-                "explanation": "Incomplete: Proves output is a common subsequence, but [] satisfies this without being longest."
+                "explanation": "Only half: returning the empty list passes."
               },
               {
                 "id": "b",
-                "text": "theorem lcs_is_optimal (xs ys : List \u03b1) : IsSubsequence (lcs xs ys) xs \u2227 IsSubsequence (lcs xs ys) ys \u2227 (\u2200 zs, IsSubsequence zs xs \u2192 IsSubsequence zs ys \u2192 zs.length \u2264 (lcs xs ys).length)",
+                "text": "What it returns is a common subsequence, and no common subsequence is longer.",
                 "is_fake": false,
-                "explanation": "Genuine: Establishes both feasibility (is common subsequence) and optimality (no other common subsequence is longer)."
+                "explanation": "This is the one: achievable, and optimal."
               },
               {
                 "id": "c",
-                "text": "theorem lcs_table_symmetric (xs ys : List \u03b1) : lcsTable xs ys = lcsTable ys xs",
+                "text": "The table is the same with the inputs swapped.",
                 "is_fake": true,
-                "explanation": "Irrelevant: Symmetry of DP table does not prove optimality."
+                "explanation": "A side property of the table. It says nothing about the answer being the longest."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "DP optimization specifications require two parts: feasibility (solution satisfies constraints) and optimality (no valid candidate achieves a better objective value)."
+            "summary_explanation": "Optimisation problems need both halves: achievable and nothing better."
           }
         ]
       }
@@ -1058,38 +1098,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "bfs_pred_1",
-            "prompt": "In a 4-cycle graph (vertices 0, 1, 2, 3 with edges 0-1, 1-2, 2-3, 3-0), what is the BFS distance from vertex 0 to vertex 2?",
+            "prompt": "In a cycle of four vertices, 0\u20131\u20132\u20133\u20130, what is the BFS distance from 0 to 2?",
             "input_type": "number",
             "expected_answer": "2",
-            "explanation": "Path 0 -> 1 -> 2 has length 2; path 0 -> 3 -> 2 has length 2."
+            "explanation": "2, going either 0 \u2192 1 \u2192 2 or 0 \u2192 3 \u2192 2."
           }
         ],
         "spot_the_fake": [
           {
             "id": "bfs_fake_1",
-            "prompt": "Which specification prevents the 'all-zero distance' fake detected in the repository audit?",
+            "prompt": "Which claim shows BFS computes shortest-path distances?",
             "options": [
               {
                 "id": "a",
-                "text": "def dist (u v : V) := 0\ntheorem dist_triangle (u v w : V) : dist u w \u2264 dist u v + dist v w",
+                "text": "The distances satisfy the triangle inequality.",
                 "is_fake": true,
-                "explanation": "The infamous review fake: The constant 0 function satisfies the triangle inequality (0 \u2264 0 + 0) but gives no shortest-path information!"
+                "explanation": "The all-zero function satisfies it. That was a real fake in this repository."
               },
               {
                 "id": "b",
-                "text": "theorem bfsWithCount_fst_eq (G : Graph) (src tgt : V) : (bfsWithCount G src tgt).1 = bfsDist G src tgt",
+                "text": "The distance BFS computes to each vertex equals the length of a shortest path, or \u221e if there is none.",
                 "is_fake": false,
-                "explanation": "Genuine: Directly equates the executable algorithm output to the graph-theoretic shortest walk infimum (bfsDist)."
+                "explanation": "This is the one. It pins every distance to the real answer."
               },
               {
                 "id": "c",
-                "text": "theorem bfs_visits_subset (G : Graph) (src : V) : (bfs G src).length \u2264 G.vertexCount",
+                "text": "BFS visits at most as many vertices as the graph has.",
                 "is_fake": true,
-                "explanation": "Weak: Only bounds visited vertex count."
+                "explanation": "True of any traversal. It says nothing about distances."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "A shortest-path spec must link the algorithm to the true graph distance metric (bfsDist) rather than loose inequalities that degenerate solutions satisfy."
+            "summary_explanation": "A spec that a trivial function satisfies isn't a spec."
           }
         ]
       }
@@ -1139,38 +1179,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "ed_pred_1",
-            "prompt": "What is the edit distance (Levenshtein distance) between 'SNOWY' and 'SUNNY'?",
+            "prompt": "What is the edit distance between SNOWY and SUNNY?",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "SNOWY -> SUNOWY (insert U) -> SUNNY (replace O with N) -> SUNNY (delete W): 3 edits."
+            "explanation": "3. For example: insert U after S (SUNOWY), change O to N (SUNNWY), then delete W (SUNNY)."
           }
         ],
         "spot_the_fake": [
           {
             "id": "ed_fake_1",
-            "prompt": "Which theorem statement accurately specifies minimum edit distance?",
+            "prompt": "Which claim shows the algorithm computes the edit distance?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem editDist_is_minimal_alignment (s t : List Char) : \u2203 a : Alignment s t, a.cost = editDist s t \u2227 \u2200 a' : Alignment s t, a.cost \u2264 a'.cost",
+                "text": "Some alignment has exactly the computed cost, and no alignment costs less.",
                 "is_fake": false,
-                "explanation": "Genuine: Formalizes alignments as an inductive predicate and proves editDist attains the minimum cost over all valid alignments."
+                "explanation": "This is the one: achievable, and minimal."
               },
               {
                 "id": "b",
-                "text": "theorem editDist_hamming (s t : List Char) (h : s.length = t.length) : editDist s t = (List.zip s t).filter (fun (x, y) => x \u2260 y).length",
+                "text": "For strings of equal length, the edit distance is the number of positions that differ.",
                 "is_fake": true,
-                "explanation": "Fake: Conflates general edit distance (allowing insertions/deletions) with Hamming distance (substitutions only)."
+                "explanation": "False: SNOWY and SUNNY differ in 4 positions, but their edit distance is 3."
               },
               {
                 "id": "c",
-                "text": "theorem editDist_le_length (s t : List Char) : editDist s t \u2264 s.length + t.length",
+                "text": "The edit distance is at most the total length of the two strings.",
                 "is_fake": true,
-                "explanation": "Weak: Upper bound only; does not establish minimality."
+                "explanation": "True, but a function returning the total length also passes."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "Edit distance correctness requires proving that the DP value is achieved by a concrete alignment and that no valid alignment has lower cost."
+            "summary_explanation": "Minimum means both \"it can be achieved\" and \"nothing is cheaper\"."
           }
         ]
       }
@@ -1202,38 +1242,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "knap_pred_1",
-            "prompt": "Given knapsack capacity W = 7 and items (weight 3, val 4), (weight 4, val 5), (weight 2, val 3), what is the optimal 0/1 knapsack value?",
+            "prompt": "The capacity is 7. The items are (weight 3, value 4), (weight 4, value 5) and (weight 2, value 3). What is the best total value?",
             "input_type": "number",
             "expected_answer": "9",
-            "explanation": "Select items 2 (wt 4, val 5) and 1 (wt 3, val 4) -> total wt 7, total val 9."
+            "explanation": "9, taking the first two items: weight 3 + 4 = 7, value 4 + 5 = 9. Any other choice that fits is worth less."
           }
         ],
         "spot_the_fake": [
           {
             "id": "knap_fake_1",
-            "prompt": "Which specification defines optimal 0/1 Knapsack over a finite set of items?",
+            "prompt": "Which claim shows the knapsack algorithm is optimal?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem knapsack_greedy_optimal (items : List Item) (W : \u2115) : knapsack items W = greedyDensity items W",
+                "text": "Its answer equals what you get by greedily taking items with the best value per unit of weight.",
                 "is_fake": true,
-                "explanation": "Fake: Greedy by value/weight density does not solve 0/1 knapsack optimally."
+                "explanation": "False for 0/1 knapsack: greedy choices can miss the best combination."
               },
               {
                 "id": "b",
-                "text": "theorem knapsack_is_optimal (items : List Item) (W : \u2115) : (knapsack items W).weight \u2264 W \u2227 \u2200 S \u2286 items, S.weight \u2264 W \u2192 S.value \u2264 (knapsack items W).value",
+                "text": "Some choice of items within capacity achieves its answer, and no choice within capacity does better.",
                 "is_fake": false,
-                "explanation": "Genuine: Feasible weight within capacity W, and value at least as high as any candidate subset S satisfying the capacity constraint."
+                "explanation": "This is the one: achievable, and optimal."
               },
               {
                 "id": "c",
-                "text": "theorem knapsack_positive (items : List Item) (W : \u2115) : knapsack items W \u2265 0",
+                "text": "Its answer is at least 0.",
                 "is_fake": true,
-                "explanation": "Trivial: Non-negativity holds for any natural number."
+                "explanation": "True of every natural number."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "0/1 Knapsack optimality must quantify over all valid subsets (S \u2286 items with S.weight \u2264 W), proving none achieves higher value."
+            "summary_explanation": "Optimal means compared against every feasible choice."
           }
         ]
       }
@@ -1268,38 +1308,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "bf_pred_1",
-            "prompt": "In a directed graph with 6 vertices, how many edge-relaxation rounds does Bellman-Ford run before checking for negative cycles?",
+            "prompt": "Bellman\u2013Ford runs relaxation passes on a graph with 6 vertices. How many passes does it make before checking for negative cycles?",
             "input_type": "number",
             "expected_answer": "5",
-            "explanation": "Shortest simple paths contain at most |V| - 1 edges; for |V| = 6, 6 - 1 = 5 rounds are performed."
+            "explanation": "5. A shortest path without repeated vertices has at most 6 \u2212 1 = 5 edges."
           }
         ],
         "spot_the_fake": [
           {
             "id": "bf_fake_1",
-            "prompt": "Which theorem statement formulates negative cycle detection without circular self-definition?",
+            "prompt": "Which claim shows Bellman\u2013Ford detects negative cycles?",
             "options": [
               {
                 "id": "a",
-                "text": "def hasNegCycle (G : Graph) := bellmanFordCheck G\ntheorem hasNegCycle_iff : hasNegCycle G \u2194 bellmanFordCheck G",
+                "text": "\"Has a negative cycle\" is defined as \"the check returns true\", and the check returns true exactly then.",
                 "is_fake": true,
-                "explanation": "The infamous review fake: Defines 'negative cycle' as the algorithm's check itself! A bug in the check would simply redefine what a negative cycle is."
+                "explanation": "Circular. It was a real fake in this repository: no cycle appears anywhere."
               },
               {
                 "id": "b",
-                "text": "theorem hasNegCycleCheck_iff (G : Graph) (src : V) : hasReachableNegCycle G src \u2194 (bellmanFord G src).hasNegCycle = true",
+                "text": "The check returns true exactly when some cycle of negative total weight is reachable from the source.",
                 "is_fake": false,
-                "explanation": "Genuine: Defines reachable negative cycles independently as a directed cycle of vertices whose edge weight sum is negative, and proves equivalence to the algorithm's check."
+                "explanation": "This is the one: the property is defined in terms of actual cycles."
               },
               {
                 "id": "c",
-                "text": "theorem bellmanFord_steps (G : Graph) : stepCount \u2264 G.vertexCount * G.edgeCount",
+                "text": "It makes at most V \u00d7 E relaxations.",
                 "is_fake": true,
-                "explanation": "Weak: Only bounds operational steps without addressing negative cycle detection correctness."
+                "explanation": "A cost bound. It says nothing about detection."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Never accept a specification where a mathematical property is defined as the algorithm that searches for it; properties must be defined independently."
+            "summary_explanation": "Define the property independently of the algorithm that detects it."
           }
         ]
       }
@@ -1325,38 +1365,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "twosat_pred_1",
-            "prompt": "In a 2-SAT implication graph, variable x and its negation \u00acx belong to the same Strongly Connected Component (SCC). Is the 2-SAT formula satisfiable or unsatisfiable?",
+            "prompt": "In a 2-SAT implication graph, x and not-x are in the same strongly connected component. Is the formula satisfiable or unsatisfiable?",
             "input_type": "choice",
             "expected_answer": "unsatisfiable",
-            "explanation": "If x ~> \u00acx and \u00acx ~> x, x implies its negation and vice versa, creating a contradiction (unsatisfiable)."
+            "explanation": "Unsatisfiable. x implies not-x and not-x implies x, so no truth value for x works."
           }
         ],
         "spot_the_fake": [
           {
             "id": "twosat_fake_1",
-            "prompt": "Which characterization theorem correctly establishes the Aspvall, Plass & Tarjan criterion for 2-SAT?",
+            "prompt": "Which claim characterises satisfiable 2-SAT formulas?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem twoSAT_soundness_and_completeness (\u03c6 : CNF2) : Satisfiable \u03c6 \u2194 \u2200 v, \u00ac(v ~> \u00acv \u2227 \u00acv ~> v)",
+                "text": "A formula is satisfiable exactly when no variable reaches its own negation and back again.",
                 "is_fake": false,
-                "explanation": "Genuine: A 2-SAT formula is satisfiable if and only if no variable lies in the same strongly connected component as its negation."
+                "explanation": "This is the one, in both directions."
               },
               {
                 "id": "b",
-                "text": "theorem twoSAT_soundness_only (\u03c6 : CNF2) : Satisfiable \u03c6 \u2192 (\u2200 c \u2208 \u03c6, c.length = 2)",
+                "text": "If a formula is satisfiable, every clause has two literals.",
                 "is_fake": true,
-                "explanation": "Irrelevant: Restates the syntactic definition of 2-CNF clauses."
+                "explanation": "Unrelated to satisfiability; it's about the formula's shape."
               },
               {
                 "id": "c",
-                "text": "theorem twoSAT_linear_solve (\u03c6 : CNF3) : Satisfiable \u03c6 \u2194 (solve2SAT \u03c6 = true)",
+                "text": "A 3-SAT formula is satisfiable exactly when a 2-SAT solver says yes.",
                 "is_fake": true,
-                "explanation": "Fake: Claims 3-SAT (NP-complete) can be solved by 2-SAT."
+                "explanation": "False, and it would mean P = NP."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "2-SAT is characterized by graph connectivity: unsatisfiability occurs iff there is a mutual implication between a variable and its negation."
+            "summary_explanation": "A characterisation needs both directions."
           }
         ]
       }
@@ -1382,38 +1422,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "red_pred_1",
-            "prompt": "In Karp's reduction from 3-SAT to Independent Set, a formula with 4 clauses produces a graph. To satisfy the formula, what size independent set must exist (k = number of clauses)?",
+            "prompt": "In the reduction from 3-SAT to Independent Set, a formula has 4 clauses. What size of independent set shows the formula is satisfiable?",
             "input_type": "number",
             "expected_answer": "4",
-            "explanation": "One vertex is selected per clause gadget (no two from the same clause or contradictory literals), so k equals the number of clauses (4)."
+            "explanation": "4: one vertex per clause, picking a true literal from each."
           }
         ],
         "spot_the_fake": [
           {
             "id": "red_fake_1",
-            "prompt": "Which theorem statement genuinely proves a polynomial-time reduction from problem A to problem B?",
+            "prompt": "Which claim shows the reduction from 3-SAT to Independent Set is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem reduction_correct (\u03c6 : 3SATInstance) : Satisfiable \u03c6 \u2194 HasIndependentSet (reduceToGraph \u03c6) \u03c6.clauseCount",
+                "text": "The formula is satisfiable exactly when the constructed graph has an independent set of size m, the number of clauses.",
                 "is_fake": false,
-                "explanation": "Genuine: Proves exact bidirectional equivalence between formula satisfiability and existence of an independent set of size k in the constructed gadget graph."
+                "explanation": "This is the one: both directions."
               },
               {
                 "id": "b",
-                "text": "theorem reduction_one_way (\u03c6 : 3SATInstance) : Satisfiable \u03c6 \u2192 HasIndependentSet (reduceToGraph \u03c6) \u03c6.clauseCount",
+                "text": "If the formula is satisfiable, the graph has an independent set of size m.",
                 "is_fake": true,
-                "explanation": "Incomplete: One direction alone allows a reduction that always produces a graph with an independent set, failing on unsatisfiable formulas."
+                "explanation": "Only one direction. A reduction that produced a graph with no edges at all would pass it."
               },
               {
                 "id": "c",
-                "text": "theorem reduction_size_poly (\u03c6 : 3SATInstance) : (reduceToGraph \u03c6).vertexCount \u2264 3 * \u03c6.clauseCount",
+                "text": "The graph has at most 3m vertices.",
                 "is_fake": true,
-                "explanation": "Incomplete: Size bound proves polynomial size gadget, but establishes zero connection to satisfiability."
+                "explanation": "A size bound. It says nothing about correctness."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "A reduction must prove bidirectional equivalence (A is YES \u2194 B is YES); a one-way implication fails to preserve hardness."
+            "summary_explanation": "A reduction must preserve the answer in both directions."
           }
         ]
       }
@@ -1501,38 +1541,38 @@ window.__TREE_DATA_FALLBACK__ = {
         "predict": [
           {
             "id": "lis_pred_1",
-            "prompt": "For the list [3, 10, 2, 1, 20], what is the length of the Longest Increasing Subsequence?",
+            "prompt": "What is the length of the longest strictly increasing subsequence of [3, 10, 2, 1, 20]?",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "The longest strictly increasing subsequence is [3, 10, 20] (length 3)."
+            "explanation": "3, for example 3, 10, 20."
           }
         ],
         "spot_the_fake": [
           {
             "id": "lis_fake_1",
-            "prompt": "Which specification correctly defines the Longest Increasing Subsequence problem?",
+            "prompt": "Which claim shows the algorithm finds the longest increasing subsequence?",
             "options": [
               {
                 "id": "a",
-                "text": "theorem lis_is_optimal (xs : List \u2115) : (lis xs).Sublist xs \u2227 (lis xs).Pairwise (\u00b7 < \u00b7) \u2227 \u2200 ys, ys.Sublist xs \u2192 ys.Pairwise (\u00b7 < \u00b7) \u2192 ys.length \u2264 (lis xs).length",
+                "text": "It returns an increasing subsequence, and no increasing subsequence is longer.",
                 "is_fake": false,
-                "explanation": "Genuine: Output is a valid sublist of xs, strictly increasing (Pairwise (\u00b7 < \u00b7)), and has length at least as large as any other strictly increasing sublist."
+                "explanation": "This is the one."
               },
               {
                 "id": "b",
-                "text": "theorem lis_contiguous (xs : List \u2115) : (lis xs).IsInfix xs \u2227 (lis xs).Pairwise (\u00b7 < \u00b7)",
+                "text": "It returns an increasing run of consecutive elements.",
                 "is_fake": true,
-                "explanation": "Fake: Requires contiguous subarray (IsInfix) rather than general subsequence (Sublist)."
+                "explanation": "That's a different problem: a subsequence can skip elements."
               },
               {
                 "id": "c",
-                "text": "theorem lis_sorted (xs : List \u2115) : (lis xs).Pairwise (\u00b7 \u2264 \u00b7)",
+                "text": "What it returns is sorted.",
                 "is_fake": true,
-                "explanation": "Fake: Non-decreasing is not strictly increasing, and permits trivial [] outputs."
+                "explanation": "Returning the empty list passes."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "LIS requires subsequence (Sublist, not Infix), strict inequality (Pairwise (\u00b7 < \u00b7)), and universal optimality over all competing sublists."
+            "summary_explanation": "Achievable, and nothing longer."
           }
         ]
       }
