@@ -188,3 +188,7 @@ out of date, and passes now.
    - the node's `tree.json` quizzes copied from the chapter;
    - `--check-site` passing with no exemptions.
    Replace each node's plain-English quiz only when its chapter lands.
+6. **No personal contact details in repository files.** `AUTHORS` listed the author's email address; it now lists
+   names only. Don't add email addresses, phone numbers or other personal details to any file in this repository
+   (`AUTHORS`, `README.md`, file headers, docs), and don't reintroduce the address. Git commit metadata is separate
+   and needs no change.
