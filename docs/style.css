@@ -401,6 +401,13 @@ html, body {
   line-height: 1;
 }
 
+.node-wip {
+  font-size: 9px;
+  font-weight: 600;
+  color: #fbbf24;
+  white-space: nowrap;
+}
+
 /* Node Title */
 .node-title {
   font-size: 13px;
@@ -1319,6 +1326,9 @@ html, body {
   .canvas-legend {
     display: none;
   }
+  #btn-start-here .btn-label {
+    display: none;
+  }
   .inspector-drawer {
     width: 100vw;
   }
@@ -1337,6 +1347,14 @@ html, body {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+}
+
+#btn-start-here {
+  text-decoration: none;
+}
+
+.reading-meta.hidden {
+  display: none;
 }
 
 .reading-view.hidden {

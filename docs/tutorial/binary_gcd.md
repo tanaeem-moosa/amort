@@ -2,13 +2,9 @@
 
 *The first node in the tree. It unlocks Euclid's GCD, Insertion Sort, Binary Search, Dynamic Array and Modular Exponentiation.*
 
-## How these chapters work
+New to these chapters? Read [Start here](intro.md) first. It explains how the chapters work, what to read beforehand and how to run the examples.
 
-Each chapter takes one algorithm through the same five steps. First we say what the problem is. Then we write down, in Lean, what a correct answer means. Then we look at the algorithm. Last come the two theorems that matter: one says the algorithm is correct, and one says how many steps it takes.
-
-You won't be writing proofs. Every proof in this repository has already been checked by Lean. If you want a proof of something new, you can ask an AI assistant for one and let Lean check it. What Lean can't tell you is whether a theorem says what you think it says. A proof that compiles only means *some* statement is true. Reading the statement and deciding whether it's the right one is your job, and it's what these chapters practise.
-
-To run the examples you need Lean installed and this repository built. The companion file for this chapter is `Tutorial/BinaryGCD.lean`. You can read everything here without it.
+The companion file for this chapter is `Tutorial/BinaryGCD.lean`. You can read everything here without it.
 
 ## 1. The problem
 
@@ -39,7 +35,7 @@ This is the first Lean in the tutorial, so here it is piece by piece:
 
 The first two lines say that `Nat.gcd a b` is a common divisor. The third says it is the greatest one, in a specific sense: every other common divisor divides it. That sense settles gcd(0, 0). Every number is a common divisor of 0 and 0, and the only number they all divide is 0.
 
-None of this mentions an algorithm, and that's deliberate. Binary GCD, Euclid's algorithm and a brute-force search are all correct exactly when they return `Nat.gcd a b`.
+None of this mentions an algorithm, and that's deliberate: the definition of gcd is orthogonal to any algorithm that computes it. Binary GCD, Euclid's algorithm and a brute-force search are all correct exactly when they return `Nat.gcd a b`.
 
 ## 3. The algorithm
 
@@ -62,7 +58,7 @@ def binary_gcd(a, b):
     return binary_gcd(a, (b - a) // 2)
 ```
 
-And here is the Lean definition from `Amort/GCD/BinaryGCD.lean`:
+This is how it looks in Lean, from `Amort/GCD/BinaryGCD.lean`:
 
 ```lean
 def binaryGcd (a b : ℕ) : ℕ :=
@@ -85,16 +81,16 @@ decreasing_by
   all_goals omega
 ```
 
-Most of it reads like the Python. The differences:
+Here is how to read the Lean:
 
 - `(a b : ℕ) : ℕ` says both inputs and the output are natural numbers.
 - `/` and `%` on natural numbers round down, like Python's `//` and `%`.
 - `if ha : a = 0 then` is an ordinary `if` that also gives the condition a name, `ha`. The code never uses these names. The termination proof does, because it needs to know which branch it is in.
-- The last three lines have no Python equivalent. They are about why the function stops.
+- The last three lines are our first example of a Lean proof. They are there because Lean won't accept a recursive function until it's convinced the function stops on every input. The next section explains how.
 
 ### Why it stops
 
-Lean won't accept a recursive function until it's convinced the function stops on every input. `termination_by a + b` promises that `a + b` gets smaller with every recursive call. `decreasing_by all_goals omega` proves that promise. `omega` is a built-in tactic that proves facts about addition, subtraction and comparison of numbers on its own, and `all_goals` runs it once for each recursive call.
+`termination_by a + b` promises that `a + b` gets smaller with every recursive call. `decreasing_by all_goals omega` proves that promise. `omega` is a built-in tactic that proves facts about addition, subtraction and comparison of numbers on its own, and `all_goals` runs it once for each recursive call.
 
 You can check the promise by hand. A recursive call only happens when `a` and `b` are both at least 1:
 

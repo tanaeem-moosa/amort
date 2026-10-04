@@ -469,6 +469,7 @@ class SkillTreeApp {
         <div class="node-title" title="${node.name}">${node.name}</div>
         <div class="node-bottom">
           <span class="node-tier-tag">T${node.tier}</span>
+          ${this.hasChapter(node) ? '' : '<span class="node-wip" title="Chapter under construction" aria-label="Chapter under construction">🚧 Under construction</span>'}
           <span class="node-quiz-count">${quizCount ? `${quizCount} quiz${quizCount > 1 ? 'zes' : ''}` : 'Reference'}</span>
         </div>
       `;
@@ -724,6 +725,11 @@ class SkillTreeApp {
 
   handleRouting() {
     const hash = window.location.hash || '';
+    if (hash === '#/intro') {
+      this.openIntroView();
+      return;
+    }
+
     const chapterMatch = hash.match(/^#\/node\/([A-Z0-9_]+)\/chapter$/);
     if (chapterMatch) {
       const nodeId = chapterMatch[1];
@@ -760,6 +766,7 @@ class SkillTreeApp {
 
     if (this.viewportEl) this.viewportEl.classList.add('hidden');
     if (this.readingViewEl) this.readingViewEl.classList.remove('hidden');
+    document.querySelector('.reading-meta')?.classList.remove('hidden');
 
     const tierBadge = document.getElementById('reading-tier-badge');
     const catBadge = document.getElementById('reading-category-badge');
@@ -794,6 +801,7 @@ class SkillTreeApp {
       const chapterData = await this.loadChapter(node);
       if (chapterData.success) {
         this.readingArticleEl.innerHTML = this.renderMarkdown(chapterData.markdown);
+        this.rewriteChapterLinks(this.readingArticleEl);
       } else if (chapterData.type === 'coming_soon') {
         this.readingArticleEl.innerHTML = this.renderMarkdown(this.renderComingSoonMarkdown(node));
       } else {
@@ -808,6 +816,77 @@ class SkillTreeApp {
 
     this.readingViewEl?.scrollTo(0, 0);
     window.scrollTo(0, 0);
+  }
+
+  // The "Start here" chapter (tutorial/intro.md) isn't a node in the tree, so it
+  // gets its own route, #/intro, and a reading view without node badges.
+  async openIntroView() {
+    this.selectedNodeId = null;
+    if (this.drawerEl?.open) {
+      this.drawerEl.close();
+    }
+
+    if (this.viewportEl) this.viewportEl.classList.add('hidden');
+    if (this.readingViewEl) this.readingViewEl.classList.remove('hidden');
+    document.querySelector('.reading-meta')?.classList.add('hidden');
+
+    if (this.readingBackLinkEl) {
+      this.readingBackLinkEl.href = '#/';
+      this.readingBackLinkEl.onclick = null;
+    }
+
+    if (this.readingArticleEl) {
+      this.readingArticleEl.innerHTML = '<div class="spec-text">Loading tutorial chapter...</div>';
+      let content = null;
+      let lastError = null;
+      for (const p of ['chapters/intro.md', 'tutorial/intro.md']) {
+        try {
+          const res = await fetch(p);
+          if (res.ok) {
+            content = await res.text();
+            break;
+          }
+          lastError = `HTTP ${res.status}: ${res.statusText}`;
+        } catch (err) {
+          lastError = err.message || String(err);
+        }
+      }
+      if (content) {
+        this.readingArticleEl.innerHTML = this.renderMarkdown(content);
+        this.rewriteChapterLinks(this.readingArticleEl);
+      } else {
+        this.readingArticleEl.innerHTML = `
+          <div class="chapter-error">
+            <h2>⚠️ Chapter Load Error</h2>
+            <p>${this.escapeHtml(`Failed to load chapters/intro.md (${lastError || 'File not found'}).`)}</p>
+          </div>
+        `;
+      }
+    }
+
+    this.readingViewEl?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }
+
+  // Chapters link to each other by file name (e.g. `binary_gcd.md`) so the links
+  // also work when the Markdown is read on GitHub. In the app, point them at the
+  // matching route instead of the raw file.
+  rewriteChapterLinks(containerEl) {
+    containerEl.querySelectorAll('a[href]').forEach(a => {
+      const match = a.getAttribute('href').match(/^(?:\.\/)?([a-z0-9_]+)\.md$/);
+      if (!match) return;
+      const filename = `${match[1]}.md`;
+      if (filename === 'intro.md') {
+        a.setAttribute('href', '#/intro');
+        return;
+      }
+      for (const node of this.engine.nodesMap.values()) {
+        if (node.chapter_path && node.chapter_path.split('/').pop() === filename) {
+          a.setAttribute('href', `#/node/${node.id}/chapter`);
+          return;
+        }
+      }
+    });
   }
 
   closeReadingView() {
@@ -964,6 +1043,7 @@ class SkillTreeApp {
         if (count > 1200) break;
       }
       previewEl.innerHTML = this.renderMarkdown(excerptLines.join('\n') + '\n\n*Open the chapter to read the rest.*');
+      this.rewriteChapterLinks(previewEl);
     } else if (chapterData.type === 'coming_soon') {
       previewEl.innerHTML = this.renderMarkdown(this.renderComingSoonMarkdown(node));
     } else {
@@ -1232,10 +1312,7 @@ class SkillTreeApp {
       return { success: true, markdown: content };
     }
 
-    const pilotChapters = ['BGCD', 'EUC', 'INS'];
-    const isPilot = pilotChapters.includes(node.id) || Boolean(node.has_chapter);
-
-    if (isPilot) {
+    if (this.hasChapter(node)) {
       return {
         success: false,
         type: 'error',
@@ -1247,6 +1324,13 @@ class SkillTreeApp {
       success: false,
       type: 'coming_soon'
     };
+  }
+
+  // Nodes whose chapter has been written. Every other node shows a
+  // "coming soon" page and an under-construction badge on the tree.
+  hasChapter(node) {
+    const pilotChapters = ['BGCD', 'EUC', 'INS'];
+    return pilotChapters.includes(node.id) || Boolean(node.has_chapter);
   }
 
   renderComingSoonMarkdown(node) {

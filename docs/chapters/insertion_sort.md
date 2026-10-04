@@ -71,7 +71,7 @@ example (r : α → α → Prop) [DecidableRel r] (a : α) (l : List α) :
     List.insertionSort r (a :: l) = List.orderedInsert r a (List.insertionSort r l) := rfl
 ```
 
-These are the same three rules as the Python. The new pieces:
+These are the same three rules as the Python. Here is how to read the Lean:
 
 - `r : α → α → Prop` is the comparison: it takes two elements and returns a statement, such as `x ≤ y`. `Prop` is Lean's type of statements.
 - `[DecidableRel r]` says the computer can actually work out whether `r a b` is true or false, which the `if` needs in order to run.

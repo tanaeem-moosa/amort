@@ -26,7 +26,7 @@ def euclid_gcd(a, b):
     return euclid_gcd(b % a, a)
 ```
 
-In Lean, from `Amort/GCD/EuclideanGCD.lean`:
+This is how it looks in Lean, from `Amort/GCD/EuclideanGCD.lean`:
 
 ```lean
 def euclidGcd (a b : ℕ) : ℕ :=
@@ -49,7 +49,7 @@ If `a` starts out larger than `b`, the first call just swaps them, because `b % 
 
 ### Why it stops
 
-This time the termination measure is just `a`, the first argument. The recursive call replaces `a` with `b % a`, and a remainder is always smaller than the number you divided by: `b % a < a` whenever `a > 0`. Mathlib calls that fact `Nat.mod_lt`, and the proof after `decreasing_by` uses it by name. `exact` means "this is the proof". The `(by omega)` supplies the condition `0 < a`, which `omega` works out from the fact that we're in the `else` branch, where `a ≠ 0`.
+As in Binary GCD, the last three lines are a proof that the function stops. This time the termination measure is just `a`, the first argument. The recursive call replaces `a` with `b % a`, and a remainder is always smaller than the number you divided by: `b % a < a` whenever `a > 0`. Mathlib calls that fact `Nat.mod_lt`, and the proof after `decreasing_by` uses it by name. `exact` means "this is the proof". The `(by omega)` supplies the condition `0 < a`, which `omega` works out from the fact that we're in the `else` branch, where `a ≠ 0`.
 
 ### Running it
 
