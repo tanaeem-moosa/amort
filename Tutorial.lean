@@ -6,6 +6,9 @@ Authors: Amort Authors
 import Tutorial.BinaryGCD
 import Tutorial.EuclideanGCD
 import Tutorial.InsertionSort
+import Tutorial.BinarySearch
+import Tutorial.DynamicArray
+import Tutorial.ModExp
 
 /-!
 # Tutorial Companion Library
@@ -22,4 +25,7 @@ demonstrating both genuine theorems and common fake specifications.
 - `Tutorial.EuclideanGCD`: Euclidean algorithm, modulo halving, cross-algorithm equivalence.
 - `Tutorial.InsertionSort`: Sorting specifications (`List.Perm` + `List.Pairwise`),
   comparison bounds, fake specifications.
+- `Tutorial.BinarySearch`: `Option` results, sortedness as a precondition, probe counting.
+- `Tutorial.DynamicArray`: Capacity doubling, the potential method, total cost of `k` pushes.
+- `Tutorial.ModExp`: Repeated squaring, modular arithmetic, the condition on the modulus.
 -/

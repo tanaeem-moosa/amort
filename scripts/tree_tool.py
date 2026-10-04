@@ -639,6 +639,18 @@ def check_site(repo_root: Path, tree_data: dict) -> bool:
             "Tutorial/InsertionSort.lean",
             "Amort/Sorting/InsertionSort.lean",
         ],
+        "tutorial/binary_search.md": [
+            "Tutorial/BinarySearch.lean",
+            "Amort/Recurrence/BinarySearch.lean",
+        ],
+        "tutorial/dynamic_array.md": [
+            "Tutorial/DynamicArray.lean",
+            "Amort/DataStructure/DynamicArray.lean",
+        ],
+        "tutorial/mod_exp.md": [
+            "Tutorial/ModExp.lean",
+            "Amort/NumberTheory/ModExp.lean",
+        ],
     }
 
     for md_rel, source_rels in chapter_sources.items():

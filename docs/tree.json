@@ -242,35 +242,42 @@
             "prompt": "What does `#eval modExp 3 13 100` print?",
             "input_type": "number",
             "expected_answer": "23",
-            "explanation": "3^13 = 1594323, and 1594323 mod 100 = 23. The algorithm gets there by squaring: 3, 9, 81, then 6561 \u2261 61, and 13 = 8 + 4 + 1, so the answer is 61 \u00d7 81 \u00d7 3 mod 100 = 23."
+            "explanation": "3^13 = 1594323, and 1594323 mod 100 = 23."
+          },
+          {
+            "id": "modexp_pred_2",
+            "prompt": "How many multiplications does `modExpWithCount 2 10 1000` count?",
+            "input_type": "number",
+            "expected_answer": "6",
+            "explanation": "10 is 1010 in binary. From the lowest bit the steps cost 1, 2, 1, 2: one squaring each, plus one more for each 1 bit."
           }
         ],
         "spot_the_fake": [
           {
             "id": "modexp_fake_1",
-            "prompt": "Which claim shows that modExp is correct?",
+            "prompt": "Which theorem proves that modExp is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "For all b, e and m with 1 < m, modExp b e m equals b^e mod m.",
+                "text": "theorem modExp_correct (a b m : \u2115) (_hm : 1 < m) :\n    modExp a b m = (a ^ b) % m := by",
                 "is_fake": false,
-                "explanation": "This is the one. The condition 1 < m is about the input, which is fine: it rules out m = 0, where \"mod 0\" doesn't mean what you want."
+                "explanation": "This is the one. The condition is about the input and rules out m = 0, where the two sides really differ. (0 < m would be enough, which makes this slightly weaker than it could be.)"
               },
               {
                 "id": "b",
-                "text": "For all b, e and m, modExp b e m equals b^e mod m.",
+                "text": "theorem modExp_lt (a b m : \u2115) (hm : 0 < m) : modExp a b m < m := by",
                 "is_fake": true,
-                "explanation": "No conditions sounds stronger, but it's false: with m = 0, modExp returns 0 while b^e mod 0 is b^e."
+                "explanation": "True of any function that returns a remainder. It doesn't say which remainder."
               },
               {
                 "id": "c",
-                "text": "For all b, e and m, modExp b e m \u2264 m.",
+                "text": "def powMod (a b m : \u2115) : \u2115 := modExp a b m\n\ntheorem modExp_eq_powMod (a b m : \u2115) : modExp a b m = powMod a b m := rfl",
                 "is_fake": true,
-                "explanation": "True of any function that returns a remainder. It says nothing about which remainder."
+                "explanation": "powMod is modExp under another name, so the theorem says the algorithm equals itself."
               }
             ],
             "correct_option_id": "a",
-            "summary_explanation": "More conditions isn't automatically worse. A condition that rules out a genuinely bad input is fine."
+            "summary_explanation": "A condition isn't a flaw in itself; check what it rules out. And check the definition behind every name on the right-hand side."
           }
         ]
       }
@@ -378,38 +385,71 @@
         "predict": [
           {
             "id": "bs_pred_1",
-            "prompt": "In the sorted list [1, 3, 5, 7, 9, 11], at which index does binary search find 7?",
+            "prompt": "What does `#eval binarySearch [1, 3, 5, 7, 9, 11] 7` return? Give the index.",
             "input_type": "number",
             "expected_answer": "3",
-            "explanation": "Indices start at 0: 1 is at 0, 3 at 1, 5 at 2, and 7 at 3."
+            "explanation": "The first probe looks at the middle element, index 6 / 2 = 3, which holds 7. Found: `some 3`, after one probe."
+          },
+          {
+            "id": "bs_pred_2",
+            "prompt": "How many probes does `binarySearchWithCount [1, 3, 5, 7, 9, 11] 1` make?",
+            "input_type": "number",
+            "expected_answer": "3",
+            "explanation": "It probes 7 and goes left to [1, 3, 5], probes 3 and goes left to [1], then finds 1. The result is (some 0, 3)."
           }
         ],
         "spot_the_fake": [
           {
             "id": "bs_fake_1",
-            "prompt": "Which claim shows that binary search is correct?",
+            "prompt": "Which theorem or theorems prove that binary search is correct?",
             "options": [
               {
                 "id": "a",
-                "text": "If the list is sorted, binary search finds the target exactly when the target is in the list.",
-                "is_fake": false,
-                "explanation": "This is the one. Sortedness is a condition on the input, and binary search really does need it."
+                "text": "theorem binarySearch_some_get (xs : List \u03b1) (x : \u03b1) (i : \u2115) (h : binarySearch xs x = some i) :\n    xs[i]? = some x",
+                "is_fake": true,
+                "explanation": "Only \"nothing wrong\". A search that always returns none passes it, because it never returns a wrong index."
               },
               {
                 "id": "b",
-                "text": "For any list, sorted or not, binary search finds the target exactly when it is in the list.",
+                "text": "theorem binarySearch_isSome_iff_of_mem (xs : List \u2115) (x : \u2115) (_hsort : xs.Pairwise (\u00b7 \u2264 \u00b7))\n    (hx : x \u2208 xs) : (binarySearch xs x).isSome \u2194 x \u2208 xs :=",
                 "is_fake": true,
-                "explanation": "False. On an unsorted list, binary search can miss an element that is there."
+                "explanation": "The condition hx assumes the target is in the list, so the statement says nothing about targets that aren't. A search that always answers some 0 passes it."
               },
               {
                 "id": "c",
-                "text": "Whenever binary search returns a result, True holds.",
-                "is_fake": true,
-                "explanation": "True of everything. It says nothing at all."
+                "text": "theorem binarySearch_some_get (xs : List \u03b1) (x : \u03b1) (i : \u2115) (h : binarySearch xs x = some i) :\n    xs[i]? = some x\n\ntheorem binarySearch_isSome_iff (xs : List \u03b1) (x : \u03b1) (hsort : xs.Pairwise (\u00b7 \u2264 \u00b7)) :\n    (binarySearch xs x).isSome \u2194 x \u2208 xs",
+                "is_fake": false,
+                "explanation": "This is the one: a returned index is right, and on a sorted list the search finds the target exactly when it's there."
               }
             ],
-            "correct_option_id": "a",
-            "summary_explanation": "A precondition that the algorithm genuinely needs belongs in the theorem."
+            "correct_option_id": "c",
+            "summary_explanation": "Sortedness is a condition the algorithm needs. Assuming the target is present is half the answer moved into the assumptions."
+          },
+          {
+            "id": "bs_fake_2",
+            "prompt": "Which theorem or theorems prove that binary search makes at most bits(n) probes?",
+            "options": [
+              {
+                "id": "a",
+                "text": "theorem binarySearchSteps_le_size (n : \u2115) :\n    binarySearchSteps n \u2264 Nat.size n := by",
+                "is_fake": true,
+                "explanation": "This is about a formula, T(n) = 1 + T(n / 2). On its own, nothing connects the formula to the search function."
+              },
+              {
+                "id": "b",
+                "text": "theorem binarySearchWithCount_fst (xs : List \u03b1) (x : \u03b1) :\n    (binarySearchWithCount xs x).1 = binarySearch xs x\n\ntheorem binarySearchWithCount_snd_le_size (xs : List \u03b1) (x : \u03b1) :\n    (binarySearchWithCount xs x).2 \u2264 Nat.size xs.length :=",
+                "is_fake": false,
+                "explanation": "This is the one: the counting version runs the real search, and its count is at most the bits of the length."
+              },
+              {
+                "id": "c",
+                "text": "theorem binarySearchWithCount_snd_le_length (xs : List \u2115) (x : \u2115) :\n    (binarySearchWithCount xs x).2 \u2264 xs.length :=",
+                "is_fake": true,
+                "explanation": "True and about the real counter, but a linear bound: up to 1000 probes for 1000 elements instead of 10."
+              }
+            ],
+            "correct_option_id": "b",
+            "summary_explanation": "A bound on a formula is only about the algorithm if something proves the formula counts the algorithm."
           }
         ]
       }
@@ -439,38 +479,45 @@
         "predict": [
           {
             "id": "dyn_pred_1",
-            "prompt": "A dynamic array doubles its capacity when it's full. Using the potential \u03a6 = 2 \u00d7 size \u2212 capacity, what is the amortized cost of one push?",
+            "prompt": "Starting from `initOne` (size 0, capacity 1), what does the 17th push cost?",
             "input_type": "number",
-            "expected_answer": "3",
-            "explanation": "3: one for writing the element, and two saved in the potential to pay for copying it during a future doubling."
+            "expected_answer": "17",
+            "explanation": "Before the 17th push the array holds 16 elements in capacity 16, so it copies 16 elements and writes one."
+          },
+          {
+            "id": "dyn_pred_2",
+            "prompt": "What do the first 16 pushes cost in total?",
+            "input_type": "number",
+            "expected_answer": "31",
+            "explanation": "The expensive pushes are at sizes 1, 2, 4 and 8, costing 2 + 3 + 5 + 9 = 19. The other 12 cost 1 each: 31, under the bound of 48."
           }
         ],
         "spot_the_fake": [
           {
             "id": "dyn_fake_1",
-            "prompt": "Which claim shows that pushes cost O(1) amortized?",
+            "prompt": "Which theorem proves that pushes cost O(1) amortized?",
             "options": [
               {
                 "id": "a",
-                "text": "Every single push costs at most 3.",
+                "text": "def badPhi (s : DynArrayState) : \u2124 := -((s.size : \u2124) * s.size)\n\ndef badAmortizedCost (s : DynArrayState) : \u2124 :=\n  (pushActualCost s : \u2124) + badPhi (pushState s) - badPhi s\n\ntheorem badAmortizedCost_le_three (s : DynArrayState) :\n    badAmortizedCost s \u2264 3 := by",
                 "is_fake": true,
-                "explanation": "False. A push that triggers a doubling copies every element, which costs far more than 3."
+                "explanation": "Amortized cost with a potential that keeps going down. Any amortized bound can be had that way; it only bounds the real total if the potential never drops below where it started."
               },
               {
                 "id": "b",
-                "text": "Starting from an empty array, any k pushes cost at most 3k in total.",
+                "text": "theorem pushSeqCost_initOne_le (k : \u2115) :\n    pushSeqCost k DynArrayState.initOne \u2264 3 * k := by",
                 "is_fake": false,
-                "explanation": "This is the one. Amortized cost is a statement about sequences of operations, not single ones."
+                "explanation": "This is the one: the actual total cost of any k pushes from an empty array is at most 3k."
               },
               {
                 "id": "c",
-                "text": "A function defined as 3k is at most 3k.",
+                "text": "theorem pushActualCost_le_size_add_one (s : DynArrayState) :\n    pushActualCost s \u2264 s.size + 1 := by",
                 "is_fake": true,
-                "explanation": "The cost is defined as the bound. Nothing connects it to the array."
+                "explanation": "A worst case for a single push. Summed over k pushes it gives about k\u00b2/2, not 3k."
               }
             ],
             "correct_option_id": "b",
-            "summary_explanation": "Amortized bounds are about totals over a sequence."
+            "summary_explanation": "Amortized bounds are about the actual total over a sequence, and a potential has to be the right one to prove it."
           }
         ]
       }

@@ -1329,7 +1329,7 @@ class SkillTreeApp {
   // Nodes whose chapter has been written. Every other node shows a
   // "coming soon" page and an under-construction badge on the tree.
   hasChapter(node) {
-    const pilotChapters = ['BGCD', 'EUC', 'INS'];
+    const pilotChapters = ['BGCD', 'EUC', 'INS', 'BS', 'DYN', 'MODEXP'];
     return pilotChapters.includes(node.id) || Boolean(node.has_chapter);
   }
 
