@@ -377,3 +377,22 @@ Ask an assistant for a proof, then build. The condition `h` says the input is so
 | `l₁ ~ l₂` | `l₁` is a rearrangement of `l₂` (`List.Perm`) |
 | `List.replicate n x` | a list of `n` copies of `x` |
 | `l.length` | the number of elements in `l` |
+
+## Proof tactics in this chapter (optional)
+
+New ones from the "Show and explain the proof" sections. The earlier chapters have the rest.
+
+| You'll see | It means |
+| :--- | :--- |
+| `induction l with \| nil => … \| cons b l ih => …` | induction on a list: the empty case, then `b :: l` assuming the claim for `l` |
+| `h.cons a` | from `l₁ ~ l₂`, get `a :: l₁ ~ a :: l₂` |
+| `Perm.swap a b l` | `b :: a :: l ~ a :: b :: l` |
+| `h₁.trans h₂` | chain `x ~ y` and `y ~ z` into `x ~ z` |
+| `simp [h]` | simplify the goal, using `h` along with Mathlib's standard rewrites |
+| `simp only [h₁, h₂]` | simplify using only the listed facts |
+| `split` | split the goal on an `if` inside it |
+| `rw [h] at h'` | rewrite inside the hypothesis `h'` instead of the goal |
+| `cases h : e with` | split on the shape of `e` (here, `0` or `n + 1`), remembering `h : e = …` |
+| `ring` | prove equations that follow from the rules of algebra |
+| `decide` | prove a statement by computing it, such as `0 < 2` |
+| `:= p` without `by` | the proof is the single term `p`, often an existing theorem |

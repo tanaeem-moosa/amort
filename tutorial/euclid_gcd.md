@@ -308,3 +308,20 @@ Paste it at the end of the companion file, ask an assistant for a proof, and bui
 | `rw [h]` | rewrite using the equation `h` |
 | `rfl` | "both sides are the same by definition" |
 | `Nat.euclidGcd` vs `euclidGcd` | the same function; the long name is used outside `namespace Nat` |
+
+## Proof tactics in this chapter (optional)
+
+New ones from the "Show and explain the proof" sections. The [Binary GCD](binary_gcd.md) chapter has the earlier ones.
+
+| You'll see | It means |
+| :--- | :--- |
+| `induction a using Nat.strong_induction_on` | strong induction: assume the claim for every number smaller than `a` |
+| `generalizing b` | let the induction hypothesis hold for every `b`, not just this one |
+| `split_ifs with h` | split the goal into the branches of an `if`, naming the condition `h` |
+| `·` | starts the proof of one goal after a split |
+| `conv_rhs => rw [h]` | rewrite only the right-hand side of the goal |
+| `if_neg h` | pick the `else` branch of a plain `if c`, given `h : ¬c` |
+| `P ∨ Q` | `P` or `Q` |
+| `rcases h with h₁ \| h₂` | split `h : P ∨ Q` into one case with `h₁ : P` and one with `h₂ : Q` |
+| `intro x h` | take `∀ x, P → …` apart: fix `x` and assume `h : P` |
+| `by_cases h : c` | split into the case where `c` holds and the case where it doesn't |

@@ -427,3 +427,23 @@ Paste it at the end of the companion file, ask an AI assistant to replace `sorry
 | `let r := e` | give the value `e` the name `r` |
 | `Nat.size n` | the number of bits in `n` |
 | `sorry` | a missing proof |
+
+## Proof tactics in this chapter (optional)
+
+These appear only in the "Show and explain the proof" sections.
+
+| You'll see | It means |
+| :--- | :--- |
+| `:= by …` | a proof written as tactics, each one changing the goal until nothing is left |
+| `induction a, b using f.induct with` | induction with one case per branch of `f`; recursive cases get `ih` |
+| `ih` | the induction hypothesis: the claim already holds for the recursive call |
+| `f.eq_def` | the equation that unfolds `f` into its definition |
+| `rw [h₁, h₂]` | rewrite the goal with each equation in turn |
+| `dif_pos h`, `dif_neg h` | pick the `then` / `else` branch of `if h : c`, given a proof that `c` holds / doesn't |
+| `exact p` | "`p` is the proof" |
+| `h.symm` | `h` with its two sides swapped |
+| `have h : P := …` | prove an intermediate fact `P` and call it `h` (unnamed: `this`) |
+| `omega` | prove facts about `+`, `−`, `≤` and multiplication by fixed numbers |
+| `all_goals t` | run `t` on every remaining goal |
+| `conv_lhs => rw [h]` | rewrite only the left-hand side of the goal |
+| `(by omega)` | a small proof written inline, where an argument is expected |
