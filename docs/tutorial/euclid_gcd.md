@@ -75,6 +75,35 @@ theorem euclid_eq_binary (a b : ℕ) : Nat.euclidGcd a b = Nat.binaryGcd a b := 
 
 `rw` means "rewrite": it replaces the left side of an equation with its right side. The proof rewrites `Nat.euclidGcd a b` to `Nat.gcd a b`, then does the same to `Nat.binaryGcd a b`, and both sides are now identical. Comparing the two algorithms directly, step by step, would be a long and fiddly proof. Going through a shared specification avoids it.
 
+<details>
+<summary>Show and explain the proof (optional)</summary>
+
+Here is the proof of `euclidGcd_eq_gcd`, from `Amort/GCD/EuclideanGCD.lean`:
+
+```lean
+theorem euclidGcd_eq_gcd (a b : ℕ) : euclidGcd a b = Nat.gcd a b := by
+  induction a using Nat.strong_induction_on generalizing b with
+  | h a ih =>
+    rw [euclidGcd.eq_def]
+    split_ifs with ha
+    · rw [ha, Nat.gcd_zero_left]
+    · have hlt : b % a < a := Nat.mod_lt b (by omega)
+      rw [ih (b % a) hlt a]
+      conv_rhs => rw [Nat.gcd.eq_def, if_neg ha]
+```
+
+**The idea.** It's much shorter than the binary GCD proof, and here's why: Lean defines `Nat.gcd` itself with Euclid's recursion. Once the recursive call is known to be right, both sides unfold to the same thing.
+
+**Line by line.**
+
+- `induction a using Nat.strong_induction_on` is *strong induction*: to prove the claim for `a`, you may assume it for every number smaller than `a`, not just for `a − 1`. We need that because the recursive call is on `b % a`, which can be any number below `a`. `ih` says: for every `m < a` and every `b`, `euclidGcd m b = Nat.gcd m b`.
+- `generalizing b` is what puts "every `b`" into `ih`. The recursive call passes `a` as its second argument, not `b`, so a hypothesis about one fixed `b` wouldn't help.
+- `split_ifs with ha` splits the goal into the two branches of `if a = 0`. In the first branch `ha : a = 0`; in the second `ha : ¬a = 0`. The `·` bullets mark the proof of each branch.
+- First branch: the goal is `b = Nat.gcd a b`. `rw [ha]` replaces `a` with 0, and Mathlib's `Nat.gcd_zero_left` says `Nat.gcd 0 b = b`.
+- Second branch: the goal is `euclidGcd (b % a) a = Nat.gcd a b`. `hlt` proves the recursive call is on a smaller number, so `ih (b % a) hlt a` rewrites the left side to `Nat.gcd (b % a) a`. Then `conv_rhs => rw [Nat.gcd.eq_def, if_neg ha]` unfolds `Nat.gcd a b` on the right, and it unfolds to exactly `Nat.gcd (b % a) a`.
+
+</details>
+
 ## 5. How many steps
 
 We count recursive calls. Each call does one `%`.
@@ -112,6 +141,74 @@ Two new things to read here:
 - **Hypotheses.** `(hb : 0 < b)` and `(hba : b ≤ a)` are conditions: to use the lemma you have to supply proofs that `0 < b` and `b ≤ a`. Conditions like these, which describe the inputs, are normal. What you have to watch for is a condition that quietly assumes the thing the theorem is supposed to prove.
 
 The lemma says that when `b ≤ a`, the remainder `a % b` is less than half of `a`. Every two calls, the numbers shrink by at least half, which means they lose at least one bit. That's where "2 × bits + 1" comes from.
+
+<details>
+<summary>Show and explain the proof (optional)</summary>
+
+The halving lemma first:
+
+```lean
+lemma mod_two_mul_lt {a b : ℕ} (hb : 0 < b) (hba : b ≤ a) : 2 * (a % b) < a := by
+  have hdiv := Nat.div_add_mod a b
+  have hmod := Nat.mod_lt a hb
+  have hq0 : 0 < a / b := Nat.div_pos hba hb
+  have hq_cases : a / b = 1 ∨ 2 ≤ a / b := by omega
+  rcases hq_cases with hq1 | hq2
+  · have h1 : b * (a / b) = b := by rw [hq1, Nat.mul_one]
+    omega
+  · have h2 : 2 * b ≤ b * (a / b) := by
+      rw [Nat.mul_comm 2 b]
+      exact Nat.mul_le_mul_left b hq2
+    omega
+```
+
+**The idea.** Write `a = b × q + r`, where `q` is the quotient and `r < b` is the remainder. If `q = 1`, then `a = b + r`, and `r < b` gives `2r < a`. If `q ≥ 2`, then `a ≥ 2b > 2r`.
+
+**Line by line.**
+
+- The three `have`s collect facts from Mathlib: `hdiv : b * (a / b) + a % b = a`, `hmod : a % b < b`, and `hq0 : 0 < a / b`.
+- `hq_cases` says the quotient is 1 or at least 2. `∨` means "or". `omega` proves it from `hq0`.
+- `rcases hq_cases with hq1 | hq2` splits the proof in two: one where `hq1 : a / b = 1`, one where `hq2 : 2 ≤ a / b`.
+- Why the extra `h1` and `h2`? `omega` only handles addition and multiplication by fixed numbers. It can't reason about `b * (a / b)`, a product of two unknowns, so it treats the product as one more unknown number. `h1` and `h2` tell it what it needs to know about that product, and then `omega` finishes both cases.
+
+From this lemma, `size_mod_add_one_le` in the same file gets "the remainder has at least one bit fewer". The bound itself is proved two calls at a time:
+
+```lean
+lemma euclideanGcdSteps_le_two_mul_size_of_le (a : ℕ) :
+    ∀ b, a ≤ b → euclideanGcdSteps a b ≤ 2 * Nat.size a := by
+  induction a using Nat.strong_induction_on with
+  | h a ih =>
+    intro b hab
+    by_cases ha : a = 0
+    · rw [euclideanGcdSteps.eq_def, dif_pos ha]
+      omega
+    · rw [euclideanGcdSteps.eq_def, dif_neg ha]
+      have ha_pos : 0 < a := Nat.pos_of_ne_zero ha
+      have hr1_lt : b % a < a := Nat.mod_lt b ha_pos
+      by_cases hr1 : b % a = 0
+      · rw [euclideanGcdSteps.eq_def, dif_pos hr1]
+        have : 0 < Nat.size a := Nat.size_pos.mpr ha_pos
+        omega
+      · have hr1_pos : 0 < b % a := Nat.pos_of_ne_zero hr1
+        rw [euclideanGcdSteps.eq_def, dif_neg hr1]
+        have hr2_lt : a % (b % a) < b % a := Nat.mod_lt a hr1_pos
+        have hr2_le : a % (b % a) ≤ b % a := Nat.le_of_lt hr2_lt
+        have hih := ih (a % (b % a)) (by omega) (b % a) hr2_le
+        have hstep : Nat.size (a % (b % a)) + 1 ≤ Nat.size a :=
+          size_mod_add_one_le hr1_pos (Nat.le_of_lt hr1_lt)
+        omega
+```
+
+It counts with `euclideanGcdSteps`, the count-only version, which `euclidGcdWithSteps_snd` proves equal to the count in `euclidGcdWithSteps`. When `a ≤ b`, two calls take the pair (a, b) to (b % a, a) and then to (a % (b % a), b % a). The proof follows those two calls:
+
+- `intro b hab` takes the `∀ b, a ≤ b →` apart: from here on `b` is a fixed number and `hab : a ≤ b`.
+- `by_cases ha : a = 0` splits on whether `a` is 0, like `split_ifs` but for any condition. If it is, there are no calls and the bound holds.
+- Otherwise the proof unfolds one call and splits again on whether `b % a = 0`. If it is, that was the only call, and `2 * Nat.size a` is at least 2 because `a > 0`.
+- Otherwise it unfolds the second call. `hih` is the induction hypothesis applied to the pair after two calls, and `hstep` says its first number has at least one bit fewer than `a`. So two calls cost 2 and lose at least one bit, and `omega` adds it up: 2 + 2 × (bits − 1) ≤ 2 × bits.
+
+The headline theorem `euclideanGcdSteps_le_two_mul_size_min` then deals with the case `b < a`: the first call only swaps the arguments, which is where the `+ 1` comes from.
+
+</details>
 
 ### Fewer calls isn't the same as faster
 

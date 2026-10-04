@@ -108,6 +108,66 @@ The first theorem says the output is a rearrangement of the input. The second sa
 
 These are fine conditions to have. They say `r` really is an ordering, and without them a sorted order might not even exist. What would *not* be fine is a condition about the output, such as assuming it's already sorted. The rearrangement theorem doesn't need either condition: moving elements around keeps them the same, however you compare them.
 
+<details>
+<summary>Show and explain the proofs (optional)</summary>
+
+Both theorems first swap the counting version for Mathlib's `List.insertionSort`, using `insertionSortWithCount_fst` from step 5, and then call a theorem about `List.insertionSort`:
+
+```lean
+theorem insertionSortWithCount_perm (l : List α) :
+    (insertionSortWithCount r l).1 ~ l := by
+  rw [insertionSortWithCount_fst]
+  exact insertionSort_perm r l
+```
+
+**Rearrangement.** The repository proves this one itself, in two steps. First, inserting `a` into `l` gives a rearrangement of `a :: l`:
+
+```lean
+theorem orderedInsert_perm (a : α) (l : List α) :
+    orderedInsert r a l ~ a :: l := by
+  induction l with
+  | nil => rfl
+  | cons b l ih =>
+    rw [orderedInsert_cons]
+    split_ifs with h
+    · rfl
+    · have h_swap : b :: orderedInsert r a l ~ b :: a :: l := ih.cons b
+      have h_trans : b :: a :: l ~ a :: b :: l := Perm.swap a b l
+      exact h_swap.trans h_trans
+```
+
+- `induction l with` is induction on a list: a case for the empty list (`nil`), and a case for `b :: l` (`cons`) where `ih` says the claim already holds for the shorter list `l`.
+- `nil`: inserting into `[]` gives `[a]`, and `[a] ~ [a]`. `rfl` works because every list is a rearrangement of itself.
+- `cons`: `rw [orderedInsert_cons]` unfolds one step of `orderedInsert`, and `split_ifs` splits on the comparison `r a b`. If it holds, the result is `a :: b :: l`, which is exactly the right-hand side. If not, the result is `b :: orderedInsert r a l`, and two facts chain together: `ih.cons b` puts `b` in front of both sides of `ih`, and `Perm.swap` says swapping the first two elements is a rearrangement. `.trans` joins them: if `x ~ y` and `y ~ z`, then `x ~ z`.
+
+Then the sort, one insertion at a time:
+
+```lean
+theorem insertionSort_perm (l : List α) :
+    insertionSort r l ~ l := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [insertionSort_cons]
+    have h1 := orderedInsert_perm r a (insertionSort r l)
+    have h2 := ih.cons a
+    exact h1.trans h2
+```
+
+Sorting `a :: l` means inserting `a` into the sorted `l`. `h1` says that's a rearrangement of `a :: insertionSort r l`, and `h2` says that's a rearrangement of `a :: l`.
+
+**Sortedness.** Here the repository relies on Mathlib:
+
+```lean
+theorem insertionSort_sorted [Std.Total r] [IsTrans α r]
+    (l : List α) : (insertionSort r l).Pairwise r :=
+  pairwise_insertionSort r l
+```
+
+There is no `by` here. The proof is a single term, Mathlib's theorem `List.pairwise_insertionSort`. That's fine: Mathlib's proofs are checked by the same Lean, so a theorem from Mathlib is as trustworthy as one written here. What you check is that the statement is the one you wanted.
+
+</details>
+
 ## 5. How many comparisons
 
 We count comparisons: each time the code evaluates `r a b`. Here are the counting versions from `Amort/Sorting/InsertionSort.lean`:
@@ -155,6 +215,67 @@ For a list of length n, that's at most n(n − 1)/2 comparisons: 6 for four elem
 ```
 
 Why is `[1, 2, 3, 4]` the cheap one? Elements are inserted starting from the end, so each new element is smaller than everything sorted so far, and the first comparison already puts it in front. With `[4, 3, 2, 1]`, each new element is larger than everything sorted so far and has to walk past all of it.
+
+<details>
+<summary>Show and explain the proof (optional)</summary>
+
+As in the GCD chapters, the bound on `insertionSortWithCount` is passed on to a count-only function, `insertionSortCount`. Two facts do the work. One insertion into a list of length `k` makes at most `k` comparisons:
+
+```lean
+lemma orderedInsertCount_le (a : α) (l : List α) :
+    orderedInsertCount r a l ≤ l.length := by
+  induction l with
+  | nil => simp [orderedInsertCount]
+  | cons b l ih =>
+    simp only [orderedInsertCount, List.length_cons]
+    split
+    · omega
+    · omega
+```
+
+- `simp [orderedInsertCount]` unfolds the definition and simplifies. For the empty list it leaves `0 ≤ 0`, which `simp` closes.
+- `simp only [...]` uses only the facts listed: it unfolds `orderedInsertCount` on `b :: l` and rewrites `(b :: l).length` to `l.length + 1`.
+- `split` splits the `if` in the goal. If `r a b` holds, the count is 1. Otherwise it's `1 + orderedInsertCount r a l`, and `ih` bounds the rest. `omega` finishes both.
+
+And the total adds those up:
+
+```lean
+theorem insertionSortCount_le_triangular (l : List α) :
+    insertionSortCount r l ≤ l.length * (l.length - 1) / 2 := by
+  induction l with
+  | nil => simp [insertionSortCount]
+  | cons a l ih =>
+    simp only [insertionSortCount, List.length_cons]
+    have h_ins := orderedInsertCount_le r a (List.insertionSort r l)
+    have h_len : (List.insertionSort r l).length = l.length := List.length_insertionSort r l
+    rw [h_len] at h_ins
+    have h_arith : (l.length + 1) * (l.length + 1 - 1) =
+        l.length * (l.length - 1) + l.length * 2 := by
+      cases hl : l.length with
+      | zero => simp
+      | succ n =>
+        have h_sub1 : n + 1 + 1 - 1 = n + 1 := by omega
+        have h_sub2 : n + 1 - 1 = n := by omega
+        rw [h_sub1, h_sub2]
+        ring
+    have h_div : (l.length * (l.length - 1) + l.length * 2) / 2 =
+        l.length * (l.length - 1) / 2 + l.length := by
+      rw [Nat.add_mul_div_right _ _ (by decide : 0 < 2)]
+    rw [h_arith, h_div]
+    omega
+```
+
+**The idea.** Sorting a list of length n + 1 means sorting the last n elements, then making one insertion into a list of length n. So the count grows by at most n each time, and 0 + 1 + 2 + … + (n − 1) = n(n − 1)/2.
+
+**Line by line.**
+
+- `h_ins` bounds the last insertion by the length of the sorted list. `h_len` says sorting doesn't change the length, and `rw [h_len] at h_ins` rewrites inside the hypothesis `h_ins` rather than the goal.
+- Most of the proof is algebra. The goal involves `l.length * (l.length - 1)`, a product of two unknowns, which `omega` can't handle. So `h_arith` and `h_div` do that algebra by hand, after which `omega` only has to add.
+- `cases hl : l.length with` splits on whether the length is 0 or `n + 1`, which takes care of the truncated subtraction (on `ℕ`, `0 - 1 = 0`).
+- `ring` proves equations that follow from the rules of algebra, such as `(n + 1) * (n + 1) = n * n + 2 * n + 1`.
+- `(by decide : 0 < 2)` proves `0 < 2` by just computing it.
+
+</details>
 
 ## Spot the fake
 

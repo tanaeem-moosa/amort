@@ -8,11 +8,13 @@ AI assistants can now write code and proofs faster than we can read them. You ca
 
 So this tutorial teaches one skill: reading a Lean statement and deciding whether it's the right one. You own the statement, the AI writes the proof, and Lean referees.
 
+It's written for people who find algorithms, and the proofs about them, fun. If you've ever enjoyed working out why an algorithm is correct, or why it's fast, you're who this is for.
+
 ## How these chapters work
 
 Each chapter takes one algorithm through the same five steps. First we say what the problem is. Then we write down, in Lean, what a correct answer means. Then we look at the algorithm. Last come the two theorems: one says the algorithm is correct, and one says how many steps it takes.
 
-You don't have to write the proofs. It's more important to understand the setup: the definitions and the theorem statements. A proof that an AI wrote and Lean checked validates itself, so you never need to read one to trust it, though it can be fun to understand them. What Lean can't tell you is whether a theorem says what you think it says. A proof that compiles only means *some* statement is true. Reading the statement and deciding whether it's the right one is your job, and it's what these chapters practise.
+You don't have to write the proofs. It's more important to understand the setup: the definitions and the theorem statements. A proof that an AI wrote and Lean checked validates itself, so you never need to read one to trust it, though it can be fun to understand them. That's why every main theorem comes with an optional **Show and explain the proof** section: open it to see the full Lean proof with a line-by-line explanation, or skip it and lose nothing. What Lean can't tell you is whether a theorem says what you think it says. A proof that compiles only means *some* statement is true. Reading the statement and deciding whether it's the right one is your job, and it's what these chapters practise.
 
 Every chapter ends with the same kinds of exercise:
 

@@ -126,7 +126,64 @@ Two things make this the right statement:
 - **It has no conditions.** The only inputs are `(a b : ℕ)`, so it covers every pair of numbers, zeros included. A version with an extra input such as `(ha : 0 < a)` would say nothing about `a = 0`.
 - **The right-hand side is the specification from step 2.** It isn't something built out of `binaryGcd` itself.
 
-The proof goes through the branches of `binaryGcd` one by one. In each branch it uses the matching fact from step 3 to show the recursive call has the same gcd as the original pair. You can read it at the bottom of `Amort/GCD/BinaryGCD.lean`, but you don't need to.
+The proof goes through the branches of `binaryGcd` one by one. In each branch it uses the matching fact from step 3 to show the recursive call has the same gcd as the original pair. You don't need it for the rest of the chapter, but if you're curious, open the section below.
+
+<details>
+<summary>Show and explain the proof (optional)</summary>
+
+Here is the whole proof, from `Amort/GCD/BinaryGCD.lean`:
+
+```lean
+theorem binaryGcd_eq_gcd (a b : ℕ) : binaryGcd a b = Nat.gcd a b := by
+  induction a, b using binaryGcd.induct with
+  | case1 b =>
+    rw [binaryGcd.eq_def, dif_pos rfl, Nat.gcd_zero_left]
+  | case2 a ha =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_pos rfl, Nat.gcd_zero_right]
+  | case3 a b ha hb ha_even hb_even ih =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_pos hb_even, ih]
+    exact (gcd_even_even ha_even hb_even).symm
+  | case4 a b ha hb ha_even hb_odd ih =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_neg hb_odd, ih]
+    exact (gcd_even_odd ha_even (by omega)).symm
+  | case5 a b ha hb ha_odd hb_even ih =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_pos hb_even, ih]
+    exact (gcd_odd_even (by omega) hb_even).symm
+  | case6 a b ha hb ha_odd hb_odd hba ih =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd, dif_pos hba, ih]
+    exact (gcd_odd_odd_sub_div_two_left (by omega) (by omega) hba).symm
+  | case7 a b ha hb ha_odd hb_odd hnba ih =>
+    rw [binaryGcd.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd, dif_neg hnba, ih]
+    exact (gcd_odd_odd_sub_div_two_right (by omega) (by omega) (by omega)).symm
+```
+
+**The idea.** Assume the recursive call returns the right answer, and show that the current call then does too. That's induction, and it's the same reasoning you'd use to convince yourself a recursive function is right.
+
+**Line by line.**
+
+- `:= by` starts a proof written as a sequence of *tactics*: commands that each transform what's left to prove (the *goal*) until nothing is left.
+- `induction a, b using binaryGcd.induct with` splits the proof into one case per branch of `binaryGcd`. Lean built `binaryGcd.induct` from the definition, so there are seven cases: two base cases (`a = 0`, `b = 0`) and five recursive ones. In each recursive case you also get `ih`, the *induction hypothesis*: the theorem already holds for the arguments of the recursive call. This is allowed because the termination proof showed that those arguments are smaller.
+- `| case3 a b ha hb ha_even hb_even ih =>` names what this case knows: `ha : ¬a = 0`, `hb : ¬b = 0`, `ha_even : a % 2 = 0`, `hb_even : b % 2 = 0`, and `ih`.
+- `rw [binaryGcd.eq_def, …]` rewrites the goal step by step. `binaryGcd.eq_def` unfolds `binaryGcd a b` into its `if` chain. `dif_pos h` picks the `then` branch of an `if`, using `h` as proof that the condition holds, and `dif_neg h` picks the `else` branch. (`rfl` proves `0 = 0` in the base cases.) After those, the goal in case 3 is `2 * binaryGcd (a / 2) (b / 2) = Nat.gcd a b`, and rewriting with `ih` turns it into `2 * Nat.gcd (a / 2) (b / 2) = Nat.gcd a b`.
+- `exact (gcd_even_even ha_even hb_even).symm` closes the goal with the matching fact from step 3. `gcd_even_even` states the equation the other way round, and `.symm` flips it.
+- `(by omega)` appears where a lemma wants `b % 2 = 1` but the case only knows `¬b % 2 = 0`. `omega` fills that gap.
+- In the base cases, `rw` finishes by itself: once both sides are identical, it closes the goal.
+
+The step-3 facts are short lemmas in the same file. Here is the one for "`a` even, `b` odd":
+
+```lean
+lemma gcd_even_odd {a b : ℕ} (ha : a % 2 = 0) (hb : b % 2 = 1) :
+    Nat.gcd a b = Nat.gcd (a / 2) b := by
+  have h2 : a = 2 * (a / 2) := by omega
+  conv_lhs => rw [h2]
+  exact (coprime_two_of_odd hb).gcd_mul_left_cancel (a / 2)
+```
+
+- `have h2 : … := by omega` proves an intermediate fact and names it `h2`.
+- `conv_lhs => rw [h2]` rewrites `a` to `2 * (a / 2)` on the left-hand side only. A plain `rw` would also rewrite the `a` inside `a / 2` on the right.
+- The goal is now `Nat.gcd (2 * (a / 2)) b = Nat.gcd (a / 2) b`. Mathlib's `Nat.Coprime.gcd_mul_left_cancel` says that a factor sharing nothing with `b` can be dropped from a gcd. `coprime_two_of_odd hb` proves that 2 shares nothing with an odd `b`, and the dot calls the Mathlib theorem on that proof.
+
+</details>
 
 ## 5. How many steps
 
@@ -161,6 +218,72 @@ theorem binaryGcdWithSteps_snd_le_size_add_size (a b : ℕ) :
 ```
 
 `Nat.size n` is the number of bits in `n`. For example, `Nat.size 6 = 3` because 6 is `110` in binary, and `Nat.size 0 = 0`. So the theorem says the number of calls is at most the total number of bits in the two inputs. That makes sense: every call removes at least one bit from at least one of the numbers. Two 64-bit inputs need at most 128 calls, even though the numbers themselves can be as large as 2⁶⁴.
+
+<details>
+<summary>Show and explain the proof (optional)</summary>
+
+The proof of the bound is two lines:
+
+```lean
+theorem binaryGcdWithSteps_snd_le_size_add_size (a b : ℕ) :
+    (binaryGcdWithSteps a b).2 ≤ Nat.size a + Nat.size b := by
+  rw [binaryGcdWithSteps_snd]
+  exact binaryGcdSteps_le_size_add_size a b
+```
+
+The file has a third function, `binaryGcdSteps`, which returns only the count. `binaryGcdWithSteps_snd` proves that it equals the count in `binaryGcdWithSteps`, so `rw` swaps one for the other, and `exact` hands over the real work to this theorem:
+
+```lean
+theorem binaryGcdSteps_le_size_add_size (a b : ℕ) :
+    binaryGcdSteps a b ≤ Nat.size a + Nat.size b := by
+  induction a, b using binaryGcdSteps.induct with
+  | case1 b =>
+    rw [binaryGcdSteps.eq_def, dif_pos rfl]
+    omega
+  | case2 a ha =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_pos rfl]
+    omega
+  | case3 a b ha hb ha_even hb_even ih =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_pos hb_even]
+    have := size_div_two a (by omega)
+    have := size_div_two b (by omega)
+    omega
+  | case4 a b ha hb ha_even hb_odd ih =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_pos ha_even, dif_neg hb_odd]
+    have := size_div_two a (by omega)
+    omega
+  | case5 a b ha hb ha_odd hb_even ih =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_pos hb_even]
+    have := size_div_two b (by omega)
+    omega
+  | case6 a b ha hb ha_odd hb_odd hba ih =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd,
+      dif_pos hba]
+    have := size_sub_div_two_le a b (by omega)
+    omega
+  | case7 a b ha hb ha_odd hb_odd hnba ih =>
+    rw [binaryGcdSteps.eq_def, dif_neg ha, dif_neg hb, dif_neg ha_odd, dif_neg hb_odd,
+      dif_neg hnba]
+    have := size_sub_div_two_le b a (by omega)
+    omega
+```
+
+**The idea.** Every call removes at least one bit from at least one of the numbers, so there can't be more calls than there are bits.
+
+**Line by line.** The shape is the same as the correctness proof: one case per branch, unfold the definition, pick the branch. Take case 4, where `a` is even and `b` is odd. After the `rw`, the goal is `1 + binaryGcdSteps (a / 2) b ≤ Nat.size a + Nat.size b`, and `ih` says `binaryGcdSteps (a / 2) b ≤ Nat.size (a / 2) + Nat.size b`. The missing piece is that halving removes one bit, which is this lemma from the same file:
+
+```lean
+lemma size_div_two (a : ℕ) (ha : 0 < a) : Nat.size (a / 2) + 1 = Nat.size a
+```
+
+`have := size_div_two a (by omega)` adds that fact for our `a` (an unnamed `have` is called `this`). Then `omega` finishes. `omega` knows nothing about `Nat.size`, but it doesn't need to: it treats `Nat.size a`, `Nat.size (a / 2)` and `binaryGcdSteps (a / 2) b` as unknown numbers, and the inequality follows from the facts in context by plain addition. Cases 6 and 7 use a similar lemma for subtract-and-halve:
+
+```lean
+lemma size_sub_div_two_le (a b : ℕ) (ha : 0 < a) :
+    Nat.size ((a - b) / 2) + 1 ≤ Nat.size a
+```
+
+</details>
 
 What this doesn't count is the work inside a call. For numbers too big for one machine word, halving and subtracting take time proportional to the number of bits. So for two n-bit inputs, the total work is on the order of n² bit operations. That part isn't formalized in this repository; the theorem is only about calls.
 
